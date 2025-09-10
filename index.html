@@ -1,0 +1,561 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Coastal City Logistics — Dispatch Board</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root{--bg:#0a0f1a;--panel:#111827;--ink:#f8fafc;--muted:#9fb2c8;--line:#1f2937;--brand:#2563eb;--brand-2:#0f766e;--ios:#0A84FF;--ios-hover:#007AFF}
+    body{background:var(--bg);color:var(--ink)}
+    .brand-grad{background:linear-gradient(120deg,#1e3a8a 0%, var(--brand-2) 100%)}
+    .card{border:1px solid #1e293b;border-radius:16px;background:var(--panel);box-shadow:0 8px 24px rgba(0,0,0,.45)}
+    .pill{border:1px solid #1f2a44;background:#0f172a;border-radius:9999px;padding:6px 10px;font-size:12px}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:10px 12px;text-align:left;white-space:nowrap}
+    th{background:#121a27;color:#e2e8f0;font-size:13px;letter-spacing:.02em;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
+    tr:nth-child(even){background:#0f1623}
+    tr:nth-child(odd){background:#111827}
+    .chk{width:18px;height:18px;cursor:pointer;accent-color:#94a3b8;filter:grayscale(1)}
+    .chk.active{accent-color:#3b82f6;filter:none}
+    tbody tr:hover{background:#0e1422}
+    tbody tr.selected{background:#1e3a8acc} /* blue highlight when selected */
+    .tab{padding:8px 12px;border-radius:10px;border:1px solid #243045;background:#0b1220;color:#cdd8e3;font-size:13px}
+    .tab.active{background:#1d2a44;border-color:#33507a}
+    ::-webkit-scrollbar{height:8px;width:8px}
+    ::-webkit-scrollbar-track{background:#0b1220;border-radius:8px}
+    ::-webkit-scrollbar-thumb{background:#1f2937;border-radius:8px}
+    ::-webkit-scrollbar-thumb:hover{background:#374151}
+    .btn{padding:8px 16px;border-radius:10px}
+    .btn-ios{background:var(--ios)} .btn-ios:hover{background:var(--ios-hover)}
+    /* Modals */
+    .modal{position:fixed;inset:0;background:rgba(2,6,23,.7);display:none;align-items:center;justify-content:center;z-index:80}
+    .modal .box{background:#0b1220;border:1px solid #243045;border-radius:20px;max-width:560px;width:94%;padding:18px}
+    .modal .msg{white-space:pre-line}
+  </style>
+</head>
+<body class="min-h-screen">
+  <header class="brand-grad p-4 flex items-center justify-between">
+    <h1 class="text-lg font-semibold">Coastal City Logistics — Dispatch Board</h1>
+  </header>
+
+  <main class="max-w-6xl mx-auto p-6 space-y-6">
+    <div class="flex items-center gap-2">
+      <button id="tab_pickups" class="tab active" onclick="switchTab('pickups')">Pickups <span id="badge_pickups" class="ml-2 px-2 py-0.5 rounded-full text-xs bg-blue-900 text-blue-200">0</span></button>
+      <button id="tab_assigned" class="tab" onclick="switchTab('assigned')">Assigned <span id="badge_assigned" class="ml-2 px-2 py-0.5 rounded-full text-xs bg-slate-700 text-slate-200">0</span></button>
+      <button id="tab_completed" class="tab" onclick="switchTab('completed')">Completed <span id="badge_completed" class="ml-2 px-2 py-0.5 rounded-full text-xs bg-emerald-900 text-emerald-200">0</span></button>
+      <div class="ml-auto text-xs opacity-80 pill">Coastal City Logistics</div>
+    </div>
+
+    <!-- PICKUPS -->
+    <section id="section_pickups" class="space-y-4">
+      <div class="card p-5">
+        <h2 class="text-xl font-bold text-sky-300 mb-3">Pickups</h2>
+        <div id="p1_scroll" class="relative overflow-auto rounded-xl" style="max-height:260px">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:42px"></th>
+                <th>Pickup #</th>
+                <th>Appt Time</th>
+                <th>From</th>
+                <th>Load In/Out</th>
+                <th>Container</th>
+                <th>Appt #</th>
+                <th>BK #</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="p1_body"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <button id="btn_assign" class="btn bg-blue-600 hover:bg-blue-700 disabled:opacity-40">Assign</button>
+        <button id="btn_edit" class="btn" style="background:#065f46; border-color:#047857; color:#d1fae5;">Edit</button>
+      </div>
+    </section>
+
+    <!-- ASSIGNED -->
+    <section id="section_assigned" class="space-y-4 hidden">
+      <div class="card p-5">
+        <h2 class="text-xl font-bold text-sky-300 mb-3">Assigned</h2>
+        <div class="relative overflow-auto rounded-xl" style="max-height:260px">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:42px"></th>
+                <th>Pickup #</th>
+                <th>Driver</th>
+                <th>Appt Time</th>
+                <th>From</th>
+                <th>Load In/Out</th>
+                <th>Container</th>
+                <th>Appt #</th>
+                <th>BK #</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="assigned_body"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <button id="btn_remove" class="btn bg-slate-700 hover:bg-slate-600 disabled:opacity-40">Remove</button>
+        <button id="btn_update" class="btn btn-ios disabled:opacity-40">Update Driver</button>
+      </div>
+    </section>
+
+    <!-- COMPLETED -->
+    <section id="section_completed" class="space-y-4 hidden">
+      <div class="card p-5">
+        <h2 class="text-xl font-bold text-sky-300 mb-3">Completed</h2>
+        <div class="relative overflow-auto rounded-xl" style="max-height:260px">
+          <table>
+            <thead>
+              <tr>
+                <th>Pickup #</th>
+                <th>Driver</th>
+                <th>Appt Time</th>
+                <th>From</th>
+                <th>Load In/Out</th>
+                <th>Container</th>
+                <th>Appt #</th>
+                <th>BK #</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="completed_body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- DRIVERS (BOTTOM) -->
+    <section id="section_drivers_bottom" class="space-y-4">
+      <div class="card p-5">
+        <h2 class="text-xl font-bold text-sky-300 mb-3">Drivers</h2>
+        <div class="relative overflow-auto rounded-xl" style="max-height:220px">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:42px"></th>
+                <th>Driver</th>
+                <th>Assigned</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="drv_body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Toast -->
+  <div id="toast" style="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#0b1220;border:1px solid #243045;border-radius:12px;padding:10px 14px;color:#e5eefb;display:none;z-index:60"></div>
+
+  <!-- Alert Modal (Driver Mismatch) -->
+  <div id="alert_modal" class="modal">
+    <div class="box">
+      <h3 class="text-lg font-semibold mb-2 text-red-200">Driver Mismatch</h3>
+      <p id="alert_text" class="text-sm opacity-90 mb-4 msg">You selected the wrong driver.</p>
+      <div class="flex justify-end gap-2">
+        <button class="px-3 py-2 rounded-md bg-slate-700 hover:bg-slate-600" onclick="closeAlert()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EDIT POPUP (Phone-like layout) -->
+  <div id="edit_modal" class="modal">
+    <div class="box p-0 overflow-hidden" style="max-width:420px">
+      <!-- phone top bar -->
+      <div class="brand-grad px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-full bg-slate-900/25 grid place-items-center font-semibold">CC</div>
+          <div class="text-sm font-semibold">Coastal City Logistics</div>
+        </div>
+        <div class="text-xs opacity-80">LTE • 100%</div>
+      </div>
+      <div class="p-5 space-y-4">
+        <div>
+          <h3 id="edit_title" class="text-2xl font-bold text-slate-100">Update Pick Up</h3>
+        </div>
+
+        <div class="rounded-2xl border border-slate-700 bg-[#0e1523] p-4 space-y-4">
+          <div class="flex items-center gap-2">
+            <span id="f_jobpill" class="tab">Job #</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <label class="block text-slate-400 text-xs mb-1">From</label>
+              <textarea id="f_from" class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" rows="3"></textarea>
+            </div>
+            <div>
+              <label class="block text-slate-400 text-xs mb-1">Load In</label>
+              <input id="f_loadin" class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" />
+            </div>
+            <div>
+              <label class="block text-slate-400 text-xs mb-1">Container #</label>
+              <input id="f_container" class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" />
+            </div>
+            <div>
+              <label class="block text-slate-400 text-xs mb-1">Appt #</label>
+              <input id="f_appt" class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" />
+            </div>
+            <div>
+              <label class="block text-slate-400 text-xs mb-1">BK #</label>
+              <input id="f_bk" class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" />
+            </div>
+            <div>
+              <label class="block text-slate-400 text-xs mb-1">Window</label>
+              <input id="f_window" class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-slate-400 text-xs mb-1">Instruction</label>
+            <textarea id="f_instruction" class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" rows="2" placeholder="Chassis back to Compton yard"></textarea>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between gap-3 pt-1">
+          <button id="btn_modal_cancel" class="flex-1 px-4 py-2 rounded-xl border border-slate-600 bg-slate-800 hover:bg-slate-700">Cancel</button>
+          <button id="btn_modal_update" class="flex-1 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700">Update</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- YES/NO CONFIRMATION -->
+  <div id="confirm_modal" class="modal">
+    <div class="box max-w-sm">
+      <p id="confirm_text" class="mb-4"></p>
+      <div class="flex justify-end gap-2">
+        <button id="confirm_no" class="px-3 py-2 rounded-md bg-slate-700 hover:bg-slate-600">No</button>
+        <button id="confirm_yes" class="px-3 py-2 rounded-md bg-blue-600 hover:bg-blue-700">Yes</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ---------- DATA ----------
+    const pickups = [
+      {id:'CCL-5001',from:'BBT',to:'Yusen Logistics, Torrance',container:'MSCU1029384',appt:'671800',bk:'BK77001',window:'07–08 AM',status:'Open'},
+      {id:'CCL-5002',from:'SSA Pier A',to:'Maersk Depot, Carson',container:'CMAU6654321',appt:'671901',bk:'BK77002',window:'08–09 AM',status:'Open'},
+      {id:'CCL-5003',from:'ITS (LB)',to:'Amazon LGB3',container:'TEMU5567123',appt:'672002',bk:'BK77003',window:'09–10 AM',status:'Open'},
+      {id:'CCL-5004',from:'Pier C',to:'Target RDC (Fontana)',container:'TCLU2948210',appt:'672103',bk:'BK77004',window:'10–11 AM',status:'Open'},
+      {id:'CCL-5005',from:'BBT',to:'Costco DC (Ontario)',container:'MSCU8812001',appt:'672204',bk:'BK77005',window:'11–12 PM',status:'Open'},
+      {id:'CCL-5006',from:'Pier E',to:'Walmart RDC',container:'MAEU4433221',appt:'672305',bk:'BK77006',window:'12–01 PM',status:'Open'},
+      {id:'CCL-5007',from:'LBCT',to:'Nike DC',container:'OOLU4422110',appt:'672406',bk:'BK77007',window:'01–02 PM',status:'Open'},
+      {id:'CCL-5008',from:'TRAPAC',to:'Home Depot DC',container:'APZU7788991',appt:'672507',bk:'BK77008',window:'02–03 PM',status:'Open'},
+      {id:'CCL-5009',from:'PCT',to:'UPS Hub',container:'SEGU9988776',appt:'672608',bk:'BK77009',window:'03–04 PM',status:'Open'},
+      {id:'CCL-5010',from:'YTI',to:'FedEx Ground',container:'TRLU3344552',appt:'672709',bk:'BK77010',window:'04–05 PM',status:'Open'}
+    ];
+
+    const drivers = [
+      {id:'DRV-1',name:'Prime Tech Solutions',status:'AVL'},
+      {id:'DRV-2',name:'CCL CEO Jorge',status:'AVL'},
+      {id:'DRV-3',name:'Jose',status:'AVL'},
+      {id:'DRV-4',name:'Kevin',status:'AVL'},
+      {id:'DRV-5',name:'David',status:'AVL'}
+    ];
+
+    const assigned = [];
+    const completed = [];
+
+    // ---------- STATE ----------
+    const state = { selectedPickups:new Set(), selectedAssigned:new Set(), selectedDriver:null, editOriginalId:null };
+
+    // ---------- HELPERS ----------
+    function statusPill(s){
+      if(s==='Completed') return "<span class='px-2 py-1 rounded-full text-xs bg-emerald-900 text-emerald-200'>COMPLETED</span>";
+      if(s==='Arrived')   return "<span class='px-2 py-1 rounded-full text-xs bg-emerald-900 text-emerald-200'>ARRIVED</span>";
+      if(s==='Assigned')  return "<span class='px-2 py-1 rounded-full text-xs bg-slate-800 text-slate-300'>ASSIGNED</span>";
+      if(s==='Open')      return "<span class='px-2 py-1 rounded-full text-xs bg-slate-800 text-slate-300'>OPEN</span>";
+      return "<span class='px-2 py-1 rounded-full text-xs bg-blue-900 text-blue-200'>"+(s||'')+"</span>";
+    }
+    function toast(msg){ const el=document.getElementById('toast'); if(!el) return; el.textContent=msg; el.style.display='block'; setTimeout(()=>{el.style.display='none';},1600); }
+    function updateBadges(){
+      const bP=document.getElementById('badge_pickups');
+      const bA=document.getElementById('badge_assigned');
+      const bC=document.getElementById('badge_completed');
+      if(bP) bP.textContent=String(pickups.length);
+      if(bA) bA.textContent=String(assigned.length);
+      if(bC) bC.textContent=String(completed.length);
+    }
+    function syncActionButtons(){
+      const btnAssign=document.getElementById('btn_assign');
+      const btnRemove=document.getElementById('btn_remove');
+      const btnUpdate=document.getElementById('btn_update');
+      if(btnAssign) btnAssign.disabled=!(state.selectedPickups.size>0 && state.selectedDriver);
+      if(btnRemove) btnRemove.disabled=!(state.selectedAssigned.size>0);
+      if(btnUpdate) btnUpdate.disabled=!(state.selectedAssigned.size>0 && state.selectedDriver);
+    }
+
+    // ---------- RENDERERS ----------
+    function renderPickups(){
+      const body=document.getElementById('p1_body'); body.innerHTML='';
+      pickups.forEach(function(a){
+        const tr=document.createElement('tr');
+        const td0=document.createElement('td');
+        const cb=document.createElement('input'); cb.type='checkbox'; cb.className='chk';
+        cb.checked=state.selectedPickups.has(a.id);
+        if(cb.checked){ cb.classList.add('active'); tr.classList.add('selected'); }
+        cb.addEventListener('change',function(){
+          if(cb.checked){ state.selectedPickups.add(a.id); tr.classList.add('selected'); cb.classList.add('active'); }
+          else { state.selectedPickups.delete(a.id); tr.classList.remove('selected'); cb.classList.remove('active'); }
+          syncActionButtons();
+        });
+        td0.appendChild(cb); tr.appendChild(td0);
+        tr.insertAdjacentHTML('beforeend',
+          '<td>'+a.id+'</td>'+
+          '<td>'+a.window+'</td>'+
+          '<td>'+a.from+'</td>'+
+          '<td>'+a.from+'</td>'+
+          '<td>'+a.container+'</td>'+
+          '<td>'+a.appt+'</td>'+
+          '<td>'+a.bk+'</td>'+
+          '<td>'+statusPill(a.status)+'</td>'
+        );
+        tr.addEventListener('click',function(e){ if(e.target.tagName.toLowerCase()==='input') return; cb.checked=!cb.checked; cb.dispatchEvent(new Event('change')); });
+        body.appendChild(tr);
+      });
+      updateBadges(); syncActionButtons();
+    }
+
+    function renderDrivers(){
+      const body=document.getElementById('drv_body'); body.innerHTML='';
+      const counts=assigned.reduce(function(m,a){ m[a.driverId]=(m[a.driverId]||0)+1; return m; },{});
+      drivers.forEach(function(d){
+        const tr=document.createElement('tr');
+        const td0=document.createElement('td');
+        const cb=document.createElement('input'); cb.type='checkbox'; cb.className='chk';
+        cb.checked = state.selectedDriver===d.id;
+        if(cb.checked){ cb.classList.add('active'); tr.classList.add('selected'); }
+        cb.addEventListener('change',function(){
+          state.selectedDriver = cb.checked ? d.id : null;
+          var boxes=document.querySelectorAll('#drv_body input[type="checkbox"]');
+          boxes.forEach(function(x){ if(x!==cb){ x.checked=false; x.classList.remove('active'); var row = x.closest ? x.closest('tr') : null; if(row){ row.classList.remove('selected'); } }});
+          if(cb.checked){ cb.classList.add('active'); tr.classList.add('selected'); } else { tr.classList.remove('selected'); }
+          syncActionButtons();
+        });
+        td0.appendChild(cb); tr.appendChild(td0);
+        const load=counts[d.id]||0;
+        tr.insertAdjacentHTML('beforeend',
+          '<td>'+d.name+'</td>'+
+          '<td><span class="ml-1 px-2 py-0.5 rounded-full text-xs bg-blue-900 text-blue-200">'+load+'</span></td>'+
+          '<td>'+d.status+'</td>'
+        );
+        tr.addEventListener('click',function(e){ if(e.target.tagName.toLowerCase()==='input') return; cb.checked=!cb.checked; cb.dispatchEvent(new Event('change')); });
+        body.appendChild(tr);
+      });
+    }
+
+    function renderAssigned(){
+      const body=document.getElementById('assigned_body'); body.innerHTML='';
+      assigned.forEach(function(a){
+        const tr=document.createElement('tr');
+        const td0=document.createElement('td');
+        const cb=document.createElement('input'); cb.type='checkbox'; cb.className='chk';
+        cb.checked=state.selectedAssigned.has(a.id);
+        if(cb.checked){ cb.classList.add('active'); tr.classList.add('selected'); }
+        cb.addEventListener('change',function(){
+          if(cb.checked){ state.selectedAssigned.add(a.id); tr.classList.add('selected'); cb.classList.add('active'); }
+          else { state.selectedAssigned.delete(a.id); tr.classList.remove('selected'); cb.classList.remove('active'); }
+          syncActionButtons();
+        });
+        td0.appendChild(cb); tr.appendChild(td0);
+        var drec = drivers.find(function(d){ return d.id===a.driverId; });
+        var dname = drec ? drec.name : '—';
+        tr.insertAdjacentHTML('beforeend',
+          '<td>'+a.id+'</td>'+
+          '<td>'+dname+'</td>'+
+          '<td>'+a.window+'</td>'+
+          '<td>'+a.from+'</td>'+
+          '<td>'+a.from+'</td>'+
+          '<td>'+a.container+'</td>'+
+          '<td>'+a.appt+'</td>'+
+          '<td>'+a.bk+'</td>'+
+          '<td>'+statusPill(a.status)+'</td>'
+        );
+        tr.addEventListener('click',function(e){ if(e.target.tagName.toLowerCase()==='input') return; cb.checked=!cb.checked; cb.dispatchEvent(new Event('change')); });
+        body.appendChild(tr);
+      });
+      updateBadges(); syncActionButtons();
+    }
+
+    function renderCompleted(){
+      const body=document.getElementById('completed_body'); if(!body) return; body.innerHTML='';
+      completed.forEach(function(a){
+        var drec = drivers.find(function(d){ return d.id===a.driverId; });
+        var dname = drec ? drec.name : '—';
+        const tr=document.createElement('tr');
+        tr.innerHTML =
+          '<td>'+a.id+'</td><td>'+dname+'</td><td>'+a.window+'</td><td>'+a.from+'</td>'+
+          '<td>'+a.from+'</td><td>'+a.container+'</td><td>'+a.appt+'</td><td>'+a.bk+'</td><td>'+statusPill("Completed")+'</td>';
+        body.appendChild(tr);
+      });
+      updateBadges();
+    }
+
+    // ---------- EDIT MODAL ----------
+    const editModal = document.getElementById('edit_modal');
+    const fFrom = document.getElementById('f_from');
+    const fLoadIn = document.getElementById('f_loadin');
+    const fContainer = document.getElementById('f_container');
+    const fAppt = document.getElementById('f_appt');
+    const fBk = document.getElementById('f_bk');
+    const fWindow = document.getElementById('f_window');
+    const fInstruction = document.getElementById('f_instruction');
+
+    function openEdit(){
+      if(state.selectedPickups.size!==1){ toast('Select exactly 1 pickup to edit'); return; }
+      const id=[...state.selectedPickups][0];
+      state.editOriginalId = id;
+      const rec = pickups.find(p=>p.id===id);
+      if(!rec){ toast('Pickup not found'); return; }
+      // fill fields
+      document.getElementById('f_jobpill').textContent = `${rec.id} • ${rec.window}`;
+      fFrom.value = `${rec.from} → ${rec.to}`;
+      fLoadIn.value = (rec.to||'').split(',')[0] || '';
+      fContainer.value = rec.container || '';
+      fAppt.value = rec.appt || '';
+      fBk.value = rec.bk || '';
+      fWindow.value = rec.window || '';
+      fInstruction.value = '';
+      editModal.style.display='flex';
+    }
+    function closeEdit(){ editModal.style.display='none'; }
+
+    document.getElementById('btn_edit').addEventListener('click', openEdit);
+    document.getElementById('btn_modal_cancel').addEventListener('click', function(){
+      openConfirm('Cancel changes?', function(){ closeEdit(); });
+    });
+    document.getElementById('btn_modal_update').addEventListener('click', function(){
+      openConfirm('Update this assignment?', function(){
+        const id = state.editOriginalId;
+        const rec = pickups.find(p=>p.id===id);
+        if(rec){
+          const parts = fFrom.value.split('→');
+          rec.from = (parts[0]||rec.from).trim();
+          rec.to = (parts[1]||rec.to||'').trim();
+          rec.container = fContainer.value.trim();
+          rec.appt = fAppt.value.trim();
+          rec.bk = fBk.value.trim();
+          rec.window = fWindow.value.trim();
+        }
+        closeEdit();
+        renderPickups();
+        toast('Pickup updated');
+      });
+    });
+
+    // ---------- YES/NO CONFIRM ----------
+    const confirmModal = document.getElementById('confirm_modal');
+    const confirmText = document.getElementById('confirm_text');
+    const confirmYes = document.getElementById('confirm_yes');
+    const confirmNo = document.getElementById('confirm_no');
+    let confirmCb = null;
+
+    function openConfirm(text, onYes){
+      confirmText.textContent = text;
+      confirmCb = onYes;
+      confirmModal.style.display='flex';
+    }
+    confirmYes.addEventListener('click', function(){ if(confirmCb) confirmCb(); closeConfirm(); });
+    confirmNo.addEventListener('click', function(){ closeConfirm(); });
+    function closeConfirm(){ confirmModal.style.display='none'; confirmCb=null; }
+
+    // ---------- ACTIONS (Assign/Remove/Update) ----------
+    document.addEventListener('click', function(e){
+      if(e.target && e.target.id==='btn_assign'){
+        const driver=drivers.find(function(d){ return d.id===state.selectedDriver; });
+        if(!driver || state.selectedPickups.size===0) return;
+        const ids=[...state.selectedPickups];
+        ids.forEach(function(id){
+          const idx=pickups.findIndex(function(p){ return p.id===id; });
+          if(idx>-1){
+            const item=pickups.splice(idx,1)[0];
+            assigned.push(Object.assign({}, item, {driverId: driver.id, status:'Assigned'}));
+          }
+        });
+        state.selectedPickups.clear();
+        state.selectedDriver=null;
+        renderPickups(); renderAssigned(); renderDrivers();
+        updateBadges(); syncActionButtons();
+        switchTab('assigned');
+        toast('Assigned to driver');
+      }
+      if(e.target && e.target.id==='btn_remove'){
+        if(state.selectedAssigned.size===0) return;
+        const ids=[...state.selectedAssigned];
+        ids.forEach(function(id){
+          const idx=assigned.findIndex(function(a){ return a.id===id; });
+          if(idx>-1){
+            const item=assigned.splice(idx,1)[0];
+            const rest={ id:item.id, from:item.from, to:item.to, container:item.container, appt:item.appt, bk:item.bk, window:item.window, status:'Open' };
+            pickups.push(rest);
+          }
+        });
+        state.selectedAssigned.clear();
+        renderPickups(); renderAssigned(); renderDrivers();
+        updateBadges(); syncActionButtons();
+        toast('Returned to Pickups');
+      }
+      if(e.target && e.target.id==='btn_update'){
+        const driver=drivers.find(function(d){ return d.id===state.selectedDriver; });
+        if(!driver || state.selectedAssigned.size===0) return;
+        const ids=[...state.selectedAssigned];
+        const mismatches=[];
+        ids.forEach(function(id){
+          const row=assigned.find(function(x){ return x.id===id; });
+          if(row && row.driverId!==driver.id){
+            var _dcur = drivers.find(function(d){ return d.id===row.driverId; });
+            var currentName = _dcur ? _dcur.name : 'Unknown';
+            mismatches.push(row.id+' is assigned to '+currentName);
+          }
+        });
+        if(mismatches.length>0){
+          openAlert('You selected '+driver.name+', but:\n\n• '+mismatches.join('\n• ')+'\n\nSelect the driver that matches the Assigned rows to proceed.');
+          return;
+        }
+        let moved=0;
+        ids.forEach(function(id){
+          const idx=assigned.findIndex(function(x){ return x.id===id; });
+          if(idx>-1){
+            const row=assigned.splice(idx,1)[0];
+            row.status='Completed';
+            completed.push(row);
+            moved++;
+          }
+        });
+        state.selectedAssigned.clear();
+        state.selectedDriver=null;
+        renderAssigned(); renderCompleted(); renderDrivers();
+        updateBadges(); syncActionButtons();
+        toast('Notified '+driver.name+': '+moved+' pickup(s) updated');
+      }
+    });
+
+    // ---------- ALERT MODAL ----------
+    function openAlert(msg){ const m=document.getElementById('alert_modal'); const t=document.getElementById('alert_text'); if(t) t.textContent=msg; if(m) m.style.display='flex'; }
+    function closeAlert(){ const m=document.getElementById('alert_modal'); if(m) m.style.display='none'; }
+
+    // ---------- TABS ----------
+    function switchTab(which){
+      document.getElementById('section_pickups').classList.toggle('hidden',which!=='pickups');
+      document.getElementById('section_assigned').classList.toggle('hidden',which!=='assigned');
+      document.getElementById('section_completed').classList.toggle('hidden',which!=='completed');
+    }
+
+    // ---------- INIT ----------
+    function init(){
+      renderPickups(); renderDrivers(); renderAssigned(); renderCompleted();
+      updateBadges(); syncActionButtons();
+    }
+    if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', init); } else { init(); }
+  </script>
+</body>
+</html>
