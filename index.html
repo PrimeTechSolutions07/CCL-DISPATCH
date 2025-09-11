@@ -19,16 +19,13 @@
     .chk{width:18px;height:18px;cursor:pointer;accent-color:#94a3b8;filter:grayscale(1)}
     .chk.active{accent-color:#3b82f6;filter:none}
     tbody tr:hover{background:#0e1422}
-    tbody tr.selected{background:#1e3a8acc} /* blue highlight when selected */
-    .tab{padding:8px 12px;border-radius:10px;border:1px solid #243045;background:#0b1220;color:#cdd8e3;font-size:13px}
-    .tab.active{background:#1d2a44;border-color:#33507a}
-    ::-webkit-scrollbar{height:8px;width:8px}
-    ::-webkit-scrollbar-track{background:#0b1220;border-radius:8px}
-    ::-webkit-scrollbar-thumb{background:#1f2937;border-radius:8px}
-    ::-webkit-scrollbar-thumb:hover{background:#374151}
+    tbody tr.selected{background:#1e3a8acc}
+    .tab{padding:8px 12px;border-radius:12px;border:1px solid #243045;background:#0b1220;color:#cdd8e3;font-size:13px;transition:background .15s ease,border-color .15s ease,box-shadow .15s ease}
+    .tab.active{background:#0f2140;border-color:#4a6aa0;box-shadow:0 0 0 2px rgba(74,106,160,.45) inset,0 0 0 1px rgba(180,200,230,.25),0 4px 12px rgba(0,0,0,.35)}
+    .tab.active span{filter:brightness(1.25);}
+    .tab:hover{border-color:#33507a}
     .btn{padding:8px 16px;border-radius:10px}
     .btn-ios{background:var(--ios)} .btn-ios:hover{background:var(--ios-hover)}
-    /* Modals */
     .modal{position:fixed;inset:0;background:rgba(2,6,23,.7);display:none;align-items:center;justify-content:center;z-index:80}
     .modal .box{background:#0b1220;border:1px solid #243045;border-radius:20px;max-width:560px;width:94%;padding:18px}
     .modal .msg{white-space:pre-line}
@@ -44,6 +41,7 @@
       <button id="tab_pickups" class="tab active" onclick="switchTab('pickups')">Pickups <span id="badge_pickups" class="ml-2 px-2 py-0.5 rounded-full text-xs bg-blue-900 text-blue-200">0</span></button>
       <button id="tab_assigned" class="tab" onclick="switchTab('assigned')">Assigned <span id="badge_assigned" class="ml-2 px-2 py-0.5 rounded-full text-xs bg-slate-700 text-slate-200">0</span></button>
       <button id="tab_completed" class="tab" onclick="switchTab('completed')">Completed <span id="badge_completed" class="ml-2 px-2 py-0.5 rounded-full text-xs bg-emerald-900 text-emerald-200">0</span></button>
+      <button id="tab_pending" class="tab" onclick="switchTab('pending')">Pending <span id="badge_pending" class="ml-2 px-2 py-0.5 rounded-full text-xs bg-yellow-900 text-yellow-200">0</span></button>
       <div class="ml-auto text-xs opacity-80 pill">Coastal City Logistics</div>
     </div>
 
@@ -73,6 +71,8 @@
       <div class="flex items-center gap-3">
         <button id="btn_assign" class="btn bg-blue-600 hover:bg-blue-700 disabled:opacity-40">Assign</button>
         <button id="btn_edit" class="btn" style="background:#065f46; border-color:#047857; color:#d1fae5;">Edit</button>
+        <button id="btn_create" class="btn bg-blue-600 hover:bg-blue-700">Create New</button>
+        <button id="btn_move" class="btn bg-slate-600 hover:bg-slate-500">Move</button>
       </div>
     </section>
 
@@ -131,6 +131,36 @@
       </div>
     </section>
 
+    <!-- PENDING -->
+    <section id="section_pending" class="space-y-4 hidden">
+      <div class="card p-5">
+        <h2 class="text-xl font-bold text-yellow-300 mb-3">Pending</h2>
+        <div class="relative overflow-auto rounded-xl" style="max-height:260px">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:42px"></th>
+                <th>Pickup #</th>
+                <th>Driver</th>
+                <th>Appt Time</th>
+                <th>From</th>
+                <th>Load In/Out</th>
+                <th>Container</th>
+                <th>Appt #</th>
+                <th>BK #</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="pending_body"></tbody>
+          </table>
+        </div>
+      </div>
+      <!-- Pending actions -->
+      <div class="flex items-center gap-3 mt-3">
+        <button id="btn_move_from_pending" class="btn bg-slate-600 hover:bg-slate-500">Move</button>
+      </div>
+    </section>
+
     <!-- DRIVERS (BOTTOM) -->
     <section id="section_drivers_bottom" class="space-y-4">
       <div class="card p-5">
@@ -155,7 +185,7 @@
   <!-- Toast -->
   <div id="toast" style="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#0b1220;border:1px solid #243045;border-radius:12px;padding:10px 14px;color:#e5eefb;display:none;z-index:60"></div>
 
-  <!-- Alert Modal (Driver Mismatch) -->
+  <!-- Alert Modal -->
   <div id="alert_modal" class="modal">
     <div class="box">
       <h3 class="text-lg font-semibold mb-2 text-red-200">Driver Mismatch</h3>
@@ -166,10 +196,9 @@
     </div>
   </div>
 
-  <!-- EDIT POPUP (Phone-like layout) -->
+  <!-- EDIT POPUP -->
   <div id="edit_modal" class="modal">
     <div class="box p-0 overflow-hidden" style="max-width:420px">
-      <!-- phone top bar -->
       <div class="brand-grad px-4 py-3 flex items-center justify-between">
         <div class="flex items-center gap-2">
           <div class="w-8 h-8 rounded-full bg-slate-900/25 grid place-items-center font-semibold">CC</div>
@@ -178,48 +207,19 @@
         <div class="text-xs opacity-80">LTE • 100%</div>
       </div>
       <div class="p-5 space-y-4">
-        <div>
-          <h3 id="edit_title" class="text-2xl font-bold text-slate-100">Update Pick Up</h3>
-        </div>
-
+        <div><h3 id="edit_title" class="text-2xl font-bold text-slate-100">Update Pick Up</h3></div>
         <div class="rounded-2xl border border-slate-700 bg-[#0e1523] p-4 space-y-4">
-          <div class="flex items-center gap-2">
-            <span id="f_jobpill" class="tab">Job #</span>
-          </div>
-
+          <div class="flex items-center gap-2"><span id="f_jobpill" class="tab">Job #</span></div>
           <div class="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <label class="block text-slate-400 text-xs mb-1">From</label>
-              <textarea id="f_from" class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" rows="3"></textarea>
-            </div>
-            <div>
-              <label class="block text-slate-400 text-xs mb-1">Load In</label>
-              <input id="f_loadin" class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" />
-            </div>
-            <div>
-              <label class="block text-slate-400 text-xs mb-1">Container #</label>
-              <input id="f_container" class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" />
-            </div>
-            <div>
-              <label class="block text-slate-400 text-xs mb-1">Appt #</label>
-              <input id="f_appt" class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" />
-            </div>
-            <div>
-              <label class="block text-slate-400 text-xs mb-1">BK #</label>
-              <input id="f_bk" class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" />
-            </div>
-            <div>
-              <label class="block text-slate-400 text-xs mb-1">Window</label>
-              <input id="f_window" class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" />
-            </div>
+            <div><label class="block text-slate-400 text-xs mb-1">From</label><textarea id="f_from" class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" rows="3"></textarea></div>
+            <div><label class="block text-slate-400 text-xs mb-1">Load In</label><input id="f_loadin" class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" /></div>
+            <div><label class="block text-slate-400 text-xs mb-1">Container #</label><input id="f_container" class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" /></div>
+            <div><label class="block text-slate-400 text-xs mb-1">Appt #</label><input id="f_appt" class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" /></div>
+            <div><label class="block text-slate-400 text-xs mb-1">BK #</label><input id="f_bk" class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" /></div>
+            <div><label class="block text-slate-400 text-xs mb-1">Window</label><input id="f_window" class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" /></div>
           </div>
-
-          <div>
-            <label class="block text-slate-400 text-xs mb-1">Instruction</label>
-            <textarea id="f_instruction" class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" rows="2" placeholder="Chassis back to Compton yard"></textarea>
-          </div>
+          <div><label class="block text-slate-400 text-xs mb-1">Instruction</label><textarea id="f_instruction" class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" rows="2" placeholder="Chassis back to Compton yard"></textarea></div>
         </div>
-
         <div class="flex items-center justify-between gap-3 pt-1">
           <button id="btn_modal_cancel" class="flex-1 px-4 py-2 rounded-xl border border-slate-600 bg-slate-800 hover:bg-slate-700">Cancel</button>
           <button id="btn_modal_update" class="flex-1 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700">Update</button>
@@ -228,7 +228,7 @@
     </div>
   </div>
 
-  <!-- YES/NO CONFIRMATION -->
+  <!-- YES/NO CONFIRM -->
   <div id="confirm_modal" class="modal">
     <div class="box max-w-sm">
       <p id="confirm_text" class="mb-4"></p>
@@ -258,15 +258,15 @@
       {id:'DRV-1',name:'Prime Tech Solutions',status:'AVL'},
       {id:'DRV-2',name:'CCL CEO Jorge',status:'AVL'},
       {id:'DRV-3',name:'Jose',status:'AVL'},
-      {id:'DRV-4',name:'Kevin',status:'AVL'},
-      {id:'DRV-5',name:'David',status:'AVL'}
+      {id:'DRV-4',name:'Kevin',status:'AVL'}
     ];
 
     const assigned = [];
     const completed = [];
+    const pending = [];
 
     // ---------- STATE ----------
-    const state = { selectedPickups:new Set(), selectedAssigned:new Set(), selectedDriver:null, editOriginalId:null };
+    const state = { selectedPickups:new Set(), selectedAssigned:new Set(), selectedPending:new Set(), selectedDriver:null, editOriginalId:null, currentTab:'pickups' };
 
     // ---------- HELPERS ----------
     function statusPill(s){
@@ -278,12 +278,10 @@
     }
     function toast(msg){ const el=document.getElementById('toast'); if(!el) return; el.textContent=msg; el.style.display='block'; setTimeout(()=>{el.style.display='none';},1600); }
     function updateBadges(){
-      const bP=document.getElementById('badge_pickups');
-      const bA=document.getElementById('badge_assigned');
-      const bC=document.getElementById('badge_completed');
-      if(bP) bP.textContent=String(pickups.length);
-      if(bA) bA.textContent=String(assigned.length);
-      if(bC) bC.textContent=String(completed.length);
+      document.getElementById('badge_pickups').textContent = pickups.length;
+      document.getElementById('badge_assigned').textContent = assigned.length;
+      document.getElementById('badge_completed').textContent = completed.length;
+      document.getElementById('badge_pending').textContent = pending.length;
     }
     function syncActionButtons(){
       const btnAssign=document.getElementById('btn_assign');
@@ -327,7 +325,8 @@
 
     function renderDrivers(){
       const body=document.getElementById('drv_body'); body.innerHTML='';
-      const counts=assigned.reduce(function(m,a){ m[a.driverId]=(m[a.driverId]||0)+1; return m; },{});
+      const source = (state.currentTab==='completed') ? completed : assigned;
+      const counts=source.reduce(function(m,a){ m[a.driverId]=(m[a.driverId]||0)+1; return m; },{});
       drivers.forEach(function(d){
         const tr=document.createElement('tr');
         const td0=document.createElement('td');
@@ -400,6 +399,48 @@
       updateBadges();
     }
 
+    function renderPending(){
+      const body=document.getElementById('pending_body'); if(!body) return; body.innerHTML='';
+      pending.forEach(function(a){
+        const tr=document.createElement('tr');
+        const td0=document.createElement('td');
+        const cb=document.createElement('input'); cb.type='checkbox'; cb.className='chk';
+        cb.checked = state.selectedPending.has(a.id);
+        if(cb.checked){ cb.classList.add('active'); tr.classList.add('selected'); }
+        cb.addEventListener('change', function(){
+          if(cb.checked){ state.selectedPending.add(a.id); tr.classList.add('selected'); cb.classList.add('active'); }
+          else { state.selectedPending.delete(a.id); tr.classList.remove('selected'); cb.classList.remove('active'); }
+        });
+        td0.appendChild(cb); tr.appendChild(td0);
+
+        const dname = (function(){ var d=drivers.find(function(x){return x.id===a.driverId}); return d?d.name:'—'; })();
+
+        tr.insertAdjacentHTML('beforeend',
+          '<td>'+a.id+'</td>'+
+          '<td>'+dname+'</td>'+
+          '<td>'+a.window+'</td>'+
+          '<td>'+a.from+'</td>'+
+          '<td>'+a.from+'</td>'+
+          '<td>'+a.container+'</td>'+
+          '<td>'+a.appt+'</td>'+
+          '<td>'+a.bk+'</td>'+
+          '<td>'+statusPill('Pending')+'</td>'
+        );
+
+        tr.addEventListener('click', function(e){
+          if(e.target.tagName.toLowerCase()==='input') return;
+          cb.checked = !cb.checked;
+          cb.dispatchEvent(new Event('change'));
+        });
+
+        body.appendChild(tr);
+      });
+    }
+
+    // ---------- ALERT MODAL ----------
+    function openAlert(msg){ const m=document.getElementById('alert_modal'); const t=document.getElementById('alert_text'); if(t) t.textContent=msg; if(m) m.style.display='flex'; }
+    function closeAlert(){ const m=document.getElementById('alert_modal'); if(m) m.style.display='none'; }
+
     // ---------- EDIT MODAL ----------
     const editModal = document.getElementById('edit_modal');
     const fFrom = document.getElementById('f_from');
@@ -416,9 +457,8 @@
       state.editOriginalId = id;
       const rec = pickups.find(p=>p.id===id);
       if(!rec){ toast('Pickup not found'); return; }
-      // fill fields
       document.getElementById('f_jobpill').textContent = `${rec.id} • ${rec.window}`;
-      fFrom.value = `${rec.from} → ${rec.to}`;
+      fFrom.value = `${rec.from} → ${rec.to||''}`;
       fLoadIn.value = (rec.to||'').split(',')[0] || '';
       fContainer.value = rec.container || '';
       fAppt.value = rec.appt || '';
@@ -452,24 +492,26 @@
       });
     });
 
-    // ---------- YES/NO CONFIRM ----------
-    const confirmModal = document.getElementById('confirm_modal');
-    const confirmText = document.getElementById('confirm_text');
-    const confirmYes = document.getElementById('confirm_yes');
-    const confirmNo = document.getElementById('confirm_no');
-    let confirmCb = null;
+    // ---------- CONFIRM ----------
+    function openConfirm(msg, onYes){
+      const m=document.getElementById('confirm_modal');
+      const t=document.getElementById('confirm_text');
+      const yes=document.getElementById('confirm_yes');
+      const no=document.getElementById('confirm_no');
+      t.textContent=msg;
 
-    function openConfirm(text, onYes){
-      confirmText.textContent = text;
-      confirmCb = onYes;
-      confirmModal.style.display='flex';
+      function cleanup(){
+        yes.replaceWith(yes.cloneNode(true));
+        no.replaceWith(no.cloneNode(true));
+      }
+      m.style.display='flex';
+      m.querySelector('#confirm_yes').addEventListener('click', function(){ m.style.display='none'; cleanup(); if(onYes) onYes(); });
+      m.querySelector('#confirm_no').addEventListener('click', function(){ m.style.display='none'; cleanup(); });
     }
-    confirmYes.addEventListener('click', function(){ if(confirmCb) confirmCb(); closeConfirm(); });
-    confirmNo.addEventListener('click', function(){ closeConfirm(); });
-    function closeConfirm(){ confirmModal.style.display='none'; confirmCb=null; }
 
-    // ---------- ACTIONS (Assign/Remove/Update) ----------
+    // ---------- ACTIONS ----------
     document.addEventListener('click', function(e){
+      // Assign (Pickups -> Assigned)
       if(e.target && e.target.id==='btn_assign'){
         const driver=drivers.find(function(d){ return d.id===state.selectedDriver; });
         if(!driver || state.selectedPickups.size===0) return;
@@ -488,6 +530,8 @@
         switchTab('assigned');
         toast('Assigned to driver');
       }
+
+      // Remove (Assigned -> Pickups)
       if(e.target && e.target.id==='btn_remove'){
         if(state.selectedAssigned.size===0) return;
         const ids=[...state.selectedAssigned];
@@ -504,6 +548,8 @@
         updateBadges(); syncActionButtons();
         toast('Returned to Pickups');
       }
+
+      // Update Driver (Assigned -> Completed), safeguard mismatch
       if(e.target && e.target.id==='btn_update'){
         const driver=drivers.find(function(d){ return d.id===state.selectedDriver; });
         if(!driver || state.selectedAssigned.size===0) return;
@@ -518,7 +564,7 @@
           }
         });
         if(mismatches.length>0){
-          openAlert('You selected '+driver.name+', but:\n\n• '+mismatches.join('\n• ')+'\n\nSelect the driver that matches the Assigned rows to proceed.');
+          openAlert('You selected '+driver.name+', but:\\n\\n• '+mismatches.join('\\n• ')+'\\n\\nSelect the driver that matches the Assigned rows to proceed.');
           return;
         }
         let moved=0;
@@ -537,23 +583,70 @@
         updateBadges(); syncActionButtons();
         toast('Notified '+driver.name+': '+moved+' pickup(s) updated');
       }
+
+      // Move (Pickups -> Pending) WITH CONFIRM
+      if(e.target && e.target.id==='btn_move'){
+        if(state.selectedPickups.size===0){ toast('Select at least 1 pickup to move'); return; }
+        openConfirm('Move selected pickup(s) to Pending?', function(){
+          const ids=[...state.selectedPickups];
+          ids.forEach(function(id){
+            const idx=pickups.findIndex(function(p){ return p.id===id; });
+            if(idx>-1){
+              const item=pickups.splice(idx,1)[0];
+              pending.push(Object.assign({}, item, { status:'Pending' }));
+            }
+          });
+          state.selectedPickups.clear();
+          renderPickups(); renderPending();
+          updateBadges(); syncActionButtons();
+          switchTab('pending');
+          toast('Moved to Pending');
+        });
+      }
     });
 
-    // ---------- ALERT MODAL ----------
-    function openAlert(msg){ const m=document.getElementById('alert_modal'); const t=document.getElementById('alert_text'); if(t) t.textContent=msg; if(m) m.style.display='flex'; }
-    function closeAlert(){ const m=document.getElementById('alert_modal'); if(m) m.style.display='none'; }
+    // Pending -> Pickups (with confirm)
+    document.addEventListener('click', function(e){
+      if(e.target && e.target.id==='btn_move_from_pending'){
+        if(state.selectedPending.size===0){ toast('Select at least 1 pending pickup'); return; }
+        openConfirm('Move selected pickup(s) to Pickups?', function(){
+          const ids=[...state.selectedPending];
+          ids.forEach(function(id){
+            const idx=pending.findIndex(function(p){ return p.id===id; });
+            if(idx>-1){
+              const item=pending.splice(idx,1)[0];
+              pickups.push(Object.assign({}, item, { status:'Open' }));
+            }
+          });
+          state.selectedPending.clear();
+          renderPickups(); renderPending();
+          updateBadges();
+          switchTab('pickups');
+          toast('Moved to Pickups');
+        });
+      }
+    });
 
     // ---------- TABS ----------
     function switchTab(which){
       document.getElementById('section_pickups').classList.toggle('hidden',which!=='pickups');
       document.getElementById('section_assigned').classList.toggle('hidden',which!=='assigned');
       document.getElementById('section_completed').classList.toggle('hidden',which!=='completed');
+      document.getElementById('section_pending').classList.toggle('hidden',which!=='pending');
+      document.querySelectorAll('.tab').forEach(btn => btn.classList.remove('active'));
+      if(which==='pickups') document.getElementById('tab_pickups').classList.add('active');
+      if(which==='assigned') document.getElementById('tab_assigned').classList.add('active');
+      if(which==='completed') document.getElementById('tab_completed').classList.add('active');
+      if(which==='pending') document.getElementById('tab_pending').classList.add('active');
+      state.currentTab = which;      // for driver badge counts
+      renderDrivers();               // refresh driver counts per current tab
     }
 
     // ---------- INIT ----------
     function init(){
-      renderPickups(); renderDrivers(); renderAssigned(); renderCompleted();
+      renderPickups(); renderDrivers(); renderAssigned(); renderCompleted(); renderPending();
       updateBadges(); syncActionButtons();
+      switchTab('pickups');
     }
     if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', init); } else { init(); }
   </script>
