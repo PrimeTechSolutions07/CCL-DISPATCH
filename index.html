@@ -29,19 +29,44 @@
     .modal{position:fixed;inset:0;background:rgba(2,6,23,.7);display:none;align-items:center;justify-content:center;z-index:80}
     .modal .box{background:#0b1220;border:1px solid #243045;border-radius:20px;max-width:560px;width:94%;padding:18px}
     .modal .msg{white-space:pre-line}
-  </style>
+    /* Dark theme scrollbars */
+    * { scrollbar-width: thin; scrollbar-color: #334155 #0b1220; }
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: #0b1220; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 9999px; border: 2px solid #0b1220; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    /* Draggable column header visuals */
+    th.colhdr{user-select:none}
+    th.colhdr.dragging{opacity:.6; outline:1px dashed #4a6aa0}
+  
+    th.colhdr{position:relative; user-select:none; transition:background .18s ease, box-shadow .18s ease}
+    th.colhdr.dragging{background:#1e3a8a; box-shadow:inset 0 0 0 3px #60a5fa, 0 0 0 2px rgba(96,165,250,.35)}
+    th.colhdr.drop-target{background:#0b1731; box-shadow:inset 0 0 0 3px #93c5fd}
+    
+/* === STICKY HEADERS (all tabs) === */
+.relative.overflow-auto thead th{position:sticky;top:0;z-index:20;background:#0f172a;}
+.relative.overflow-auto thead tr{position:sticky;top:0;z-index:19;background:#0f172a;}
+
+thead th.colhdr{ text-align:center; }
+
+/* Centered dash for empty cells only */
+.dash-center{display:block;text-align:center;}
+
+</style>
+        
 </head>
 <body class="min-h-screen">
   <header class="brand-grad p-4 flex items-center justify-between">
     <h1 class="text-lg font-semibold">Coastal City Logistics — Dispatch Board</h1>
   </header>
 
-  <main class="max-w-6xl mx-auto p-6 space-y-6">
-    <div class="flex items-center gap-2">
-      <button id="tab_pickups" class="tab active" onclick="switchTab('pickups')">Pickups <span id="badge_pickups" class="ml-2 px-2 py-0.5 rounded-full text-xs bg-blue-900 text-blue-200">0</span></button>
+  <main class="max-w-screen-2xl w-full mx-auto p-6 space-y-6">
+    <div id="tabs_container" class="flex items-center gap-2">
+      <!-- Original order: Pickups, Assigned, Completed, Pending (renamed visually) -->
+      <button id="tab_pending" class="tab active" onclick="switchTab('pending')">Main Dispatch <span id="badge_pending" class="ml-2 px-2 py-0.5 rounded-full text-xs bg-yellow-900 text-yellow-200">0</span></button>
+      <button id="tab_pickups" class="tab" onclick="switchTab('pickups')">Pickups <span id="badge_pickups" class="ml-2 px-2 py-0.5 rounded-full text-xs bg-blue-900 text-blue-200">0</span></button>
       <button id="tab_assigned" class="tab" onclick="switchTab('assigned')">Assigned <span id="badge_assigned" class="ml-2 px-2 py-0.5 rounded-full text-xs bg-slate-700 text-slate-200">0</span></button>
       <button id="tab_completed" class="tab" onclick="switchTab('completed')">Completed <span id="badge_completed" class="ml-2 px-2 py-0.5 rounded-full text-xs bg-emerald-900 text-emerald-200">0</span></button>
-      <button id="tab_pending" class="tab" onclick="switchTab('pending')">Pending <span id="badge_pending" class="ml-2 px-2 py-0.5 rounded-full text-xs bg-yellow-900 text-yellow-200">0</span></button>
       <div class="ml-auto text-xs opacity-80 pill">Coastal City Logistics</div>
     </div>
 
@@ -49,21 +74,9 @@
     <section id="section_pickups" class="space-y-4">
       <div class="card p-5">
         <h2 class="text-xl font-bold text-sky-300 mb-3">Pickups</h2>
-        <div id="p1_scroll" class="relative overflow-auto rounded-xl" style="max-height:260px">
+        <div class="relative overflow-auto rounded-xl" style="max-height:320px">
           <table>
-            <thead>
-              <tr>
-                <th style="width:42px"></th>
-                <th>Pickup #</th>
-                <th>Appt Time</th>
-                <th>From</th>
-                <th>Load In/Out</th>
-                <th>Container</th>
-                <th>Appt #</th>
-                <th>BK #</th>
-                <th>Status</th>
-              </tr>
-            </thead>
+            <thead><tr></tr></thead>
             <tbody id="p1_body"></tbody>
           </table>
         </div>
@@ -71,7 +84,6 @@
       <div class="flex items-center gap-3">
         <button id="btn_assign" class="btn bg-blue-600 hover:bg-blue-700 disabled:opacity-40">Assign</button>
         <button id="btn_edit" class="btn" style="background:#065f46; border-color:#047857; color:#d1fae5;">Edit</button>
-        <button id="btn_create" class="btn bg-blue-600 hover:bg-blue-700">Create New</button>
         <button id="btn_move" class="btn bg-slate-600 hover:bg-slate-500">Move</button>
       </div>
     </section>
@@ -80,22 +92,9 @@
     <section id="section_assigned" class="space-y-4 hidden">
       <div class="card p-5">
         <h2 class="text-xl font-bold text-sky-300 mb-3">Assigned</h2>
-        <div class="relative overflow-auto rounded-xl" style="max-height:260px">
+        <div class="relative overflow-auto rounded-xl" style="max-height:320px">
           <table>
-            <thead>
-              <tr>
-                <th style="width:42px"></th>
-                <th>Pickup #</th>
-                <th>Driver</th>
-                <th>Appt Time</th>
-                <th>From</th>
-                <th>Load In/Out</th>
-                <th>Container</th>
-                <th>Appt #</th>
-                <th>BK #</th>
-                <th>Status</th>
-              </tr>
-            </thead>
+            <thead><tr></tr></thead>
             <tbody id="assigned_body"></tbody>
           </table>
         </div>
@@ -110,53 +109,30 @@
     <section id="section_completed" class="space-y-4 hidden">
       <div class="card p-5">
         <h2 class="text-xl font-bold text-sky-300 mb-3">Completed</h2>
-        <div class="relative overflow-auto rounded-xl" style="max-height:260px">
+        <div class="relative overflow-auto rounded-xl" style="max-height:320px">
           <table>
-            <thead>
-              <tr>
-                <th>Pickup #</th>
-                <th>Driver</th>
-                <th>Appt Time</th>
-                <th>From</th>
-                <th>Load In/Out</th>
-                <th>Container</th>
-                <th>Appt #</th>
-                <th>BK #</th>
-                <th>Status</th>
-              </tr>
-            </thead>
+            <thead><tr></tr></thead>
             <tbody id="completed_body"></tbody>
           </table>
         </div>
       </div>
     </section>
 
-    <!-- PENDING -->
+    <!-- MAIN DISPATCH (Pending) -->
     <section id="section_pending" class="space-y-4 hidden">
       <div class="card p-5">
-        <h2 class="text-xl font-bold text-yellow-300 mb-3">Pending</h2>
-        <div class="relative overflow-auto rounded-xl" style="max-height:260px">
+        <h2 class="text-xl font-bold text-yellow-300 mb-3">Main Dispatch</h2>
+        <div class="relative overflow-auto rounded-xl" style="max-height:320px">
           <table>
-            <thead>
-              <tr>
-                <th style="width:42px"></th>
-                <th>Pickup #</th>
-                <th>Driver</th>
-                <th>Appt Time</th>
-                <th>From</th>
-                <th>Load In/Out</th>
-                <th>Container</th>
-                <th>Appt #</th>
-                <th>BK #</th>
-                <th>Status</th>
-              </tr>
-            </thead>
+            <thead><tr></tr></thead>
             <tbody id="pending_body"></tbody>
           </table>
         </div>
       </div>
-      <!-- Pending actions -->
+      <!-- Only Create New + Move -->
       <div class="flex items-center gap-3 mt-3">
+        <button id="btn_create_pending" class="btn bg-blue-600 hover:bg-blue-700">Create New</button>
+        <button id="btn_edit_pending" class="btn" style="background:#065f46; border-color:#047857; color:#d1fae5;">Edit</button>
         <button id="btn_move_from_pending" class="btn bg-slate-600 hover:bg-slate-500">Move</button>
       </div>
     </section>
@@ -211,7 +187,7 @@
         <div class="rounded-2xl border border-slate-700 bg-[#0e1523] p-4 space-y-4">
           <div class="flex items-center gap-2"><span id="f_jobpill" class="tab">Job #</span></div>
           <div class="grid grid-cols-2 gap-4 text-sm">
-            <div><label class="block text-slate-400 text-xs mb-1">From</label><textarea id="f_from" class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" rows="3"></textarea></div>
+            <div><label class="block text-slate-400 text-xs mb-1">From → To</label><textarea id="f_from" class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" rows="3" placeholder="BBT → Costco DC (Ontario)"></textarea></div>
             <div><label class="block text-slate-400 text-xs mb-1">Load In</label><input id="f_loadin" class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" /></div>
             <div><label class="block text-slate-400 text-xs mb-1">Container #</label><input id="f_container" class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" /></div>
             <div><label class="block text-slate-400 text-xs mb-1">Appt #</label><input id="f_appt" class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" /></div>
@@ -222,7 +198,7 @@
         </div>
         <div class="flex items-center justify-between gap-3 pt-1">
           <button id="btn_modal_cancel" class="flex-1 px-4 py-2 rounded-xl border border-slate-600 bg-slate-800 hover:bg-slate-700">Cancel</button>
-          <button id="btn_modal_update" class="flex-1 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700">Update</button>
+          <button id="btn_modal_update" class="flex-1 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700">Save</button>
         </div>
       </div>
     </div>
@@ -261,21 +237,51 @@
       {id:'DRV-4',name:'Kevin',status:'AVL'}
     ];
 
-    const assigned = [];
-    const completed = [];
-    const pending = [];
+    let assigned = [];
+    let completed = [];
+    let pending = [...pickups]; // All start on Main Dispatch
+    pickups.length = 0;
 
     // ---------- STATE ----------
-    const state = { selectedPickups:new Set(), selectedAssigned:new Set(), selectedPending:new Set(), selectedDriver:null, editOriginalId:null, currentTab:'pickups' };
+    const state = { selectedPickups:new Set(), selectedAssigned:new Set(), selectedPending:new Set(), selectedDriver:null, editOriginalId:null, editScope:null, currentTab:'pickups', createMode:null };
 
-    // ---------- HELPERS ----------
-    function statusPill(s){
-      if(s==='Completed') return "<span class='px-2 py-1 rounded-full text-xs bg-emerald-900 text-emerald-200'>COMPLETED</span>";
-      if(s==='Arrived')   return "<span class='px-2 py-1 rounded-full text-xs bg-emerald-900 text-emerald-200'>ARRIVED</span>";
-      if(s==='Assigned')  return "<span class='px-2 py-1 rounded-full text-xs bg-slate-800 text-slate-300'>ASSIGNED</span>";
-      if(s==='Open')      return "<span class='px-2 py-1 rounded-full text-xs bg-slate-800 text-slate-300'>OPEN</span>";
-      return "<span class='px-2 py-1 rounded-full text-xs bg-blue-900 text-blue-200'>"+(s||'')+"</span>";
+    // ---------- COLUMN DEFINITIONS ----------
+    const COLUMN_LABELS = {
+      arrival: 'Date Arrived',
+      container: 'Container #',
+      chassis: 'Chassis',
+      size: 'Size / Type',
+      pin: 'PIN #',
+      ie: 'Import / Export',
+      bk: 'BK/EDO',
+      from: 'Pick Port',
+      pudate: 'P/U Date',
+      appt: 'Appointment',
+      deliveryDate: 'Delivery Date',
+      to: 'Delivery',
+      lfd: 'LFD Date',
+      returnDate: 'Return Date',
+      returnPort: 'Return Port',
+      customer: 'Customer',
+      remark: 'Remark',
+      carrier: 'Carrier Name',	
+      mbl: 'MB/L No.',
+      status: 'Status'
+    };
+    const DEFAULT_ORDER = ['arrival','container','chassis','size','pin','ie','bk','from','pudate','appt','deliveryDate','to','lfd','returnDate','returnPort','customer','remark','carrier','mbl','status'];
+    function getOrder(){
+      try{ const s=localStorage.getItem('ccl_col_order'); if(s){ const arr=JSON.parse(s); if(Array.isArray(arr)&&arr.length){ return arr.filter(k=>COLUMN_LABELS[k]); }} }catch(e){}
+      return [...DEFAULT_ORDER];
     }
+    function setOrder(arr){ try{ localStorage.setItem('ccl_col_order', JSON.stringify(arr)); }catch(e){} }
+    let COL_ORDER = getOrder();
+
+    function statusPill(s){// Show a centered dash when empty or 'pending'; otherwise plain text
+  const v = (s == null) ? '' : String(s);
+  if(!v.trim() || v.trim().toLowerCase()==='pending'){
+    return '<span class="dash-center">—</span>';
+  }
+  return v;}
     function toast(msg){ const el=document.getElementById('toast'); if(!el) return; el.textContent=msg; el.style.display='block'; setTimeout(()=>{el.style.display='none';},1600); }
     function updateBadges(){
       document.getElementById('badge_pickups').textContent = pickups.length;
@@ -292,11 +298,164 @@
       if(btnUpdate) btnUpdate.disabled=!(state.selectedAssigned.size>0 && state.selectedDriver);
     }
 
+    // ---------- Column builders & DnD ----------
+    function buildHeader(theadEl, withCheckbox, includeDriver){
+      const tr=document.createElement('tr'); theadEl.innerHTML=''; theadEl.appendChild(tr);
+      if(withCheckbox){ const th=document.createElement('th'); th.style.width='42px'; tr.appendChild(th);
+        /* MASTER CB */ const master=document.createElement('input'); master.type='checkbox'; master.className='h-4 w-4 align-middle';
+        th.appendChild(master);
+        master.addEventListener('change', function(){
+          const table = theadEl.closest('table'); if(!table) return;
+          const tb = (table.tBodies && table.tBodies[0]) ? table.tBodies[0] : null; if(!tb) return;
+          const boxes = tb.querySelectorAll('input[type="checkbox"]');
+          boxes.forEach(cb => { cb.checked = master.checked; cb.dispatchEvent(new Event('change', {bubbles:true})); });
+        });
+      }
+      if(includeDriver){ const th=document.createElement('th'); th.textContent='Driver'; tr.appendChild(th); }
+      COL_ORDER.forEach(function(key){
+        const th=document.createElement('th'); th.textContent = COLUMN_LABELS[key] || key; th.dataset.key=key; th.className='colhdr'; tr.appendChild(th);
+      });
+      enableHeaderDnD(theadEl, includeDriver ? 1 : 0, withCheckbox ? 1 : 0);
+    }
+    function cellFor(a, key, statusOverride){
+if(key==='status') return statusPill(statusOverride || a.status);
+  const norm = (val) => {
+    const s = (val==null) ? '' : String(val);
+    return (!s.trim() || s==='—') ? '<span class="dash-center">—</span>' : s;
+  };
+  if(key==='customer') return norm(a.customer || (a.to));
+  if(key==='to') return norm(a.to);
+  if(key==='from') return norm(a.from);
+  if(key==='appt') return norm(a.appt);
+  if(key==='deliveryDate') return norm(a.deliveryDate);
+  if(key==='lfd') return norm(a.lfd);
+  if(key==='arrival') return norm(a.arrival);
+  if(key==='container') return norm(a.container);
+  if(key==='pudate') return norm(a.pudate);
+  if(key==='bk') return norm(a.bk);
+  if(key==='pin') return norm(a.pin);
+  if(key==='size') return norm(a.size);
+  if(key==='ie') return norm(a.ie);
+  if(key==='chassis') return norm(a.chassis);
+  if(key==='returnDate') return norm(a.returnDate);
+  if(key==='returnPort') return norm(a.returnPort);
+  if(key==='remark') return norm(a.remark);
+  if(key==='carrier') return norm(a.carrier);
+  if(key==='mbl') return norm(a.mbl);
+  return norm(a[key]);
+}
+    function buildRowCells(tr, a, statusOverride){
+      COL_ORDER.forEach(function(key){
+        const td=document.createElement('td'); td.innerHTML = cellFor(a, key, statusOverride); tr.appendChild(td);
+      });
+    }
+    
+function enableHeaderDnD(theadEl, driverOffset, checkboxOffset){
+  const table = theadEl.closest('table');
+  if(!table || !theadEl || !theadEl.rows || !theadEl.rows.length) return;
+  const tr = theadEl.rows[0];
+
+  // Helper: key for a header cell (supports data-key, Driver, and the blank checkbox)
+  function headerKey(th, idx){
+    if(th.dataset && th.dataset.key) return th.dataset.key;
+    const txt = (th.textContent||'').trim();
+    if(txt==='Driver') return 'DRIVER';
+    if(txt==='' && idx===0) return 'CHECK';
+    return txt || ('COL_'+idx);
+  }
+  // Helper: move a column across header + all body rows
+  function moveColumn(from, to){
+    if(from===to || from<0 || to<0) return;
+    const moveInRow = (row, f, t) => {
+      const cell = row.children[f];
+      if(!cell) return;
+      if(t >= row.children.length) row.appendChild(cell);
+      else row.insertBefore(cell, row.children[t]);
+    };
+    moveInRow(tr, from, to);
+    Array.from(table.tBodies).forEach(tb => Array.from(tb.rows).forEach(r => moveInRow(r, from, to)));
+  }
+  // Apply saved order (global across tabs), if present
+  try{
+    const saved = JSON.parse(localStorage.getItem('ccl_col_order_all')||'[]');
+    if(Array.isArray(saved) && saved.length){
+      // Build current keys
+      const ths = Array.from(tr.children);
+      const keys = ths.map((th, i)=>headerKey(th, i));
+      // Reorder to match saved sequence for keys we have
+      const desired = [];
+      const used = new Set();
+      saved.forEach(k=>{
+        const idx = keys.indexOf(k);
+        if(idx>-1 && !used.has(idx)){ desired.push(idx); used.add(idx); }
+      });
+      // Append any missing columns in their current order
+      keys.forEach((k, idx)=>{ if(!used.has(idx)) desired.push(idx); });
+      // Execute moves to reach desired order
+      let mapping = desired.slice();
+      for(let to=0; to<mapping.length; to++){
+        let from = mapping.indexOf(to);
+        if(from===-1 || from===to) continue;
+        moveColumn(from, to);
+        const val = mapping[from];
+        mapping.splice(from,1);
+        mapping.splice(to,0,val);
+      }
+    }
+  }catch(_){}
+
+  // Enable drag on EVERY header (including Driver + checkbox)
+  Array.from(tr.children).forEach((th, i) => {
+    th.classList.add('colhdr');
+    th.onmousedown = (e) => {
+      e.preventDefault();
+      const dragTh = th;
+      dragTh.classList.add('dragging');
+
+      const onMove = (ev) => {
+        const headers = Array.from(tr.children);
+        // Find insertion point by midpoint comparison
+        let target = null;
+        for(const cand of headers){
+          if(cand===dragTh) continue;
+          const rect = cand.getBoundingClientRect();
+          const mid = rect.left + rect.width/2;
+          if(ev.clientX < mid){ target = cand; break; }
+        }
+        headers.forEach(h => h.classList.remove('drop-target'));
+        if(target) target.classList.add('drop-target');
+
+        const fromIndex = headers.indexOf(dragTh);
+        const toIndex = target ? headers.indexOf(target) : headers.length;
+        if(fromIndex!==toIndex){
+          moveColumn(fromIndex, toIndex);
+        }
+      };
+
+      const onUp = () => {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        dragTh.classList.remove('dragging');
+        tr.querySelectorAll('.drop-target').forEach(x=>x.classList.remove('drop-target'));
+        // Save new global order: include special DRIVER/CHECK tokens and data keys
+        const newKeys = Array.from(tr.children).map((el, idx)=>headerKey(el, idx));
+        try{ localStorage.setItem('ccl_col_order_all', JSON.stringify(newKeys)); }catch(_){}
+      };
+
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    };
+  });
+}
+
     // ---------- RENDERERS ----------
     function renderPickups(){
+      const table=document.querySelector('#section_pickups table');
       const body=document.getElementById('p1_body'); body.innerHTML='';
+      buildHeader(table.tHead, true, false);
       pickups.forEach(function(a){
         const tr=document.createElement('tr');
+        tr.dataset.id = a.id;
         const td0=document.createElement('td');
         const cb=document.createElement('input'); cb.type='checkbox'; cb.className='chk';
         cb.checked=state.selectedPickups.has(a.id);
@@ -307,16 +466,7 @@
           syncActionButtons();
         });
         td0.appendChild(cb); tr.appendChild(td0);
-        tr.insertAdjacentHTML('beforeend',
-          '<td>'+a.id+'</td>'+
-          '<td>'+a.window+'</td>'+
-          '<td>'+a.from+'</td>'+
-          '<td>'+a.from+'</td>'+
-          '<td>'+a.container+'</td>'+
-          '<td>'+a.appt+'</td>'+
-          '<td>'+a.bk+'</td>'+
-          '<td>'+statusPill(a.status)+'</td>'
-        );
+        buildRowCells(tr, a, 'Open');
         tr.addEventListener('click',function(e){ if(e.target.tagName.toLowerCase()==='input') return; cb.checked=!cb.checked; cb.dispatchEvent(new Event('change')); });
         body.appendChild(tr);
       });
@@ -342,20 +492,19 @@
         });
         td0.appendChild(cb); tr.appendChild(td0);
         const load=counts[d.id]||0;
-        tr.insertAdjacentHTML('beforeend',
-          '<td>'+d.name+'</td>'+
-          '<td><span class="ml-1 px-2 py-0.5 rounded-full text-xs bg-blue-900 text-blue-200">'+load+'</span></td>'+
-          '<td>'+d.status+'</td>'
-        );
+        tr.insertAdjacentHTML('beforeend','<td>'+d.name+'</td><td><span class="ml-1 px-2 py-0.5 rounded-full text-xs bg-blue-900 text-blue-200">'+load+'</span></td><td>'+d.status+'</td>');
         tr.addEventListener('click',function(e){ if(e.target.tagName.toLowerCase()==='input') return; cb.checked=!cb.checked; cb.dispatchEvent(new Event('change')); });
         body.appendChild(tr);
       });
     }
 
     function renderAssigned(){
+      const table=document.querySelector('#section_assigned table');
       const body=document.getElementById('assigned_body'); body.innerHTML='';
+      buildHeader(table.tHead, true, true);
       assigned.forEach(function(a){
         const tr=document.createElement('tr');
+        tr.dataset.id = a.id;
         const td0=document.createElement('td');
         const cb=document.createElement('input'); cb.type='checkbox'; cb.className='chk';
         cb.checked=state.selectedAssigned.has(a.id);
@@ -368,17 +517,8 @@
         td0.appendChild(cb); tr.appendChild(td0);
         var drec = drivers.find(function(d){ return d.id===a.driverId; });
         var dname = drec ? drec.name : '—';
-        tr.insertAdjacentHTML('beforeend',
-          '<td>'+a.id+'</td>'+
-          '<td>'+dname+'</td>'+
-          '<td>'+a.window+'</td>'+
-          '<td>'+a.from+'</td>'+
-          '<td>'+a.from+'</td>'+
-          '<td>'+a.container+'</td>'+
-          '<td>'+a.appt+'</td>'+
-          '<td>'+a.bk+'</td>'+
-          '<td>'+statusPill(a.status)+'</td>'
-        );
+        const tdDriver=document.createElement('td'); tdDriver.textContent=(a.driverName || dname); tr.appendChild(tdDriver);
+        buildRowCells(tr, a, 'Assigned');
         tr.addEventListener('click',function(e){ if(e.target.tagName.toLowerCase()==='input') return; cb.checked=!cb.checked; cb.dispatchEvent(new Event('change')); });
         body.appendChild(tr);
       });
@@ -386,25 +526,29 @@
     }
 
     function renderCompleted(){
+      const table=document.querySelector('#section_completed table');
       const body=document.getElementById('completed_body'); if(!body) return; body.innerHTML='';
+      buildHeader(table.tHead, false, true);
       completed.forEach(function(a){
         var drec = drivers.find(function(d){ return d.id===a.driverId; });
         var dname = drec ? drec.name : '—';
         const tr=document.createElement('tr');
-        tr.innerHTML =
-          '<td>'+a.id+'</td><td>'+dname+'</td><td>'+a.window+'</td><td>'+a.from+'</td>'+
-          '<td>'+a.from+'</td><td>'+a.container+'</td><td>'+a.appt+'</td><td>'+a.bk+'</td><td>'+statusPill("Completed")+'</td>';
+        tr.dataset.id = a.id;
+        const tdDriver=document.createElement('td'); tdDriver.textContent=(a.driverName || dname); tr.appendChild(tdDriver);
+        buildRowCells(tr, a, 'Completed');
         body.appendChild(tr);
       });
       updateBadges();
     }
 
     function renderPending(){
+      const table=document.querySelector('#section_pending table');
       const body=document.getElementById('pending_body'); if(!body) return; body.innerHTML='';
+      buildHeader(table.tHead, true, true); // include driver col in Main Dispatch
       pending.forEach(function(a){
         const tr=document.createElement('tr');
-        const td0=document.createElement('td');
-        const cb=document.createElement('input'); cb.type='checkbox'; cb.className='chk';
+        tr.dataset.id = a.id;
+        const td0=document.createElement('td'); const cb=document.createElement('input'); cb.type='checkbox'; cb.className='chk';
         cb.checked = state.selectedPending.has(a.id);
         if(cb.checked){ cb.classList.add('active'); tr.classList.add('selected'); }
         cb.addEventListener('change', function(){
@@ -412,27 +556,11 @@
           else { state.selectedPending.delete(a.id); tr.classList.remove('selected'); cb.classList.remove('active'); }
         });
         td0.appendChild(cb); tr.appendChild(td0);
-
-        const dname = (function(){ var d=drivers.find(function(x){return x.id===a.driverId}); return d?d.name:'—'; })();
-
-        tr.insertAdjacentHTML('beforeend',
-          '<td>'+a.id+'</td>'+
-          '<td>'+dname+'</td>'+
-          '<td>'+a.window+'</td>'+
-          '<td>'+a.from+'</td>'+
-          '<td>'+a.from+'</td>'+
-          '<td>'+a.container+'</td>'+
-          '<td>'+a.appt+'</td>'+
-          '<td>'+a.bk+'</td>'+
-          '<td>'+statusPill('Pending')+'</td>'
-        );
-
-        tr.addEventListener('click', function(e){
-          if(e.target.tagName.toLowerCase()==='input') return;
-          cb.checked = !cb.checked;
-          cb.dispatchEvent(new Event('change'));
-        });
-
+        var drec = drivers.find(function(d){ return d.id===a.driverId; });
+        var dname = drec ? drec.name : '—';
+        const tdDriver=document.createElement('td'); tdDriver.textContent=(a.driverName || dname); tr.appendChild(tdDriver);
+        buildRowCells(tr, a, 'Pending');
+        tr.addEventListener('click', function(e){ if(e.target.tagName.toLowerCase()==='input') return; cb.checked = !cb.checked; cb.dispatchEvent(new Event('change')); });
         body.appendChild(tr);
       });
     }
@@ -441,7 +569,116 @@
     function openAlert(msg){ const m=document.getElementById('alert_modal'); const t=document.getElementById('alert_text'); if(t) t.textContent=msg; if(m) m.style.display='flex'; }
     function closeAlert(){ const m=document.getElementById('alert_modal'); if(m) m.style.display='none'; }
 
+    
+    
+    // ---------- INLINE EDIT (DBLCLICK) ----------
+    // Edit in place, and lock the column key on the TD to prevent any misalignment.
+    document.addEventListener('dblclick', function(e){
+      const td = e.target.closest('td'); if(!td) return;
+      const table = td.closest('table'); if(!table || !table.tHead || !table.tHead.rows.length) return;
+      const tr = td.parentElement;
+      const section = td.closest('section'); if(!section) return;
+
+      // Header + column key
+      const theadTr = table.tHead.rows[0];
+      const cellIndex = Array.from(tr.children).indexOf(td);
+      const th = theadTr.children[cellIndex];
+      const headerText = th ? (th.textContent||'').trim() : '';
+      const keyAttr = th && th.dataset ? th.dataset.key : null;
+      const colKey = (td.dataset.colKey) || keyAttr || (headerText ? headerText.toLowerCase().replace(/[^a-z0-9]+/g,'_') : '');
+      td.dataset.colKey = colKey;
+
+      // Skip ONLY the checkbox column
+      if(headerText==='' && cellIndex===0) return;
+
+      // Resolve dataset by section
+      let arr=null, sectionStatus=null, sid=section.id;
+      if(sid==='section_pickups'){ arr=pickups; sectionStatus='Open'; }
+      else if(sid==='section_assigned'){ arr=assigned; sectionStatus='Assigned'; }
+      else if(sid==='section_completed'){ arr=completed; sectionStatus='Completed'; }
+      else if(sid==='section_pending'){ arr=pending; sectionStatus='Pending'; }
+      else { return; }
+
+      // Locate record
+      const rowId = tr.dataset ? tr.dataset.id : null;
+      let rec = null;
+      if(rowId){ rec = (arr||[]).find(x => x.id===rowId) || null; }
+      if(!rec){
+        const idx = Array.from(tr.parentElement.children).indexOf(tr);
+        rec = (arr && arr[idx]) ? arr[idx] : null;
+      }
+      if(!rec) return;
+
+      // Create inline input
+      const oldHTML = td.innerHTML;
+      const oldText = td.textContent.trim();
+      const input = document.createElement('input');
+      input.type='text';
+      input.value = oldText;
+      input.style.width='100%';
+      input.style.background='#0f172a';
+      input.style.border='1px solid #243045';
+      input.style.borderRadius='8px';
+      input.style.padding='6px 8px';
+      input.style.color='#e2e8f0';
+      td.innerHTML='';
+      td.appendChild(input);
+      input.focus();
+      input.select();
+
+      let pendingValue = oldText;
+      input.addEventListener('input', () => { pendingValue = input.value; });
+
+      function renderCellInPlace(){
+        if(colKey==='status'){
+          if(typeof statusPill==='function'){
+            td.innerHTML = statusPill(rec.status) || (rec.status || '—');
+          } else {
+            td.textContent = rec.status || '—';
+          }
+          return;
+        }
+        if(colKey==='driver'){
+          const drec = drivers.find(x=>x.id===rec.driverId);
+          const dname = drec ? drec.name : '—';
+          td.textContent = (rec.driverName || dname);
+          return;
+        }
+        if(typeof cellFor==='function'){
+          td.innerHTML = cellFor(rec, colKey, sectionStatus);
+        } else {
+          td.textContent = rec[colKey] ?? '';
+        }
+      }
+
+      function applyChange(){
+        const newVal = (pendingValue||'').trim();
+        if(colKey==='status'){
+          rec.status = newVal;
+        } else if(colKey==='driver'){
+          const d = drivers.find(drv => (drv.name||'').toLowerCase() === newVal.toLowerCase());
+          if(d){ rec.driverId = d.id; delete rec.driverName; }
+          else { rec.driverName = newVal; }
+        } else {
+          rec[colKey] = newVal;
+        }
+        renderCellInPlace();
+        // subtle confirm flash
+        td.classList.add('ring-2','ring-blue-500/60');
+        setTimeout(()=>td.classList.remove('ring-2','ring-blue-500/60'), 500);
+      }
+
+      input.addEventListener('blur', function(){
+        if(pendingValue===oldText){ td.innerHTML = oldHTML; return; }
+        openConfirm('Save change to '+(COLUMN_LABELS[colKey]||headerText||'field')+'?\n\nOld: '+oldText+'\nNew: '+pendingValue, applyChange);
+      });
+      input.addEventListener('keydown', function(ev){
+        if(ev.key==='Enter'){ input.blur(); }
+        if(ev.key==='Escape'){ pendingValue=oldText; input.blur(); }
+      });
+    });
     // ---------- EDIT MODAL ----------
+    
     const editModal = document.getElementById('edit_modal');
     const fFrom = document.getElementById('f_from');
     const fLoadIn = document.getElementById('f_loadin');
@@ -471,26 +708,83 @@
 
     document.getElementById('btn_edit').addEventListener('click', openEdit);
     document.getElementById('btn_modal_cancel').addEventListener('click', function(){
-      openConfirm('Cancel changes?', function(){ closeEdit(); });
+      openConfirm('Cancel changes?', function(){ state.createMode=null; closeEdit(); });
     });
     document.getElementById('btn_modal_update').addEventListener('click', function(){
-      openConfirm('Update this assignment?', function(){
-        const id = state.editOriginalId;
-        const rec = pickups.find(p=>p.id===id);
-        if(rec){
+      if(state.createMode==='pending'){
+        openConfirm('Create this Main Dispatch pickup?', function(){
           const parts = fFrom.value.split('→');
-          rec.from = (parts[0]||rec.from).trim();
-          rec.to = (parts[1]||rec.to||'').trim();
-          rec.container = fContainer.value.trim();
-          rec.appt = fAppt.value.trim();
-          rec.bk = fBk.value.trim();
-          rec.window = fWindow.value.trim();
-        }
-        closeEdit();
-        renderPickups();
-        toast('Pickup updated');
-      });
+          const from = (parts[0]||'').trim();
+          const to = (parts[1]||'').trim();
+          const newId = 'NEW-' + Date.now();
+          const item = { id:newId, from:from||'—', to:to||'', container:fContainer.value.trim(), appt:fAppt.value.trim(), bk:fBk.value.trim(), window:fWindow.value.trim(), status:'Pending' };
+          pending.push(item);
+          state.createMode=null;
+          closeEdit();
+          renderPending(); updateBadges(); toast('Created in Main Dispatch');
+        });
+      } else if(state.editScope==='pending'){
+        openConfirm('Update this Main Dispatch row?', function(){
+          const id = state.editOriginalId;
+          const rec = pending.find(p=>p.id===id);
+          if(rec){
+            const parts = fFrom.value.split('→');
+            rec.from = (parts[0]||rec.from||'').trim();
+            rec.to = (parts[1]||rec.to||'').trim();
+            rec.container = fContainer.value.trim();
+            rec.appt = fAppt.value.trim();
+            rec.bk = fBk.value.trim();
+            rec.window = fWindow.value.trim();
+            rec.remark = fInstruction.value.trim();
+          }
+          state.editScope=null;
+          closeEdit();
+          renderPending();
+          toast('Main Dispatch updated');
+        });
+      } else {
+        openConfirm('Update this assignment?', function(){
+          const id = state.editOriginalId;
+          const rec = pickups.find(p=>p.id===id);
+          if(rec){
+            const parts = fFrom.value.split('→');
+            rec.from = (parts[0]||rec.from).trim();
+            rec.to = (parts[1]||rec.to||'').trim();
+            rec.container = fContainer.value.trim();
+            rec.appt = fAppt.value.trim();
+            rec.bk = fBk.value.trim();
+            rec.window = fWindow.value.trim();
+          }
+          closeEdit();
+          renderPickups();
+          toast('Pickup updated');
+        });
+      }
     });
+
+    
+    // Edit (Main Dispatch) - edit exactly one selected pending row
+    document.addEventListener('click', function(e){
+      if(e.target && e.target.id==='btn_edit_pending'){
+        if(state.selectedPending.size!==1){ toast('Select exactly 1 row in Main Dispatch to edit'); return; }
+        const id=[...state.selectedPending][0];
+        state.editOriginalId = id;
+        state.editScope = 'pending';
+        const rec = pending.find(p=>p.id===id);
+        if(!rec){ toast('Row not found'); return; }
+        document.getElementById('edit_title').textContent = 'Edit Main Dispatch';
+        document.getElementById('f_jobpill').textContent = `${rec.id} • ${rec.window||''}`;
+        fFrom.value = `${rec.from||''} → ${rec.to||''}`;
+        fLoadIn.value = (rec.to||'').split(',')[0] || '';
+        fContainer.value = rec.container || '';
+        fAppt.value = rec.appt || '';
+        fBk.value = rec.bk || '';
+        fWindow.value = rec.window || '';
+        fInstruction.value = rec.remark || '';
+        editModal.style.display='flex';
+      }
+    });
+
 
     // ---------- CONFIRM ----------
     function openConfirm(msg, onYes){
@@ -499,11 +793,7 @@
       const yes=document.getElementById('confirm_yes');
       const no=document.getElementById('confirm_no');
       t.textContent=msg;
-
-      function cleanup(){
-        yes.replaceWith(yes.cloneNode(true));
-        no.replaceWith(no.cloneNode(true));
-      }
+      function cleanup(){ yes.replaceWith(yes.cloneNode(true)); no.replaceWith(no.cloneNode(true)); }
       m.style.display='flex';
       m.querySelector('#confirm_yes').addEventListener('click', function(){ m.style.display='none'; cleanup(); if(onYes) onYes(); });
       m.querySelector('#confirm_no').addEventListener('click', function(){ m.style.display='none'; cleanup(); });
@@ -587,7 +877,7 @@
       // Move (Pickups -> Pending) WITH CONFIRM
       if(e.target && e.target.id==='btn_move'){
         if(state.selectedPickups.size===0){ toast('Select at least 1 pickup to move'); return; }
-        openConfirm('Move selected pickup(s) to Pending?', function(){
+        openConfirm('Move selected pickup(s) to Main Dispatch?', function(){
           const ids=[...state.selectedPickups];
           ids.forEach(function(id){
             const idx=pickups.findIndex(function(p){ return p.id===id; });
@@ -600,7 +890,7 @@
           renderPickups(); renderPending();
           updateBadges(); syncActionButtons();
           switchTab('pending');
-          toast('Moved to Pending');
+          toast('Moved to Main Dispatch');
         });
       }
     });
@@ -621,9 +911,21 @@
           state.selectedPending.clear();
           renderPickups(); renderPending();
           updateBadges();
-          switchTab('pickups');
+          switchTab('pending');
           toast('Moved to Pickups');
         });
+      }
+    });
+
+    // Create New under Main Dispatch
+    document.addEventListener('click', function(e){
+      if(e.target && e.target.id==='btn_create_pending'){
+        state.createMode = 'pending';
+        state.editOriginalId = null;
+        document.getElementById('edit_title').textContent = 'Create Pickup';
+        document.getElementById('f_jobpill').textContent = 'New Job';
+        fFrom.value = ''; fLoadIn.value=''; fContainer.value=''; fAppt.value=''; fBk.value=''; fWindow.value=''; fInstruction.value='';
+        editModal.style.display='flex';
       }
     });
 
@@ -638,17 +940,34 @@
       if(which==='assigned') document.getElementById('tab_assigned').classList.add('active');
       if(which==='completed') document.getElementById('tab_completed').classList.add('active');
       if(which==='pending') document.getElementById('tab_pending').classList.add('active');
-      state.currentTab = which;      // for driver badge counts
-      renderDrivers();               // refresh driver counts per current tab
+      state.currentTab = which;
+      // Hide Drivers panel on Main Dispatch
+      var drvSec=document.getElementById('section_drivers_bottom'); if(drvSec){ drvSec.classList.toggle('hidden', which==='pending'); }
+      renderDrivers();
     }
 
     // ---------- INIT ----------
     function init(){
       renderPickups(); renderDrivers(); renderAssigned(); renderCompleted(); renderPending();
       updateBadges(); syncActionButtons();
-      switchTab('pickups');
+      switchTab('pending'); // start on Main Dispatch per your request
     }
     if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', init); } else { init(); }
-  </script>
+  // HEADER RENAME (dblclick)
+
+// HEADER RENAME (dblclick): confirm and update label text only (no key/logic changes)
+document.addEventListener('dblclick', function(e){
+  const th = e.target.closest('th.colhdr'); if(!th) return;
+  const key = th.dataset && th.dataset.key; if(!key) return;
+  const oldName = (th.textContent||'').trim();
+  const typed = prompt('Rename header:', oldName);
+  if(typed==null) return;
+  const next = (typed||'').trim();
+  if(!next || next===oldName) return;
+  if(typeof openConfirm==='function'){
+    openConfirm('Change "'+oldName+'" to "'+next+'"?', function(){ COLUMN_LABELS[key]=next; th.textContent=next; });
+  } else { COLUMN_LABELS[key]=next; th.textContent=next; }
+});
+</script>
 </body>
 </html>
