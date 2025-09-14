@@ -54,6 +54,70 @@ thead th.colhdr{ text-align:center; }
 
 </style>
         
+
+<style>
+/* === Canva-style Header Highlight (Dark) — CSS-only === */
+:root{
+  --hdr-bg:#0f172a;
+  --hdr-glass:
+    linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,0) 40%),
+    linear-gradient(180deg, #0f172a 0%, #121a27 70%, #0f172a 100%);
+  --hdr-line:#2b3a55;
+
+  /* Section accent suggestions (used if matching IDs/classes exist) */
+  --acc-pending:#fde047;   /* yellow-300  (Main Dispatch / Pending) */
+  --acc-pickups:#60a5fa;   /* sky-400     (Pickups) */
+  --acc-assigned:#cbd5e1;  /* slate-300   (Assigned) */
+  --acc-completed:#34d399; /* emerald-400 (Completed) */
+}
+
+/* Base header glass + elevation */
+.relative.overflow-auto table thead th{
+  background: var(--hdr-glass);
+  border-bottom: 1px solid var(--hdr-line);
+  backdrop-filter: saturate(140%) blur(4px);
+  letter-spacing:.02em;
+  box-shadow:
+    inset 0 -2px 0 0 var(--hdr-line),
+    0 8px 18px rgba(0,0,0,.35);
+}
+
+/* Neon accent line under sticky header row */
+.relative.overflow-auto thead tr::after{
+  content:"";
+  position: sticky;
+  left:0; right:0; bottom:-1px; height:5px;
+  display:block; z-index:21; pointer-events:none;
+  background: linear-gradient(90deg, transparent 0%,
+              var(--acc-current, var(--acc-pending)) 18%,
+              var(--acc-current, var(--acc-pending)) 82%,
+              transparent 100%);
+  box-shadow:
+    0 0 14px var(--acc-current, var(--acc-pending)),
+    0 0 32px var(--acc-current, var(--acc-pending)),
+    0 0 64px var(--acc-current, var(--acc-pending)),
+    0 0 96px var(--acc-current, var(--acc-pending));
+  filter: saturate(160%) brightness(1.35);
+  opacity: 1;
+}
+
+/* If your sections have these IDs, each gets its own accent color automatically */
+#section_pending   thead tr{ --acc-current: var(--acc-pending); }
+#section_pickups   thead tr{ --acc-current: var(--acc-pickups); }
+#section_assigned  thead tr{ --acc-current: var(--acc-assigned); }
+#section_completed thead tr{ --acc-current: var(--acc-completed); }
+
+/* Subtle column separators + hover glow */
+thead th.colhdr + th.colhdr{ box-shadow: -1px 0 0 0 rgba(51,65,85,.35) inset; }
+thead th.colhdr:hover{
+  box-shadow:
+    inset 0 -2px 0 0 var(--hdr-line),
+    0 0 0 1px rgba(96,165,250,.25),
+    0 6px 16px rgba(2,6,23,.6);
+}
+/* === End Canva-style Header Highlight === */
+
+</style>
 </head>
 <body class="min-h-screen">
   <header class="brand-grad p-4 flex items-center justify-between">
@@ -66,6 +130,7 @@ thead th.colhdr{ text-align:center; }
       <button id="tab_pending" class="tab active" onclick="switchTab('pending')">Main Dispatch <span id="badge_pending" class="ml-2 px-2 py-0.5 rounded-full text-xs bg-yellow-900 text-yellow-200">0</span></button>
       <button id="tab_pickups" class="tab" onclick="switchTab('pickups')">Pickups <span id="badge_pickups" class="ml-2 px-2 py-0.5 rounded-full text-xs bg-blue-900 text-blue-200">0</span></button>
       <button id="tab_assigned" class="tab" onclick="switchTab('assigned')">Assigned <span id="badge_assigned" class="ml-2 px-2 py-0.5 rounded-full text-xs bg-slate-700 text-slate-200">0</span></button>
+      <button id="tab_inprogress" class="tab" onclick="switchTab('inprogress')">In‑Progress <span id="badge_inprogress" class="ml-2 px-2 py-0.5 rounded-full text-xs bg-amber-900 text-amber-200">0</span></button>
       <button id="tab_completed" class="tab" onclick="switchTab('completed')">Completed <span id="badge_completed" class="ml-2 px-2 py-0.5 rounded-full text-xs bg-emerald-900 text-emerald-200">0</span></button>
       <div class="ml-auto text-xs opacity-80 pill">Coastal City Logistics</div>
     </div>
@@ -106,6 +171,24 @@ thead th.colhdr{ text-align:center; }
     </section>
 
     <!-- COMPLETED -->
+    
+    <!-- IN-PROGRESS -->
+    <section id="section_inprogress" class="space-y-4 hidden">
+      <div class="card p-5">
+        <h2 class="text-xl font-bold text-sky-300 mb-3">In‑Progress</h2>
+        <div class="relative overflow-auto rounded-xl" style="max-height:320px">
+          <table>
+            <thead><tr></tr></thead>
+            <tbody id="inprogress_body"></tbody>
+          </table>
+        </div>
+      </div>
+          <div class="flex items-center gap-3">
+        <button id="btn_ip_move" class="btn bg-slate-700 hover:bg-slate-600 disabled:opacity-40">Move</button>
+        
+      </div>
+    </section>
+
     <section id="section_completed" class="space-y-4 hidden">
       <div class="card p-5">
         <h2 class="text-xl font-bold text-sky-300 mb-3">Completed</h2>
@@ -243,7 +326,7 @@ thead th.colhdr{ text-align:center; }
     pickups.length = 0;
 
     // ---------- STATE ----------
-    const state = { selectedPickups:new Set(), selectedAssigned:new Set(), selectedPending:new Set(), selectedDriver:null, editOriginalId:null, editScope:null, currentTab:'pickups', createMode:null };
+    const state = { selectedPickups:new Set(), selectedAssigned:new Set(), selectedPending:new Set(), selectedInprogress:new Set(), selectedDriver:null, editOriginalId:null, editScope:null, currentTab:'pickups', createMode:null };
 
     // ---------- COLUMN DEFINITIONS ----------
     const COLUMN_LABELS = {
@@ -266,7 +349,7 @@ thead th.colhdr{ text-align:center; }
       remark: 'Remark',
       carrier: 'Carrier Name',	
       mbl: 'MB/L No.',
-      status: 'Status'
+      status: 'Drop / Live'
     };
     const DEFAULT_ORDER = ['arrival','container','chassis','size','pin','ie','bk','from','pudate','appt','deliveryDate','to','lfd','returnDate','returnPort','customer','remark','carrier','mbl','status'];
     function getOrder(){
@@ -288,14 +371,19 @@ thead th.colhdr{ text-align:center; }
       document.getElementById('badge_assigned').textContent = assigned.length;
       document.getElementById('badge_completed').textContent = completed.length;
       document.getElementById('badge_pending').textContent = pending.length;
-    }
+    
+      var _ip=document.getElementById('badge_inprogress'); if(_ip){ try{ _ip.textContent=(typeof inprogress!=='undefined'&&inprogress&&inprogress.length)||0; }catch(e){ _ip.textContent=0; } }}
     function syncActionButtons(){
       const btnAssign=document.getElementById('btn_assign');
       const btnRemove=document.getElementById('btn_remove');
       const btnUpdate=document.getElementById('btn_update');
+      const btnIpMove=document.getElementById('btn_ip_move');
+      
       if(btnAssign) btnAssign.disabled=!(state.selectedPickups.size>0 && state.selectedDriver);
       if(btnRemove) btnRemove.disabled=!(state.selectedAssigned.size>0);
       if(btnUpdate) btnUpdate.disabled=!(state.selectedAssigned.size>0 && state.selectedDriver);
+      if(btnIpMove) btnIpMove.disabled=!(state.selectedInprogress.size>0);
+      
     }
 
     // ---------- Column builders & DnD ----------
@@ -452,7 +540,7 @@ function enableHeaderDnD(theadEl, driverOffset, checkboxOffset){
     function renderPickups(){
       const table=document.querySelector('#section_pickups table');
       const body=document.getElementById('p1_body'); body.innerHTML='';
-      buildHeader(table.tHead, true, false);
+      buildHeader(table.tHead, true, true);
       pickups.forEach(function(a){
         const tr=document.createElement('tr');
         tr.dataset.id = a.id;
@@ -466,6 +554,13 @@ function enableHeaderDnD(theadEl, driverOffset, checkboxOffset){
           syncActionButtons();
         });
         td0.appendChild(cb); tr.appendChild(td0);
+        // Driver cell (Pickups has no assigned driver yet)
+        (function(){ 
+          var drec = drivers.find(function(d){ return d.id===a.driverId; });
+          var dname = drec ? drec.name : '—';
+          const tdDriver=document.createElement('td'); tdDriver.textContent=(a.driverName || dname || '—'); 
+          tr.appendChild(tdDriver);
+        })();
         buildRowCells(tr, a, 'Open');
         tr.addEventListener('click',function(e){ if(e.target.tagName.toLowerCase()==='input') return; cb.checked=!cb.checked; cb.dispatchEvent(new Event('change')); });
         body.appendChild(tr);
@@ -528,18 +623,75 @@ function enableHeaderDnD(theadEl, driverOffset, checkboxOffset){
     function renderCompleted(){
       const table=document.querySelector('#section_completed table');
       const body=document.getElementById('completed_body'); if(!body) return; body.innerHTML='';
-      buildHeader(table.tHead, false, true);
+      buildHeader(table.tHead, true, true);
       completed.forEach(function(a){
         var drec = drivers.find(function(d){ return d.id===a.driverId; });
         var dname = drec ? drec.name : '—';
         const tr=document.createElement('tr');
         tr.dataset.id = a.id;
+        // Checkbox (display-only; no selection logic needed here)
+        const td0_c=document.createElement('td');
+        const cb_c=document.createElement('input'); cb_c.type='checkbox'; cb_c.className='chk';
+        td0_c.appendChild(cb_c); tr.appendChild(td0_c);
         const tdDriver=document.createElement('td'); tdDriver.textContent=(a.driverName || dname); tr.appendChild(tdDriver);
         buildRowCells(tr, a, 'Completed');
         body.appendChild(tr);
       });
       updateBadges();
     }
+
+
+    function renderInprogress(){
+      const table=document.querySelector('#section_inprogress table');
+      if(!table) return;
+      const body=document.getElementById('inprogress_body'); if(!body) return;
+      body.innerHTML='';
+      if(typeof inprogress==='undefined' || !Array.isArray(inprogress)){ window.inprogress = []; }
+      buildHeader(table.tHead, true, true);
+      inprogress.forEach(function(a){
+        const tr=document.createElement('tr');
+        tr.dataset.id = a.id;
+        // Checkbox with selection state
+        const td0=document.createElement('td');
+        const cb=document.createElement('input'); cb.type='checkbox'; cb.className='chk';
+        cb.checked = state.selectedInprogress.has(a.id);
+        if(cb.checked){ cb.classList.add('active'); tr.classList.add('selected'); }
+        cb.addEventListener('change', function(){
+          if(cb.checked){ state.selectedInprogress.add(a.id); tr.classList.add('selected'); cb.classList.add('active'); }
+          else { state.selectedInprogress.delete(a.id); tr.classList.remove('selected'); cb.classList.remove('active'); }
+          syncActionButtons();
+        });
+        td0.appendChild(cb); tr.appendChild(td0);
+        // Driver cell
+        var drec = drivers.find(function(d){ return d.id===a.driverId; });
+        var dname = drec ? drec.name : '—';
+        const tdDriver=document.createElement('td'); tdDriver.textContent=(a.driverName || dname); tr.appendChild(tdDriver);
+        // Cells
+        buildRowCells(tr, a, 'In-Progress');
+        // /* ACK badge */ inject into first data cell after Driver
+        try {
+          const cells = tr.querySelectorAll('td');
+          // cells[0] = checkbox, cells[1] = driver, cells[2] = first data cell (ID)
+          if (cells && cells.length > 2) {
+            const idCell = cells[2];
+            const badge = document.createElement('span');
+            badge.textContent = 'ACK';
+            badge.style.marginLeft = '6px';
+            badge.style.fontSize = '10px';
+            badge.style.padding = '2px 6px';
+            badge.style.borderRadius = '10px';
+            badge.style.border = '1px solid #16a34a';
+            badge.style.color = '#16a34a';
+            badge.style.opacity = (a.acknowledged ? '1' : '0.25');
+            idCell.appendChild(badge);
+          }
+        } catch(_) {}
+        tr.addEventListener('click', function(e){ if(e.target.tagName.toLowerCase()==='input') return; cb.checked=!cb.checked; cb.dispatchEvent(new Event('change')); });
+        body.appendChild(tr);
+      });
+      updateBadges();
+    }
+
 
     function renderPending(){
       const table=document.querySelector('#section_pending table');
@@ -858,21 +1010,53 @@ function enableHeaderDnD(theadEl, driverOffset, checkboxOffset){
           return;
         }
         let moved=0;
+        const movedRows=[];
         ids.forEach(function(id){
           const idx=assigned.findIndex(function(x){ return x.id===id; });
           if(idx>-1){
             const row=assigned.splice(idx,1)[0];
-            row.status='Completed';
-            completed.push(row);
+            row.status='In-Progress';
+            if(typeof inprogress==='undefined' || !Array.isArray(inprogress)){ window.inprogress = []; }
+            inprogress.push(row);
             moved++;
+            movedRows.push({ id: row.id, from: row.from, to: row.to, container: row.container, appt: row.appt, bk: row.bk, window: row.window, driverId: driver.id, driverName: driver.name });
           }
         });
+        try {
+          if (window.parent && window.parent !== window && movedRows.length) {
+            window.parent.postMessage({ type: 'dispatch_assigned', driverId: driver.id, driverName: driver.name, jobs: movedRows }, '*');
+            if(window.__publishAssignmentToChannel){ window.__publishAssignmentToChannel({ driverId: driver.id, driverName: driver.name, jobs: movedRows }); }
+          }
+        } catch(_){}
         state.selectedAssigned.clear();
         state.selectedDriver=null;
-        renderAssigned(); renderCompleted(); renderDrivers();
+        renderAssigned(); renderInprogress(); renderDrivers();
         updateBadges(); syncActionButtons();
-        toast('Notified '+driver.name+': '+moved+' pickup(s) updated');
+        switchTab('inprogress');
+        toast('Notified '+driver.name+': '+moved+' pickup(s) moved to In‑Progress');
       }
+
+      
+      // In-Progress -> Pickups (dispatcher removes from phone app list)
+      if(e.target && e.target.id==='btn_ip_move'){
+        if(state.selectedInprogress.size===0){ toast('Select at least 1 In‑Progress row'); return; }
+        openConfirm('Move selected pickup(s) back to Pickups?', function(){
+          const ids=[...state.selectedInprogress];
+          ids.forEach(function(id){
+            const idx=(inprogress||[]).findIndex(function(x){ return x.id===id; });
+            if(idx>-1){
+              const row=inprogress.splice(idx,1)[0];
+              const rest={ id:row.id, from:row.from, to:row.to, container:row.container, appt:row.appt, bk:row.bk, window:row.window, status:'Open' };
+              pickups.push(rest);
+            }
+          });
+          state.selectedInprogress.clear();
+          renderPickups(); renderInprogress(); updateBadges(); syncActionButtons();
+          switchTab('pickups');
+          toast('Moved back to Pickups');
+        });
+      }
+
 
       // Move (Pickups -> Pending) WITH CONFIRM
       if(e.target && e.target.id==='btn_move'){
@@ -929,18 +1113,59 @@ function enableHeaderDnD(theadEl, driverOffset, checkboxOffset){
       }
     });
 
+    // ---------- Driver App Hook ----------
+    // Receive driver acknowledgments from the bridge
+    window.receiveDriverAck = function(ids){
+      try{
+        if(typeof ids==='string'){ ids=[ids]; }
+        if(!Array.isArray(ids) || !ids.length) return false;
+        let updated=0;
+        (inprogress||[]).forEach(function(r){
+          if(ids.indexOf(r.id) !== -1){ r.acknowledged = true; updated++; }
+        });
+        if(updated){ renderInprogress(); updateBadges(); }
+        return updated>0;
+      }catch(_){ return false; }
+    };
+
+    // Call window.driverComplete(['CCL-5001','CCL-5002']) from the phone app to auto-complete.
+    window.driverComplete = function(ids){
+      try{
+        if(typeof ids==='string'){ ids=[ids]; }
+        if(!Array.isArray(ids) || ids.length===0) return false;
+        let moved=0;
+        ids.forEach(function(id){
+          const idx=(inprogress||[]).findIndex(function(x){ return x.id===id; });
+          if(idx>-1){
+            const row=inprogress.splice(idx,1)[0];
+            row.status='Completed';
+            completed.push(row);
+            moved++;
+          }
+        });
+        if(moved>0){
+          renderInprogress(); renderCompleted(); updateBadges();
+          return true;
+        }
+        return false;
+      }catch(_){ return false; }
+    };
+
     // ---------- TABS ----------
     function switchTab(which){
       document.getElementById('section_pickups').classList.toggle('hidden',which!=='pickups');
       document.getElementById('section_assigned').classList.toggle('hidden',which!=='assigned');
+      var _sip=document.getElementById('section_inprogress'); if(_sip) _sip.classList.toggle('hidden',which!=='inprogress');
       document.getElementById('section_completed').classList.toggle('hidden',which!=='completed');
       document.getElementById('section_pending').classList.toggle('hidden',which!=='pending');
       document.querySelectorAll('.tab').forEach(btn => btn.classList.remove('active'));
       if(which==='pickups') document.getElementById('tab_pickups').classList.add('active');
       if(which==='assigned') document.getElementById('tab_assigned').classList.add('active');
+      if(which==='inprogress') document.getElementById('tab_inprogress')?.classList.add('active');
       if(which==='completed') document.getElementById('tab_completed').classList.add('active');
       if(which==='pending') document.getElementById('tab_pending').classList.add('active');
       state.currentTab = which;
+      if(which==='inprogress'){ try{ renderInprogress(); }catch(e){} }
       // Hide Drivers panel on Main Dispatch
       var drvSec=document.getElementById('section_drivers_bottom'); if(drvSec){ drvSec.classList.toggle('hidden', which==='pending'); }
       renderDrivers();
@@ -948,7 +1173,7 @@ function enableHeaderDnD(theadEl, driverOffset, checkboxOffset){
 
     // ---------- INIT ----------
     function init(){
-      renderPickups(); renderDrivers(); renderAssigned(); renderCompleted(); renderPending();
+      renderPickups(); renderDrivers(); renderAssigned(); renderCompleted(); renderPending(); renderInprogress();
       updateBadges(); syncActionButtons();
       switchTab('pending'); // start on Main Dispatch per your request
     }
@@ -968,6 +1193,27 @@ document.addEventListener('dblclick', function(e){
     openConfirm('Change "'+oldName+'" to "'+next+'"?', function(){ COLUMN_LABELS[key]=next; th.textContent=next; });
   } else { COLUMN_LABELS[key]=next; th.textContent=next; }
 });
+</script>
+
+<!-- CCL Channel: Dispatch side -->
+<script>
+(function(){
+  const ccl = new BroadcastChannel('ccl_dispatch_driver');
+  ccl.onmessage = (ev) => {
+    const data = ev.data || {};
+    try{
+      if(data.type === 'driver_completed' && Array.isArray(data.ids)) {
+        if(typeof window.driverComplete === 'function') window.driverComplete(data.ids);
+      }
+      if(data.type === 'driver_ack' && Array.isArray(data.ids)) {
+        if(typeof window.receiveDriverAck === 'function') window.receiveDriverAck(data.ids);
+      }
+    }catch(e){ console.warn('Channel error (dispatch onmessage):', e); }
+  };
+  window.__publishAssignmentToChannel = function(payload){
+    try { ccl.postMessage({ type: 'new_assignment', ...payload }); } catch(e){}
+  };
+})();
 </script>
 </body>
 </html>
