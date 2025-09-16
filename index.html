@@ -1146,6 +1146,7 @@ document.addEventListener('dblclick', function(e){
 </script>
 
 
+
 <script>
 (function(){
   function ready(fn){ 
@@ -1156,21 +1157,12 @@ document.addEventListener('dblclick', function(e){
     var btn = document.getElementById('tab_drivergps');
     if(!btn) return;
 
-    // Preferences you can tweak
+    // Config you can tweak
     const PREFS = {
-      width: 1400,
-      height: 900,
-      // If your second monitor is to the RIGHT of the main display,
-      // set this to the approximate X offset of that monitor in pixels.
-      // 1920 assumes your primary is 1920px wide. Adjust if needed.
-      secondMonitorLeft: 1920,
-      top: 0,
-      // Default map focus
       mapQuery: 'Port of Long Beach',
       mapZoom: 13
     };
 
-    // Build the inline HTML for the GPS window (single pop-up; no extra windows)
     function buildGpsHtml(){
       const q = encodeURIComponent(PREFS.mapQuery);
       const z = Math.max(3, Math.min(PREFS.mapZoom, 20));
@@ -1185,41 +1177,29 @@ document.addEventListener('dblclick', function(e){
   iframe{width:100%;height:100%;border:1px solid #243045;border-radius:14px}
 </style>
 </head><body>
-  <div class="top">Driver GPS • Long Beach Port (adjust zoom freely)</div>
+  <div class="top">Driver GPS • Long Beach Port</div>
   <div class="wrap">
     <iframe loading="lazy" allowfullscreen referrerpolicy="no-referrer-when-downgrade" src="${embedSrc}"></iframe>
   </div>
 </body></html>`;
     }
 
-    function openGpsWin(){
-      // Open immediately on click (satisfies pop-up rules)
-      const features = `width=${PREFS.width},height=${PREFS.height},left=${PREFS.secondMonitorLeft},top=${PREFS.top}`;
-      const w = window.open('', 'CCL_DRIVER_GPS', features);
+    function openGpsTab(){
+      // Build HTML and open as a Blob URL in a NEW TAB
+      const html = buildGpsHtml();
+      const blob = new Blob([html], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      // _blank + no features => browser opens a new tab
+      const w = window.open(url, '_blank'); 
       if(!w){ alert('Pop-up blocked. Allow pop-ups for this site and try again.'); return; }
-      try{
-        // Write the HTML first
-        w.document.open();
-        w.document.write(buildGpsHtml());
-        w.document.close();
-
-        // Then attempt to place/resize it (most browsers allow this right after open)
-        try{
-          if (typeof w.moveTo === 'function') { w.moveTo(PREFS.secondMonitorLeft, PREFS.top); }
-          if (typeof w.resizeTo === 'function') { w.resizeTo(PREFS.width, PREFS.height); }
-        }catch(_){ /* non-fatal; user can still move/resize manually */ }
-
-        w.focus();
-      }catch(err){
-        // As a last resort, navigate the same window (still only 1 pop-up)
-        const q = encodeURIComponent(PREFS.mapQuery);
-        const z = Math.max(3, Math.min(PREFS.mapZoom, 20));
-        w.location.href = `https://www.google.com/maps?q=${q}&z=${z}`;
-      }
+      // Optional: keep dispatch in focus (some browsers respect this)
+      try{ window.focus(); }catch(_){}
+      // Revoke the blob URL later (when the tab loads) to avoid leaks
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
     }
 
-    btn.onclick = openGpsWin;
-    btn.onkeydown = function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); openGpsWin(); } };
+    btn.onclick = openGpsTab;
+    btn.onkeydown = function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); openGpsTab(); } };
   });
 })();
 </script>
