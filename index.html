@@ -1,11 +1,12 @@
-<!doctype html>
+<!DOCTYPE html>
+
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Coastal City Logistics — Dispatch Board</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>Coastal City Logistics — Dispatch Board</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
     :root{--bg:#0a0f1a;--panel:#111827;--ink:#f8fafc;--muted:#9fb2c8;--line:#1f2937;--brand:#2563eb;--brand-2:#0f766e;--ios:#0A84FF;--ios-hover:#007AFF}
     body{background:var(--bg);color:var(--ink)}
     .brand-grad{background:linear-gradient(120deg,#1e3a8a 0%, var(--brand-2) 100%)}
@@ -53,8 +54,6 @@ thead th.colhdr{ text-align:center; }
 .dash-center{display:block;text-align:center;}
 
 </style>
-        
-
 <style>
 /* === Canva-style Header Highlight (Dark) — CSS-only === */
 :root{
@@ -120,185 +119,176 @@ thead th.colhdr:hover{
 </style>
 </head>
 <body class="min-h-screen">
-  <header class="brand-grad p-4 flex items-center justify-between">
-    <h1 class="text-lg font-semibold">Coastal City Logistics — Dispatch Board</h1>
-  </header>
-
-  <main class="max-w-screen-2xl w-full mx-auto p-6 space-y-6">
-    <div id="tabs_container" class="flex items-center gap-2">
-      <!-- Original order: Pickups, Assigned, Completed, Pending (renamed visually) -->
-      <button id="tab_pending" class="tab active" onclick="switchTab('pending')">Main Dispatch <span id="badge_pending" class="ml-2 px-2 py-0.5 rounded-full text-xs bg-yellow-900 text-yellow-200">0</span></button>
-      <button id="tab_pickups" class="tab" onclick="switchTab('pickups')">Pickups <span id="badge_pickups" class="ml-2 px-2 py-0.5 rounded-full text-xs bg-blue-900 text-blue-200">0</span></button>
-      <button id="tab_assigned" class="tab" onclick="switchTab('assigned')">Assigned <span id="badge_assigned" class="ml-2 px-2 py-0.5 rounded-full text-xs bg-slate-700 text-slate-200">0</span></button>
-      <button id="tab_inprogress" class="tab" onclick="switchTab('inprogress')">In‑Progress <span id="badge_inprogress" class="ml-2 px-2 py-0.5 rounded-full text-xs bg-amber-900 text-amber-200">0</span></button>
-      <button id="tab_completed" class="tab" onclick="switchTab('completed')">Completed <span id="badge_completed" class="ml-2 px-2 py-0.5 rounded-full text-xs bg-emerald-900 text-emerald-200">0</span></button>
-      <div class="ml-auto text-xs opacity-80 pill">Coastal City Logistics</div>
-    </div>
-
-    <!-- PICKUPS -->
-    <section id="section_pickups" class="space-y-4">
-      <div class="card p-5">
-        <h2 class="text-xl font-bold text-sky-300 mb-3">Pickups</h2>
-        <div class="relative overflow-auto rounded-xl" style="max-height:320px">
-          <table>
-            <thead><tr></tr></thead>
-            <tbody id="p1_body"></tbody>
-          </table>
-        </div>
-      </div>
-      <div class="flex items-center gap-3">
-        <button id="btn_assign" class="btn bg-blue-600 hover:bg-blue-700 disabled:opacity-40">Assign</button>
-        <button id="btn_edit" class="btn" style="background:#065f46; border-color:#047857; color:#d1fae5;">Edit</button>
-        <button id="btn_move" class="btn bg-slate-600 hover:bg-slate-500">Move</button>
-      </div>
-    </section>
-
-    <!-- ASSIGNED -->
-    <section id="section_assigned" class="space-y-4 hidden">
-      <div class="card p-5">
-        <h2 class="text-xl font-bold text-sky-300 mb-3">Assigned</h2>
-        <div class="relative overflow-auto rounded-xl" style="max-height:320px">
-          <table>
-            <thead><tr></tr></thead>
-            <tbody id="assigned_body"></tbody>
-          </table>
-        </div>
-      </div>
-      <div class="flex items-center gap-3">
-        <button id="btn_remove" class="btn bg-slate-700 hover:bg-slate-600 disabled:opacity-40">Remove</button>
-        <button id="btn_update" class="btn btn-ios disabled:opacity-40">Update Driver</button>
-      </div>
-    </section>
-
-    <!-- COMPLETED -->
-    
-    <!-- IN-PROGRESS -->
-    <section id="section_inprogress" class="space-y-4 hidden">
-      <div class="card p-5">
-        <h2 class="text-xl font-bold text-sky-300 mb-3">In‑Progress</h2>
-        <div class="relative overflow-auto rounded-xl" style="max-height:320px">
-          <table>
-            <thead><tr></tr></thead>
-            <tbody id="inprogress_body"></tbody>
-          </table>
-        </div>
-      </div>
-          <div class="flex items-center gap-3">
-        <button id="btn_ip_move" class="btn bg-slate-700 hover:bg-slate-600 disabled:opacity-40">Move</button>
-        
-      </div>
-    </section>
-
-    <section id="section_completed" class="space-y-4 hidden">
-      <div class="card p-5">
-        <h2 class="text-xl font-bold text-sky-300 mb-3">Completed</h2>
-        <div class="relative overflow-auto rounded-xl" style="max-height:320px">
-          <table>
-            <thead><tr></tr></thead>
-            <tbody id="completed_body"></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- MAIN DISPATCH (Pending) -->
-    <section id="section_pending" class="space-y-4 hidden">
-      <div class="card p-5">
-        <h2 class="text-xl font-bold text-yellow-300 mb-3">Main Dispatch</h2>
-        <div class="relative overflow-auto rounded-xl" style="max-height:320px">
-          <table>
-            <thead><tr></tr></thead>
-            <tbody id="pending_body"></tbody>
-          </table>
-        </div>
-      </div>
-      <!-- Only Create New + Move -->
-      <div class="flex items-center gap-3 mt-3">
-        <button id="btn_create_pending" class="btn bg-blue-600 hover:bg-blue-700">Create New</button>
-        <button id="btn_edit_pending" class="btn" style="background:#065f46; border-color:#047857; color:#d1fae5;">Edit</button>
-        <button id="btn_move_from_pending" class="btn bg-slate-600 hover:bg-slate-500">Move</button>
-      </div>
-    </section>
-
-    <!-- DRIVERS (BOTTOM) -->
-    <section id="section_drivers_bottom" class="space-y-4">
-      <div class="card p-5">
-        <h2 class="text-xl font-bold text-sky-300 mb-3">Drivers</h2>
-        <div class="relative overflow-auto rounded-xl" style="max-height:220px">
-          <table>
-            <thead>
-              <tr>
-                <th style="width:42px"></th>
-                <th>Driver</th>
-                <th>Assigned</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody id="drv_body"></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <!-- Toast -->
-  <div id="toast" style="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#0b1220;border:1px solid #243045;border-radius:12px;padding:10px 14px;color:#e5eefb;display:none;z-index:60"></div>
-
-  <!-- Alert Modal -->
-  <div id="alert_modal" class="modal">
-    <div class="box">
-      <h3 class="text-lg font-semibold mb-2 text-red-200">Driver Mismatch</h3>
-      <p id="alert_text" class="text-sm opacity-90 mb-4 msg">You selected the wrong driver.</p>
-      <div class="flex justify-end gap-2">
-        <button class="px-3 py-2 rounded-md bg-slate-700 hover:bg-slate-600" onclick="closeAlert()">OK</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- EDIT POPUP -->
-  <div id="edit_modal" class="modal">
-    <div class="box p-0 overflow-hidden" style="max-width:420px">
-      <div class="brand-grad px-4 py-3 flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <div class="w-8 h-8 rounded-full bg-slate-900/25 grid place-items-center font-semibold">CC</div>
-          <div class="text-sm font-semibold">Coastal City Logistics</div>
-        </div>
-        <div class="text-xs opacity-80">LTE • 100%</div>
-      </div>
-      <div class="p-5 space-y-4">
-        <div><h3 id="edit_title" class="text-2xl font-bold text-slate-100">Update Pick Up</h3></div>
-        <div class="rounded-2xl border border-slate-700 bg-[#0e1523] p-4 space-y-4">
-          <div class="flex items-center gap-2"><span id="f_jobpill" class="tab">Job #</span></div>
-          <div class="grid grid-cols-2 gap-4 text-sm">
-            <div><label class="block text-slate-400 text-xs mb-1">From → To</label><textarea id="f_from" class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" rows="3" placeholder="BBT → Costco DC (Ontario)"></textarea></div>
-            <div><label class="block text-slate-400 text-xs mb-1">Load In</label><input id="f_loadin" class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" /></div>
-            <div><label class="block text-slate-400 text-xs mb-1">Container #</label><input id="f_container" class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" /></div>
-            <div><label class="block text-slate-400 text-xs mb-1">Appt #</label><input id="f_appt" class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" /></div>
-            <div><label class="block text-slate-400 text-xs mb-1">BK #</label><input id="f_bk" class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" /></div>
-            <div><label class="block text-slate-400 text-xs mb-1">Window</label><input id="f_window" class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" /></div>
-          </div>
-          <div><label class="block text-slate-400 text-xs mb-1">Instruction</label><textarea id="f_instruction" class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" rows="2" placeholder="Chassis back to Compton yard"></textarea></div>
-        </div>
-        <div class="flex items-center justify-between gap-3 pt-1">
-          <button id="btn_modal_cancel" class="flex-1 px-4 py-2 rounded-xl border border-slate-600 bg-slate-800 hover:bg-slate-700">Cancel</button>
-          <button id="btn_modal_update" class="flex-1 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700">Save</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- YES/NO CONFIRM -->
-  <div id="confirm_modal" class="modal">
-    <div class="box max-w-sm">
-      <p id="confirm_text" class="mb-4"></p>
-      <div class="flex justify-end gap-2">
-        <button id="confirm_no" class="px-3 py-2 rounded-md bg-slate-700 hover:bg-slate-600">No</button>
-        <button id="confirm_yes" class="px-3 py-2 rounded-md bg-blue-600 hover:bg-blue-700">Yes</button>
-      </div>
-    </div>
-  </div>
-
-  <script>
+<header class="brand-grad p-4 flex items-center justify-between">
+<h1 class="text-lg font-semibold">Coastal City Logistics — Dispatch Board</h1>
+</header>
+<main class="max-w-screen-2xl w-full mx-auto p-6 space-y-6">
+<div class="flex items-center gap-2" id="tabs_container">
+<!-- Original order: Pickups, Assigned, Completed, Pending (renamed visually) -->
+<button class="tab active" id="tab_pending" onclick="switchTab('pending')">Main Dispatch <span class="ml-2 px-2 py-0.5 rounded-full text-xs bg-yellow-900 text-yellow-200" id="badge_pending">0</span></button>
+<button class="tab" id="tab_pickups" onclick="switchTab('pickups')">Pickups <span class="ml-2 px-2 py-0.5 rounded-full text-xs bg-blue-900 text-blue-200" id="badge_pickups">0</span></button>
+<button class="tab" id="tab_assigned" onclick="switchTab('assigned')">Assigned <span class="ml-2 px-2 py-0.5 rounded-full text-xs bg-slate-700 text-slate-200" id="badge_assigned">0</span></button>
+<button class="tab" id="tab_inprogress" onclick="switchTab('inprogress')">In‑Progress <span class="ml-2 px-2 py-0.5 rounded-full text-xs bg-amber-900 text-amber-200" id="badge_inprogress">0</span></button>
+<button class="tab" id="tab_completed" onclick="switchTab('completed')">Completed <span class="ml-2 px-2 py-0.5 rounded-full text-xs bg-emerald-900 text-emerald-200" id="badge_completed">0</span></button>
+<button class="tab flex items-center gap-2" id="tab_drivergps" title="Open Driver GPS in a new window"><span>Driver GPS</span>
+<svg aria-hidden="true" class="opacity-80" height="16" viewbox="0 0 24 24" width="16">
+<path d="M14 3h7v7h-2V6.41l-9.29 9.3-1.42-1.42 9.3-9.29H14V3z" fill="currentColor"></path>
+<path d="M5 5h7V3H3v9h2V5z" fill="currentColor"></path>
+</svg>
+</button><div class="ml-auto text-xs opacity-80 pill">Coastal City Logistics</div>
+</div>
+<!-- PICKUPS -->
+<section class="space-y-4" id="section_pickups">
+<div class="card p-5">
+<h2 class="text-xl font-bold text-sky-300 mb-3">Pickups</h2>
+<div class="relative overflow-auto rounded-xl" style="max-height:320px">
+<table>
+<thead><tr></tr></thead>
+<tbody id="p1_body"></tbody>
+</table>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<button class="btn bg-blue-600 hover:bg-blue-700 disabled:opacity-40" id="btn_assign">Assign</button>
+<button class="btn" id="btn_edit" style="background:#065f46; border-color:#047857; color:#d1fae5;">Edit</button>
+<button class="btn bg-slate-600 hover:bg-slate-500" id="btn_move">Move</button>
+</div>
+</section>
+<!-- ASSIGNED -->
+<section class="space-y-4 hidden" id="section_assigned">
+<div class="card p-5">
+<h2 class="text-xl font-bold text-sky-300 mb-3">Assigned</h2>
+<div class="relative overflow-auto rounded-xl" style="max-height:320px">
+<table>
+<thead><tr></tr></thead>
+<tbody id="assigned_body"></tbody>
+</table>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<button class="btn bg-slate-700 hover:bg-slate-600 disabled:opacity-40" id="btn_remove">Remove</button>
+<button class="btn btn-ios disabled:opacity-40" id="btn_update">Update Driver</button>
+</div>
+</section>
+<!-- COMPLETED -->
+<!-- IN-PROGRESS -->
+<section class="space-y-4 hidden" id="section_inprogress">
+<div class="card p-5">
+<h2 class="text-xl font-bold text-sky-300 mb-3">In‑Progress</h2>
+<div class="relative overflow-auto rounded-xl" style="max-height:320px">
+<table>
+<thead><tr></tr></thead>
+<tbody id="inprogress_body"></tbody>
+</table>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<button class="btn bg-slate-700 hover:bg-slate-600 disabled:opacity-40" id="btn_ip_move">Move</button>
+</div>
+</section>
+<section class="space-y-4 hidden" id="section_completed">
+<div class="card p-5">
+<h2 class="text-xl font-bold text-sky-300 mb-3">Completed</h2>
+<div class="relative overflow-auto rounded-xl" style="max-height:320px">
+<table>
+<thead><tr></tr></thead>
+<tbody id="completed_body"></tbody>
+</table>
+</div>
+</div>
+</section>
+<!-- MAIN DISPATCH (Pending) -->
+<section class="space-y-4 hidden" id="section_pending">
+<div class="card p-5">
+<h2 class="text-xl font-bold text-yellow-300 mb-3">Main Dispatch</h2>
+<div class="relative overflow-auto rounded-xl" style="max-height:320px">
+<table>
+<thead><tr></tr></thead>
+<tbody id="pending_body"></tbody>
+</table>
+</div>
+</div>
+<!-- Only Create New + Move -->
+<div class="flex items-center gap-3 mt-3">
+<button class="btn bg-blue-600 hover:bg-blue-700" id="btn_create_pending">Create New</button>
+<button class="btn" id="btn_edit_pending" style="background:#065f46; border-color:#047857; color:#d1fae5;">Edit</button>
+<button class="btn bg-slate-600 hover:bg-slate-500" id="btn_move_from_pending">Move</button>
+</div>
+</section>
+<!-- DRIVERS (BOTTOM) -->
+<section class="space-y-4" id="section_drivers_bottom">
+<div class="card p-5">
+<h2 class="text-xl font-bold text-sky-300 mb-3">Drivers</h2>
+<div class="relative overflow-auto rounded-xl" style="max-height:220px">
+<table>
+<thead>
+<tr>
+<th style="width:42px"></th>
+<th>Driver</th>
+<th>Assigned</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody id="drv_body"></tbody>
+</table>
+</div>
+</div>
+</section>
+</main>
+<!-- Toast -->
+<div id="toast" style="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#0b1220;border:1px solid #243045;border-radius:12px;padding:10px 14px;color:#e5eefb;display:none;z-index:60"></div>
+<!-- Alert Modal -->
+<div class="modal" id="alert_modal">
+<div class="box">
+<h3 class="text-lg font-semibold mb-2 text-red-200">Driver Mismatch</h3>
+<p class="text-sm opacity-90 mb-4 msg" id="alert_text">You selected the wrong driver.</p>
+<div class="flex justify-end gap-2">
+<button class="px-3 py-2 rounded-md bg-slate-700 hover:bg-slate-600" onclick="closeAlert()">OK</button>
+</div>
+</div>
+</div>
+<!-- EDIT POPUP -->
+<div class="modal" id="edit_modal">
+<div class="box p-0 overflow-hidden" style="max-width:420px">
+<div class="brand-grad px-4 py-3 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-slate-900/25 grid place-items-center font-semibold">CC</div>
+<div class="text-sm font-semibold">Coastal City Logistics</div>
+</div>
+<div class="text-xs opacity-80">LTE • 100%</div>
+</div>
+<div class="p-5 space-y-4">
+<div><h3 class="text-2xl font-bold text-slate-100" id="edit_title">Update Pick Up</h3></div>
+<div class="rounded-2xl border border-slate-700 bg-[#0e1523] p-4 space-y-4">
+<div class="flex items-center gap-2"><span class="tab" id="f_jobpill">Job #</span></div>
+<div class="grid grid-cols-2 gap-4 text-sm">
+<div><label class="block text-slate-400 text-xs mb-1">From → To</label><textarea class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" id="f_from" placeholder="BBT → Costco DC (Ontario)" rows="3"></textarea></div>
+<div><label class="block text-slate-400 text-xs mb-1">Load In</label><input class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" id="f_loadin"/></div>
+<div><label class="block text-slate-400 text-xs mb-1">Container #</label><input class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" id="f_container"/></div>
+<div><label class="block text-slate-400 text-xs mb-1">Appt #</label><input class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" id="f_appt"/></div>
+<div><label class="block text-slate-400 text-xs mb-1">BK #</label><input class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" id="f_bk"/></div>
+<div><label class="block text-slate-400 text-xs mb-1">Window</label><input class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" id="f_window"/></div>
+</div>
+<div><label class="block text-slate-400 text-xs mb-1">Instruction</label><textarea class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" id="f_instruction" placeholder="Chassis back to Compton yard" rows="2"></textarea></div>
+</div>
+<div class="flex items-center justify-between gap-3 pt-1">
+<button class="flex-1 px-4 py-2 rounded-xl border border-slate-600 bg-slate-800 hover:bg-slate-700" id="btn_modal_cancel">Cancel</button>
+<button class="flex-1 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700" id="btn_modal_update">Save</button>
+</div>
+</div>
+</div>
+</div>
+<!-- YES/NO CONFIRM -->
+<div class="modal" id="confirm_modal">
+<div class="box max-w-sm">
+<p class="mb-4" id="confirm_text"></p>
+<div class="flex justify-end gap-2">
+<button class="px-3 py-2 rounded-md bg-slate-700 hover:bg-slate-600" id="confirm_no">No</button>
+<button class="px-3 py-2 rounded-md bg-blue-600 hover:bg-blue-700" id="confirm_yes">Yes</button>
+</div>
+</div>
+</div>
+<script>
     // ---------- DATA ----------
     const pickups = [
       {id:'CCL-5001',from:'BBT',to:'Yusen Logistics, Torrance',container:'MSCU1029384',appt:'671800',bk:'BK77001',window:'07–08 AM',status:'Open'},
@@ -668,24 +658,6 @@ function enableHeaderDnD(theadEl, driverOffset, checkboxOffset){
         const tdDriver=document.createElement('td'); tdDriver.textContent=(a.driverName || dname); tr.appendChild(tdDriver);
         // Cells
         buildRowCells(tr, a, 'In-Progress');
-        // /* ACK badge */ inject into first data cell after Driver
-        try {
-          const cells = tr.querySelectorAll('td');
-          // cells[0] = checkbox, cells[1] = driver, cells[2] = first data cell (ID)
-          if (cells && cells.length > 2) {
-            const idCell = cells[2];
-            const badge = document.createElement('span');
-            badge.textContent = 'ACK';
-            badge.style.marginLeft = '6px';
-            badge.style.fontSize = '10px';
-            badge.style.padding = '2px 6px';
-            badge.style.borderRadius = '10px';
-            badge.style.border = '1px solid #16a34a';
-            badge.style.color = '#16a34a';
-            badge.style.opacity = (a.acknowledged ? '1' : '0.25');
-            idCell.appendChild(badge);
-          }
-        } catch(_) {}
         tr.addEventListener('click', function(e){ if(e.target.tagName.toLowerCase()==='input') return; cb.checked=!cb.checked; cb.dispatchEvent(new Event('change')); });
         body.appendChild(tr);
       });
@@ -1010,7 +982,6 @@ function enableHeaderDnD(theadEl, driverOffset, checkboxOffset){
           return;
         }
         let moved=0;
-        const movedRows=[];
         ids.forEach(function(id){
           const idx=assigned.findIndex(function(x){ return x.id===id; });
           if(idx>-1){
@@ -1019,15 +990,8 @@ function enableHeaderDnD(theadEl, driverOffset, checkboxOffset){
             if(typeof inprogress==='undefined' || !Array.isArray(inprogress)){ window.inprogress = []; }
             inprogress.push(row);
             moved++;
-            movedRows.push({ id: row.id, from: row.from, to: row.to, container: row.container, appt: row.appt, bk: row.bk, window: row.window, driverId: driver.id, driverName: driver.name });
           }
         });
-        try {
-          if (window.parent && window.parent !== window && movedRows.length) {
-            window.parent.postMessage({ type: 'dispatch_assigned', driverId: driver.id, driverName: driver.name, jobs: movedRows }, '*');
-            if(window.__publishAssignmentToChannel){ window.__publishAssignmentToChannel({ driverId: driver.id, driverName: driver.name, jobs: movedRows }); }
-          }
-        } catch(_){}
         state.selectedAssigned.clear();
         state.selectedDriver=null;
         renderAssigned(); renderInprogress(); renderDrivers();
@@ -1114,20 +1078,6 @@ function enableHeaderDnD(theadEl, driverOffset, checkboxOffset){
     });
 
     // ---------- Driver App Hook ----------
-    // Receive driver acknowledgments from the bridge
-    window.receiveDriverAck = function(ids){
-      try{
-        if(typeof ids==='string'){ ids=[ids]; }
-        if(!Array.isArray(ids) || !ids.length) return false;
-        let updated=0;
-        (inprogress||[]).forEach(function(r){
-          if(ids.indexOf(r.id) !== -1){ r.acknowledged = true; updated++; }
-        });
-        if(updated){ renderInprogress(); updateBadges(); }
-        return updated>0;
-      }catch(_){ return false; }
-    };
-
     // Call window.driverComplete(['CCL-5001','CCL-5002']) from the phone app to auto-complete.
     window.driverComplete = function(ids){
       try{
@@ -1195,25 +1145,84 @@ document.addEventListener('dblclick', function(e){
 });
 </script>
 
-<!-- CCL Channel: Dispatch side -->
 <script>
 (function(){
-  const ccl = new BroadcastChannel('ccl_dispatch_driver');
-  ccl.onmessage = (ev) => {
-    const data = ev.data || {};
-    try{
-      if(data.type === 'driver_completed' && Array.isArray(data.ids)) {
-        if(typeof window.driverComplete === 'function') window.driverComplete(data.ids);
+  function ready(fn){ 
+    if(document.readyState!=='loading') fn(); 
+    else document.addEventListener('DOMContentLoaded', fn); 
+  }
+  ready(function(){
+    var btn = document.getElementById('tab_drivergps');
+    if(!btn) return;
+
+    function buildGpsHtml(){
+      return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Driver GPS — Coastal City Logistics</title>
+  <style>
+    html,body { height:100%; margin:0; background:#0b1220; color:#e5eefb;
+                font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; }
+    .topbar { display:flex; align-items:center; justify-content:space-between;
+              padding:10px 14px; background:#0f172a; border-bottom:1px solid #243045; }
+    .brand { font-weight:600; letter-spacing:.2px; }
+    .wrap { position:fixed; inset:46px 8px 8px 8px; }
+    iframe { width:100%; height:100%; border:1px solid #243045; border-radius:14px; }
+    .badge { font-size:12px; opacity:.85; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand">Driver GPS • Coastal City Logistics</div>
+    <div class="badge">Live Map</div>
+  </div>
+  <div class="wrap">
+    <!-- Google Maps Embed (no extra pop-ups) -->
+    <iframe
+      loading="lazy"
+      allowfullscreen
+      referrerpolicy="no-referrer-when-downgrade"
+      src="https://www.google.com/maps/embed?hl=en&q=Port%20of%20Los%20Angeles&z=12">
+    </iframe>
+  </div>
+</body>
+</html>`;
+    }
+
+    function openWin(){
+      // Open immediately in the click handler to satisfy popup rules
+      const w = window.open('', 'CCL_DRIVER_GPS',
+        'noopener,noreferrer,width='+Math.max(1400,screen.availWidth-40)+
+        ',height='+Math.max(900,screen.availHeight-80)+
+        ',left=1920,top=0');
+      if(!w){
+        alert('Pop-up blocked. Please allow pop-ups for this site and try again.');
+        return;
       }
-      if(data.type === 'driver_ack' && Array.isArray(data.ids)) {
-        if(typeof window.receiveDriverAck === 'function') window.receiveDriverAck(data.ids);
+      try{
+        const doc = w.document;
+        doc.open();
+        doc.write(buildGpsHtml());
+        doc.close();
+        w.focus();
+      }catch(err){
+        // Fallback: navigate to Google Maps in same popup if document.write is restricted
+        w.location.href = 'https://www.google.com/maps?q=Port+of+Los+Angeles&z=12';
       }
-    }catch(e){ console.warn('Channel error (dispatch onmessage):', e); }
-  };
-  window.__publishAssignmentToChannel = function(payload){
-    try { ccl.postMessage({ type: 'new_assignment', ...payload }); } catch(e){}
-  };
+    }
+
+    btn.onclick = openWin;
+    btn.onkeydown = function(e){
+      if(e.key==='Enter' || e.key===' '){
+        e.preventDefault();
+        openWin();
+      }
+    };
+  });
 })();
 </script>
+
 </body>
 </html>
