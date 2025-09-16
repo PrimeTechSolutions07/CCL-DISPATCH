@@ -1145,6 +1145,7 @@ document.addEventListener('dblclick', function(e){
 });
 </script>
 
+
 <script>
 (function(){
   function ready(fn){ 
@@ -1155,71 +1156,70 @@ document.addEventListener('dblclick', function(e){
     var btn = document.getElementById('tab_drivergps');
     if(!btn) return;
 
+    // Preferences you can tweak
+    const PREFS = {
+      width: 1400,
+      height: 900,
+      // If your second monitor is to the RIGHT of the main display,
+      // set this to the approximate X offset of that monitor in pixels.
+      // 1920 assumes your primary is 1920px wide. Adjust if needed.
+      secondMonitorLeft: 1920,
+      top: 0,
+      // Default map focus
+      mapQuery: 'Port of Long Beach',
+      mapZoom: 13
+    };
+
+    // Build the inline HTML for the GPS window (single pop-up; no extra windows)
     function buildGpsHtml(){
-      return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Driver GPS — Coastal City Logistics</title>
-  <style>
-    html,body { height:100%; margin:0; background:#0b1220; color:#e5eefb;
-                font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; }
-    .topbar { display:flex; align-items:center; justify-content:space-between;
-              padding:10px 14px; background:#0f172a; border-bottom:1px solid #243045; }
-    .brand { font-weight:600; letter-spacing:.2px; }
-    .wrap { position:fixed; inset:46px 8px 8px 8px; }
-    iframe { width:100%; height:100%; border:1px solid #243045; border-radius:14px; }
-    .badge { font-size:12px; opacity:.85; }
-  </style>
-</head>
-<body>
-  <div class="topbar">
-    <div class="brand">Driver GPS • Coastal City Logistics</div>
-    <div class="badge">Live Map</div>
-  </div>
+      const q = encodeURIComponent(PREFS.mapQuery);
+      const z = Math.max(3, Math.min(PREFS.mapZoom, 20));
+      const embedSrc = `https://www.google.com/maps?q=${q}&z=${z}&output=embed`;
+      return `<!doctype html><html><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Driver GPS — Coastal City Logistics</title>
+<style>
+  html,body{height:100%;margin:0;background:#0b1220;color:#e5eefb;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+  .top{padding:10px 14px;background:#0f172a;border-bottom:1px solid #243045;font-weight:600}
+  .wrap{position:fixed;inset:46px 8px 8px 8px}
+  iframe{width:100%;height:100%;border:1px solid #243045;border-radius:14px}
+</style>
+</head><body>
+  <div class="top">Driver GPS • Long Beach Port (adjust zoom freely)</div>
   <div class="wrap">
-    <!-- Google Maps Embed (no extra pop-ups) -->
-    <iframe
-      loading="lazy"
-      allowfullscreen
-      referrerpolicy="no-referrer-when-downgrade"
-      src="https://www.google.com/maps/embed?hl=en&q=Port%20of%20Los%20Angeles&z=12">
-    </iframe>
+    <iframe loading="lazy" allowfullscreen referrerpolicy="no-referrer-when-downgrade" src="${embedSrc}"></iframe>
   </div>
-</body>
-</html>`;
+</body></html>`;
     }
 
-    function openWin(){
-      // Open immediately in the click handler to satisfy popup rules
-      const w = window.open('', 'CCL_DRIVER_GPS',
-        'noopener,noreferrer,width='+Math.max(1400,screen.availWidth-40)+
-        ',height='+Math.max(900,screen.availHeight-80)+
-        ',left=1920,top=0');
-      if(!w){
-        alert('Pop-up blocked. Please allow pop-ups for this site and try again.');
-        return;
-      }
+    function openGpsWin(){
+      // Open immediately on click (satisfies pop-up rules)
+      const features = `width=${PREFS.width},height=${PREFS.height},left=${PREFS.secondMonitorLeft},top=${PREFS.top}`;
+      const w = window.open('', 'CCL_DRIVER_GPS', features);
+      if(!w){ alert('Pop-up blocked. Allow pop-ups for this site and try again.'); return; }
       try{
-        const doc = w.document;
-        doc.open();
-        doc.write(buildGpsHtml());
-        doc.close();
+        // Write the HTML first
+        w.document.open();
+        w.document.write(buildGpsHtml());
+        w.document.close();
+
+        // Then attempt to place/resize it (most browsers allow this right after open)
+        try{
+          if (typeof w.moveTo === 'function') { w.moveTo(PREFS.secondMonitorLeft, PREFS.top); }
+          if (typeof w.resizeTo === 'function') { w.resizeTo(PREFS.width, PREFS.height); }
+        }catch(_){ /* non-fatal; user can still move/resize manually */ }
+
         w.focus();
       }catch(err){
-        // Fallback: navigate to Google Maps in same popup if document.write is restricted
-        w.location.href = 'https://www.google.com/maps?q=Port+of+Los+Angeles&z=12';
+        // As a last resort, navigate the same window (still only 1 pop-up)
+        const q = encodeURIComponent(PREFS.mapQuery);
+        const z = Math.max(3, Math.min(PREFS.mapZoom, 20));
+        w.location.href = `https://www.google.com/maps?q=${q}&z=${z}`;
       }
     }
 
-    btn.onclick = openWin;
-    btn.onkeydown = function(e){
-      if(e.key==='Enter' || e.key===' '){
-        e.preventDefault();
-        openWin();
-      }
-    };
+    btn.onclick = openGpsWin;
+    btn.onkeydown = function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); openGpsWin(); } };
   });
 })();
 </script>
