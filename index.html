@@ -117,7 +117,72 @@ thead th.colhdr:hover{
 /* === End Canva-style Header Highlight === */
 
 </style>
-</head>
+<style>
+/* Scoped ONLY to the edit modal */
+#edit_modal .ccl-dd { position: relative; }
+#edit_modal .ccl-dd-trigger {
+  width: 100%; text-align: left;
+  background: #0f172a; border: 1px solid #334155; color:#e5e7eb;
+  border-radius: 0.75rem; padding: 8px 12px; min-height: 40px;
+}
+#edit_modal .ccl-dd-trigger:after {
+  content: "▾"; float: right; opacity:.6;
+}
+#edit_modal .ccl-dd-trigger:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 1px #3b82f6; }
+#edit_modal .ccl-dd-menu {
+  position: absolute; left: 0; right: 0; top: calc(100% + 6px);
+  background: #0b1220; border: 1px solid #334155; border-radius: 12px;
+  padding: 6px; box-shadow: 0 10px 24px rgba(0,0,0,.45); z-index: 120;
+}
+#edit_modal .ccl-dd-menu div { padding: 8px 10px; border-radius: 10px; color:#e5e7eb; cursor: pointer; }
+#edit_modal .ccl-dd-menu div:hover { background:#111827; }
+</style>
+<style>
+/* === Fullscreen Create Modal (scoped) === */
+#create_modal{ z-index:200; }
+#create_modal .box{ width:96vw; height:92vh; max-width:none; padding:0; display:flex; flex-direction:column; background:#0b1220; }
+#create_modal .hdr{ background:linear-gradient(120deg,#1e3a8a 0%, #0f766e 100%); padding:12px 16px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid #243045; }
+#create_modal .title{ font-weight:700; }
+#create_modal .content{ padding:18px; overflow:auto; }
+#create_modal .grid2{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+#create_modal label{ display:block; font-size:12px; color:#94a3b8; margin-bottom:6px; }
+#create_modal input, #create_modal textarea{ width:100%; background:#0b0f1a; color:#e5e7eb; border:1px solid #334155; border-radius:12px; padding:10px; }
+#create_modal textarea{ min-height:80px; }
+#create_modal .actions{ display:flex; gap:10px; padding:12px 16px; border-top:1px solid #243045; background:#0b1220; }
+#create_modal .btn{ padding:10px 16px; border-radius:10px; }
+#create_modal .btn-outline{ background:#111827; border:1px solid #334155; }
+#create_modal .btn-primary{ background:#2563eb; }
+#create_modal .ccl-dd { position: relative; }
+#create_modal .ccl-dd-trigger {
+  width: 100%; text-align: left;
+  background: #0b0f1a; border: 1px solid #334155; color:#e5e7eb;
+  border-radius: 0.75rem; padding: 10px 12px; min-height: 40px;
+}
+#create_modal .ccl-dd-trigger:after { content: "▾"; float:right; opacity:.6; }
+#create_modal .ccl-dd-menu {
+  position: absolute; left:0; right:0; top: calc(100% + 6px);
+  background:#0b1220; border:1px solid #334155; border-radius:12px; padding:6px;
+  box-shadow:0 10px 24px rgba(0,0,0,.45); z-index:240;
+}
+#create_modal .ccl-dd-menu div{ padding:8px 10px; border-radius:10px; color:#e5e7eb; cursor:pointer; }
+#create_modal .ccl-dd-menu div:hover{ background:#111827; }
+
+/* === Pro pass: compressed UI & accent borders === */
+#create_modal .box{box-shadow:0 16px 40px rgba(0,0,0,.55)}
+#create_modal .content{padding:14px}
+#create_modal .panel{border:1px solid #2b3a55; border-radius:16px; background:#0d1524; padding:12px}
+#create_modal .panel .panel-title{font-size:12px; letter-spacing:.02em; color:#c7d2fe; margin-bottom:8px; opacity:.9}
+#create_modal .grid3{display:grid; grid-template-columns:repeat(1,minmax(0,1fr)); gap:10px}
+@media (min-width: 900px){ #create_modal .grid3{grid-template-columns:repeat(3,minmax(0,1fr));} }
+#create_modal label{font-size:11px; color:#9fb2c8; margin-bottom:4px}
+#create_modal input, #create_modal textarea{border-radius:10px; padding:8px 10px; min-height:36px}
+#create_modal textarea{min-height:72px}
+#create_modal .panel{position:relative; overflow:hidden}
+#create_modal .panel:after{
+  content:""; position:absolute; inset:-1px; border-radius:16px; pointer-events:none;
+  box-shadow:0 0 0 1px rgba(99,102,241,.35), 0 0 24px rgba(99,102,241,.15) inset;
+}
+</style></head>
 <body class="min-h-screen">
 <header class="brand-grad p-4 flex items-center justify-between">
 <h1 class="text-lg font-semibold">Coastal City Logistics — Dispatch Board</h1>
@@ -150,7 +215,6 @@ thead th.colhdr:hover{
 </div>
 <div class="flex items-center gap-3">
 <button class="btn bg-blue-600 hover:bg-blue-700 disabled:opacity-40" id="btn_assign">Assign</button>
-<button class="btn" id="btn_edit" style="background:#065f46; border-color:#047857; color:#d1fae5;">Edit</button>
 <button class="btn bg-slate-600 hover:bg-slate-500" id="btn_move">Move</button>
 </div>
 </section>
@@ -183,7 +247,8 @@ thead th.colhdr:hover{
 </div>
 </div>
 <div class="flex items-center gap-3">
-<button class="btn bg-slate-700 hover:bg-slate-600 disabled:opacity-40" id="btn_ip_move">Move</button>
+<button class="btn" id="btn_ip_edit" style="background:#065f46; border-color:#047857; color:#d1fae5;">Edit</button>
+<button class="btn bg-slate-700 hover:bg-slate-600 disabled:opacity-40" id="btn_ip_move">Retract</button>
 </div>
 </section>
 <section class="space-y-4 hidden" id="section_completed">
@@ -224,7 +289,7 @@ thead th.colhdr:hover{
 <thead>
 <tr>
 <th style="width:42px"></th>
-<th>Driver</th>
+<th>Driver</th><th>Employee ID</th>
 <th>Assigned</th>
 <th>Status</th>
 </tr>
@@ -248,6 +313,7 @@ thead th.colhdr:hover{
 </div>
 </div>
 <!-- EDIT POPUP -->
+<!-- EDIT POPUP (Driver App layout, all fields blank) -->
 <div class="modal" id="edit_modal">
 <div class="box p-0 overflow-hidden" style="max-width:420px">
 <div class="brand-grad px-4 py-3 flex items-center justify-between">
@@ -258,23 +324,85 @@ thead th.colhdr:hover{
 <div class="text-xs opacity-80">LTE • 100%</div>
 </div>
 <div class="p-5 space-y-4">
-<div><h3 class="text-2xl font-bold text-slate-100" id="edit_title">Update Pick Up</h3></div>
+<div><h3 class="text-2xl font-bold text-slate-100" id="edit_title">Edit Job</h3></div>
 <div class="rounded-2xl border border-slate-700 bg-[#0e1523] p-4 space-y-4">
-<div class="flex items-center gap-2"><span class="tab" id="f_jobpill">Job #</span></div>
+<div class="flex items-center gap-2"><span class="tab" id="e_jobpill">Job #</span></div>
 <div class="grid grid-cols-2 gap-4 text-sm">
-<div><label class="block text-slate-400 text-xs mb-1">From → To</label><textarea class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" id="f_from" placeholder="BBT → Costco DC (Ontario)" rows="3"></textarea></div>
-<div><label class="block text-slate-400 text-xs mb-1">Load In</label><input class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" id="f_loadin"/></div>
-<div><label class="block text-slate-400 text-xs mb-1">Container #</label><input class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" id="f_container"/></div>
-<div><label class="block text-slate-400 text-xs mb-1">Appt #</label><input class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" id="f_appt"/></div>
-<div><label class="block text-slate-400 text-xs mb-1">BK #</label><input class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" id="f_bk"/></div>
-<div><label class="block text-slate-400 text-xs mb-1">Window</label><input class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" id="f_window"/></div>
+<div>
+<label class="block text-slate-400 text-xs mb-1">From</label>
+<textarea class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" id="e_from" placeholder="" rows="3"></textarea>
 </div>
-<div><label class="block text-slate-400 text-xs mb-1">Instruction</label><textarea class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" id="f_instruction" placeholder="Chassis back to Compton yard" rows="2"></textarea></div>
+<div>
+<label class="block text-slate-400 text-xs mb-1">To</label>
+<textarea class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" id="e_to" placeholder="" rows="3"></textarea>
+</div>
+<div>
+<label class="block text-slate-400 text-xs mb-1">Container #</label>
+<input class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" id="e_container" placeholder=""/>
+</div>
+<div>
+<label class="block text-slate-400 text-xs mb-1">LOAD / EMPTY</label>
+<input id="e_loadempty" type="hidden" value=""/>
+<div class="ccl-dd">
+<button class="ccl-dd-trigger" id="dd_loadempty" type="button"></button>
+<div class="ccl-dd-menu hidden" id="menu_loadempty">
+<div data-val="LOAD">LOAD</div>
+<div data-val="EMPTY">EMPTY</div>
+</div>
+</div>
+</div>
+<div>
+<label class="block text-slate-400 text-xs mb-1">BK # / PIN</label>
+<input class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" id="e_bkpin" placeholder=""/>
+</div>
+<div>
+<label class="block text-slate-400 text-xs mb-1">Import / Export</label>
+<input id="e_impexp" type="hidden" value=""/>
+<div class="ccl-dd">
+<button class="ccl-dd-trigger" id="dd_impexp" type="button"></button>
+<div class="ccl-dd-menu hidden" id="menu_impexp">
+<div data-val="Import">Import</div>
+<div data-val="Export">Export</div>
+</div>
+</div>
+</div>
+<div>
+<label class="block text-slate-400 text-xs mb-1">Seal #</label>
+<input class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" id="e_seal" placeholder=""/>
+</div>
+<div>
+<label class="block text-slate-400 text-xs mb-1">Window</label>
+<input class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" id="e_window" placeholder=""/>
+</div>
+</div>
+<div>
+<label class="block text-slate-400 text-xs mb-1">Instruction</label>
+<textarea class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2" id="e_instruction" placeholder="" rows="2"></textarea>
+</div>
 </div>
 <div class="flex items-center justify-between gap-3 pt-1">
 <button class="flex-1 px-4 py-2 rounded-xl border border-slate-600 bg-slate-800 hover:bg-slate-700" id="btn_modal_cancel">Cancel</button>
 <button class="flex-1 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700" id="btn_modal_update">Save</button>
 </div>
+</div>
+</div>
+</div>
+<div class="modal" id="create_modal" style="display:none">
+<div class="box border border-slate-700 rounded-2xl overflow-hidden">
+<div class="hdr">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-slate-900/25 grid place-items-center font-semibold">CC</div>
+<div class="text-sm font-semibold">Coastal City Logistics</div>
+</div>
+<div class="title">Create Pickup</div>
+<div class="text-xs opacity-80">LTE • 100%</div>
+</div>
+<div class="content">
+<div class="space-y-3"><div class="panel"><div class="panel-title">Job</div><div class="grid3"><div><label>Job #</label><input id="c_id"/></div><div><label>Window</label><input id="c_window"/></div><div><label>BK # / PIN</label><input id="c_bkpin"/></div></div></div><div class="panel"><div class="panel-title">Locations</div><div class="grid3"><div><label>From</label><textarea id="c_from" rows="3"></textarea></div><div><label>To</label><textarea id="c_to" rows="3"></textarea></div><div><label>Customer</label><input id="c_customer"/></div></div></div><div class="panel"><div class="panel-title">Container • Type</div><div class="grid3"><div><label>Container #</label><input id="c_container"/></div><div><label>Load / Empty</label><input id="c_loadempty" type="hidden"/><div class="ccl-dd"><button class="ccl-dd-trigger" id="c_dd_loadempty" type="button">Select…</button><div class="ccl-dd-menu hidden" id="c_menu_loadempty"><div data-val="LOAD">LOAD</div><div data-val="EMPTY">EMPTY</div></div></div></div><div><label>Import / Export</label><input id="c_impexp" type="hidden"/><div class="ccl-dd"><button class="ccl-dd-trigger" id="c_dd_impexp" type="button">Select…</button><div class="ccl-dd-menu hidden" id="c_menu_impexp"><div data-val="Import">Import</div><div data-val="Export">Export</div></div></div></div></div></div><div class="panel"><div class="panel-title">Dates • Appt</div><div class="grid3"><div><label>Appointment</label><input id="c_appt"/></div><div><label>P/U Date</label><input id="c_pudate"/></div><div><label>Delivery Date</label><input id="c_deliveryDate"/></div><div><label>LFD Date</label><input id="c_lfd"/></div><div><label>Return Date</label><input id="c_returnDate"/></div></div></div><div class="panel"><div class="panel-title">Ports • Equipment</div><div class="grid3"><div><label>Return Port</label><input id="c_returnPort"/></div><div><label>Chassis</label><input id="c_chassis"/></div><div><label>Size / Type</label><input id="c_size"/></div><div><label>PIN #</label><input id="c_pin"/></div><div><label>Seal #</label><input id="c_seal"/></div></div></div><div class="panel"><div class="panel-title">Instruction</div><div class="grid3"><div style="grid-column:1/-1"><label>Instruction</label><textarea id="c_instruction" rows="3"></textarea></div></div></div></div>
+</div>
+<div class="actions">
+<button class="btn btn-outline" id="btn_create_cancel">Cancel</button>
+<button class="btn btn-primary" id="btn_create_update">Update</button>
 </div>
 </div>
 </div>
@@ -303,12 +431,10 @@ thead th.colhdr:hover{
       {id:'CCL-5010',from:'YTI',to:'FedEx Ground',container:'TRLU3344552',appt:'672709',bk:'BK77010',window:'04–05 PM',status:'Open'}
     ];
 
-    const drivers = [
-      {id:'DRV-1',name:'Prime Tech Solutions',status:'AVL'},
-      {id:'DRV-2',name:'CCL CEO Jorge',status:'AVL'},
-      {id:'DRV-3',name:'Jose',status:'AVL'},
-      {id:'DRV-4',name:'Kevin',status:'AVL'}
-    ];
+    const drivers = [{id:'DRV-1',name:'Prime Tech Solutions',status:'AVL',empId:'53939'},
+      {id:'DRV-2',name:'CCL CEO Jorge',status:'AVL',empId:'54545'},
+      {id:'DRV-3',name:'Jose',status:'AVL',empId:'554421'},
+      {id:'DRV-4',name:'Kevin',status:'AVL',empId:'598771'}];
 
     let assigned = [];
     let completed = [];
@@ -577,7 +703,7 @@ function enableHeaderDnD(theadEl, driverOffset, checkboxOffset){
         });
         td0.appendChild(cb); tr.appendChild(td0);
         const load=counts[d.id]||0;
-        tr.insertAdjacentHTML('beforeend','<td>'+d.name+'</td><td><span class="ml-1 px-2 py-0.5 rounded-full text-xs bg-blue-900 text-blue-200">'+load+'</span></td><td>'+d.status+'</td>');
+        tr.insertAdjacentHTML('beforeend','<td>'+d.name+'</td>'+'<td>'+(d.empId||"—")+'</td>'+'<td><span class="ml-1 px-2 py-0.5 rounded-full text-xs bg-blue-900 text-blue-200">'+load+'</span></td>'+'<td>'+(d.status||"AVL")+'</td>');
         tr.addEventListener('click',function(e){ if(e.target.tagName.toLowerCase()==='input') return; cb.checked=!cb.checked; cb.dispatchEvent(new Event('change')); });
         body.appendChild(tr);
       });
@@ -801,114 +927,120 @@ function enableHeaderDnD(theadEl, driverOffset, checkboxOffset){
         if(ev.key==='Escape'){ pendingValue=oldText; input.blur(); }
       });
     });
-    // ---------- EDIT MODAL ----------
     
+    // ---------- EDIT MODAL (clean) ----------
     const editModal = document.getElementById('edit_modal');
-    const fFrom = document.getElementById('f_from');
-    const fLoadIn = document.getElementById('f_loadin');
-    const fContainer = document.getElementById('f_container');
-    const fAppt = document.getElementById('f_appt');
-    const fBk = document.getElementById('f_bk');
-    const fWindow = document.getElementById('f_window');
-    const fInstruction = document.getElementById('f_instruction');
-
-    function openEdit(){
-      if(state.selectedPickups.size!==1){ toast('Select exactly 1 pickup to edit'); return; }
-      const id=[...state.selectedPickups][0];
-      state.editOriginalId = id;
-      const rec = pickups.find(p=>p.id===id);
-      if(!rec){ toast('Pickup not found'); return; }
-      document.getElementById('f_jobpill').textContent = `${rec.id} • ${rec.window}`;
-      fFrom.value = `${rec.from} → ${rec.to||''}`;
-      fLoadIn.value = (rec.to||'').split(',')[0] || '';
-      fContainer.value = rec.container || '';
-      fAppt.value = rec.appt || '';
-      fBk.value = rec.bk || '';
-      fWindow.value = rec.window || '';
-      fInstruction.value = '';
-      editModal.style.display='flex';
+    const eFrom = document.getElementById('e_from');
+    const eTo = document.getElementById('e_to');
+    const eContainer = document.getElementById('e_container');
+    const eLoadEmpty = document.getElementById('e_loadempty');
+    const eBkPin = document.getElementById('e_bkpin');
+    const eImpExp = document.getElementById('e_impexp');
+    const eSeal = document.getElementById('e_seal');
+    const eWindow = document.getElementById('e_window');
+    const eInstruction = document.getElementById('e_instruction');
+    // Local dropdowns (to remove OS checkmark and add border)
+    function initDropdown(triggerId, menuId, inputEl){
+      const trigger = document.getElementById(triggerId);
+      const menu = document.getElementById(menuId);
+      if(!trigger || !menu || !inputEl) return;
+      function close(){ menu.classList.add('hidden'); document.removeEventListener('click', onDoc); }
+      
+// ===== Initialize the custom dropdowns (applies to ALL Edit modals) =====
+document.addEventListener('DOMContentLoaded', function(){
+  try{
+    initDropdown('dd_loadempty','menu_loadempty', eLoadEmpty);
+    initDropdown('dd_impexp','menu_impexp', eImpExp);
+    // Default trigger labels
+    var t1=document.getElementById('dd_loadempty'); if(t1 && !t1.textContent.trim()) t1.textContent='Select…';
+    var t2=document.getElementById('dd_impexp');   if(t2 && !t2.textContent.trim()) t2.textContent='Select…';
+  }catch(_){ /* no-op */ }
+});
+// ======================================================================
+function onDoc(e){ if(!menu.contains(e.target) && e.target!==trigger) close(); }
+      trigger.onclick = () => {
+        menu.classList.toggle('hidden');
+        if(!menu.classList.contains('hidden')) document.addEventListener('click', onDoc);
+      };
+      menu.querySelectorAll('[data-val]').forEach(item => {
+        item.onclick = () => { inputEl.value=item.dataset.val; trigger.textContent=item.textContent; close(); };
+      });
     }
+
+
+    function clearEditFields(){
+      eFrom.value=''; eTo.value=''; eContainer.value=''; eLoadEmpty.value=''; eBkPin.value='';
+      eImpExp.value=''; eSeal.value=''; eWindow.value=''; eInstruction.value='';
+    }
+    try{ const a=document.getElementById('dd_loadempty'); if(a) a.textContent='Select…'; }catch(_){}
+    try{ const b=document.getElementById('dd_impexp'); if(b) b.textContent='Select…'; }catch(_){}
+    
     function closeEdit(){ editModal.style.display='none'; }
 
-    document.getElementById('btn_edit').addEventListener('click', openEdit);
-    document.getElementById('btn_modal_cancel').addEventListener('click', function(){
-      openConfirm('Cancel changes?', function(){ state.createMode=null; closeEdit(); });
-    });
-    document.getElementById('btn_modal_update').addEventListener('click', function(){
-      if(state.createMode==='pending'){
-        openConfirm('Create this Main Dispatch pickup?', function(){
-          const parts = fFrom.value.split('→');
-          const from = (parts[0]||'').trim();
-          const to = (parts[1]||'').trim();
-          const newId = 'NEW-' + Date.now();
-          const item = { id:newId, from:from||'—', to:to||'', container:fContainer.value.trim(), appt:fAppt.value.trim(), bk:fBk.value.trim(), window:fWindow.value.trim(), status:'Pending' };
-          pending.push(item);
-          state.createMode=null;
-          closeEdit();
-          renderPending(); updateBadges(); toast('Created in Main Dispatch');
-        });
-      } else if(state.editScope==='pending'){
-        openConfirm('Update this Main Dispatch row?', function(){
-          const id = state.editOriginalId;
-          const rec = pending.find(p=>p.id===id);
-          if(rec){
-            const parts = fFrom.value.split('→');
-            rec.from = (parts[0]||rec.from||'').trim();
-            rec.to = (parts[1]||rec.to||'').trim();
-            rec.container = fContainer.value.trim();
-            rec.appt = fAppt.value.trim();
-            rec.bk = fBk.value.trim();
-            rec.window = fWindow.value.trim();
-            rec.remark = fInstruction.value.trim();
-          }
-          state.editScope=null;
-          closeEdit();
-          renderPending();
-          toast('Main Dispatch updated');
-        });
-      } else {
-        openConfirm('Update this assignment?', function(){
-          const id = state.editOriginalId;
-          const rec = pickups.find(p=>p.id===id);
-          if(rec){
-            const parts = fFrom.value.split('→');
-            rec.from = (parts[0]||rec.from).trim();
-            rec.to = (parts[1]||rec.to||'').trim();
-            rec.container = fContainer.value.trim();
-            rec.appt = fAppt.value.trim();
-            rec.bk = fBk.value.trim();
-            rec.window = fWindow.value.trim();
-          }
-          closeEdit();
-          renderPickups();
-          toast('Pickup updated');
-        });
-      }
-    });
-
-    
-    // Edit (Main Dispatch) - edit exactly one selected pending row
-    document.addEventListener('click', function(e){
-      if(e.target && e.target.id==='btn_edit_pending'){
+    function openEdit(){
+      let arr=null, selId=null, title='Edit Job';
+      if(state.currentTab==='pending'){
         if(state.selectedPending.size!==1){ toast('Select exactly 1 row in Main Dispatch to edit'); return; }
-        const id=[...state.selectedPending][0];
-        state.editOriginalId = id;
-        state.editScope = 'pending';
-        const rec = pending.find(p=>p.id===id);
-        if(!rec){ toast('Row not found'); return; }
-        document.getElementById('edit_title').textContent = 'Edit Main Dispatch';
-        document.getElementById('f_jobpill').textContent = `${rec.id} • ${rec.window||''}`;
-        fFrom.value = `${rec.from||''} → ${rec.to||''}`;
-        fLoadIn.value = (rec.to||'').split(',')[0] || '';
-        fContainer.value = rec.container || '';
-        fAppt.value = rec.appt || '';
-        fBk.value = rec.bk || '';
-        fWindow.value = rec.window || '';
-        fInstruction.value = rec.remark || '';
-        editModal.style.display='flex';
+        arr=pending; selId=[...state.selectedPending][0]; title='Edit Main Dispatch';
+      } else if(state.currentTab==='inprogress'){
+        if(state.selectedInprogress.size!==1){ toast('Select exactly 1 In‑Progress row'); return; }
+        arr=(window.inprogress||[]); selId=[...state.selectedInprogress][0]; title='Edit In‑Progress';
+      } else {
+        return;
       }
+      state.editScope = (state.currentTab==='pending') ? 'pending' : 'inprogress';
+      state.editOriginalId = selId;
+      const rec = arr.find(r=>r.id===selId) || {};
+      document.getElementById('edit_title').textContent = title;
+      document.getElementById('e_jobpill').textContent = (rec.id||'Job #') + (rec.window?(' • '+rec.window):'');
+      clearEditFields(); // always blank
+      editModal.style.display='flex';
+// Ensure dropdowns are (re)initialized each time the modal opens
+try{
+  initDropdown('dd_loadempty','menu_loadempty', eLoadEmpty);
+  initDropdown('dd_impexp','menu_impexp', eImpExp);
+  var t1=document.getElementById('dd_loadempty'); if(t1 && !t1.textContent.trim()) t1.textContent='Select…';
+  var t2=document.getElementById('dd_impexp');   if(t2 && !t2.textContent.trim()) t2.textContent='Select…';
+}catch(_){}
+}
+
+    document.getElementById('btn_edit_pending')?.addEventListener('click', openEdit);
+    document.getElementById('btn_ip_edit')?.addEventListener('click', openEdit);
+
+    document.getElementById('btn_modal_cancel').addEventListener('click', function(){
+      openConfirm('Cancel changes?', function(){ closeEdit(); });
     });
 
+    document.getElementById('btn_modal_update').addEventListener('click', function(){
+      let arr=null, render=null, okMsg='Updated';
+      if(state.editScope==='pending'){ arr=pending; render=renderPending; okMsg='Main Dispatch updated'; }
+      else if(state.editScope==='inprogress'){ arr=(window.inprogress||[]); render=renderInprogress; okMsg='In‑Progress updated'; }
+      else { closeEdit(); return; }
+      const rec = arr.find(r=>r.id===state.editOriginalId); if(!rec){ closeEdit(); return; }
+
+      const updates = {
+        from: eFrom.value.trim(),
+        to: eTo.value.trim(),
+        container: eContainer.value.trim(),
+        appt: eLoadEmpty.value.trim(), // store LOAD/EMPTY into existing 'appt' field to avoid schema changes
+        bk: eBkPin.value.trim(),
+        ie: eImpExp.value.trim(),
+        seal: eSeal.value.trim(),
+        window: eWindow.value.trim(),
+        remark: eInstruction.value.trim()
+      };
+      openConfirm('Save changes to this job?', function(){
+        Object.entries(updates).forEach(([k,v])=>{ if(v!=='') rec[k]=v; });
+        closeEdit(); render(); renderDrivers(); updateBadges(); syncActionButtons(); toast(okMsg);
+        try{
+          if(typeof window.driverAppNotify==='function'){
+            window.driverAppNotify({type:'job-edit', id:rec.id, fields:updates});
+          }
+          window.dispatchEvent(new CustomEvent('job-edit',{detail:{id:rec.id,fields:updates}}));
+        }catch(_){}
+        state.editScope=null;
+      });
+    });
 
     // ---------- CONFIRM ----------
     function openConfirm(msg, onYes){
@@ -1144,9 +1276,6 @@ document.addEventListener('dblclick', function(e){
   } else { COLUMN_LABELS[key]=next; th.textContent=next; }
 });
 </script>
-
-
-
 <script>
 (function(){
   function ready(fn){ 
@@ -1203,6 +1332,126 @@ document.addEventListener('dblclick', function(e){
   });
 })();
 </script>
+<script>
+// ===== CREATE NEW (Full-screen modal) =====
+const createModal = document.getElementById('create_modal');
+function openCreate(){
+  if(!createModal) return;
+  // Reset fields
+  ['c_id','c_window','c_from','c_to','c_container','c_bkpin','c_seal','c_appt','c_pudate','c_deliveryDate','c_lfd','c_returnDate','c_returnPort','c_customer','c_chassis','c_size','c_pin','c_instruction']
+    .forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  const leTrig = document.getElementById('c_dd_loadempty'); if(leTrig) leTrig.textContent='Select…';
+  const ieTrig = document.getElementById('c_dd_impexp'); if(ieTrig) ieTrig.textContent='Select…';
+  const leHid = document.getElementById('c_loadempty'); if(leHid) leHid.value='';
+  const ieHid = document.getElementById('c_impexp'); if(ieHid) ieHid.value='';
+  createModal.style.display='flex';
+  try{
+    initDropdown('c_dd_loadempty','c_menu_loadempty', document.getElementById('c_loadempty'));
+    initDropdown('c_dd_impexp','c_menu_impexp', document.getElementById('c_impexp'));
+  }catch(_){}
+}
+function closeCreate(){ if(createModal) createModal.style.display='none'; }
+document.getElementById('btn_create_pending')?.addEventListener('click', openCreate);
+document.getElementById('btn_create_cancel')?.addEventListener('click', function(){ openConfirm('Confirm cancel? Your entries will be lost.', closeCreate); });
+document.getElementById('btn_create_update')?.addEventListener('click', function(){
+  const id = (document.getElementById('c_id')?.value||'').trim();
+  if(!id){ toast('Enter a Job #'); return; }
+  const rec = {
+    id,
+    from: (document.getElementById('c_from')?.value||'').trim(),
+    to: (document.getElementById('c_to')?.value||'').trim(),
+    container: (document.getElementById('c_container')?.value||'').trim(),
+    appt: (document.getElementById('c_loadempty')?.value||'').trim(), // Load/Empty mapping (keeps schema)
+    bk: (document.getElementById('c_bkpin')?.value||'').trim(),
+    ie: (document.getElementById('c_impexp')?.value||'').trim(),
+    seal: (document.getElementById('c_seal')?.value||'').trim(),
+    window: (document.getElementById('c_window')?.value||'').trim(),
+    remark: (document.getElementById('c_instruction')?.value||'').trim(),
+    pudate: (document.getElementById('c_pudate')?.value||'').trim(),
+    deliveryDate: (document.getElementById('c_deliveryDate')?.value||'').trim(),
+    lfd: (document.getElementById('c_lfd')?.value||'').trim(),
+    returnDate: (document.getElementById('c_returnDate')?.value||'').trim(),
+    returnPort: (document.getElementById('c_returnPort')?.value||'').trim(),
+    customer: (document.getElementById('c_customer')?.value||'').trim(),
+    chassis: (document.getElementById('c_chassis')?.value||'').trim(),
+    size: (document.getElementById('c_size')?.value||'').trim(),
+    pin: (document.getElementById('c_pin')?.value||'').trim(),
+    status: 'Pending'
+  };
+  openConfirm('Create this new pickup in Main Dispatch?', function(){
+    pending.push(rec);
+    renderPending(); updateBadges(); closeCreate(); switchTab('pending'); toast('Pickup created');
+  });
+});
+</script>
 
+<script>
+(function(){
+  function ready(fn){ if(document.readyState!=='loading') fn(); else document.addEventListener('DOMContentLoaded', fn); }
+  ready(function(){
+    var cancelBtn = document.getElementById('btn_create_cancel');
+    var updateBtn = document.getElementById('btn_create_update');
+    // Rebind by cloning to remove old listeners
+    function rebind(el, handler){
+      if(!el) return null;
+      var clone = el.cloneNode(true);
+      el.parentNode.replaceChild(clone, el);
+      clone.addEventListener('click', function(e){
+        e.preventDefault();
+        handler();
+      });
+      return clone;
+    }
+    function doCancel(){
+      if(typeof openConfirm==='function'){
+        openConfirm('Confirm cancel? Your entries will be lost.', function(){
+          var modal = document.getElementById('create_modal');
+          if(modal) modal.style.display='none';
+        });
+      }
+    }
+    function doUpdate(){
+      if(typeof openConfirm!=='function'){ return; }
+      openConfirm('Create this new pickup in Main Dispatch?', function(){
+        // Collect and push (same as previous logic)
+        function gv(id){ var el=document.getElementById(id); return (el && el.value||'').trim(); }
+        var rec = {
+          id: gv('c_id'),
+          from: gv('c_from'),
+          to: gv('c_to'),
+          container: gv('c_container'),
+          appt: gv('c_loadempty'),
+          bk: gv('c_bkpin'),
+          ie: gv('c_impexp'),
+          seal: gv('c_seal'),
+          window: gv('c_window'),
+          remark: gv('c_instruction'),
+          pudate: gv('c_pudate'),
+          deliveryDate: gv('c_deliveryDate'),
+          lfd: gv('c_lfd'),
+          returnDate: gv('c_returnDate'),
+          returnPort: gv('c_returnPort'),
+          customer: gv('c_customer'),
+          chassis: gv('c_chassis'),
+          size: gv('c_size'),
+          pin: gv('c_pin'),
+          status: 'Pending'
+        };
+        if(!rec.id){ toast && toast('Enter a Job #'); return; }
+        try{
+          pending.push(rec);
+          if(typeof renderPending==='function') renderPending();
+          if(typeof updateBadges==='function') updateBadges();
+          var modal = document.getElementById('create_modal'); if(modal) modal.style.display='none';
+          if(typeof switchTab==='function') switchTab('pending');
+          toast && toast('Pickup created');
+        }catch(e){ console.error(e); }
+      });
+    }
+    cancelBtn = rebind(cancelBtn, doCancel);
+    updateBtn = rebind(updateBtn, doUpdate);
+  });
+})();
+</script>
 </body>
 </html>
