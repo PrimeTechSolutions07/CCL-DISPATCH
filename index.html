@@ -53,6 +53,19 @@ thead th.colhdr{ text-align:center; }
 /* Centered dash for empty cells only */
 .dash-center{display:block;text-align:center;}
 
+#driverMsgModal .btn.primary:hover{ filter:brightness(1.05); }
+
+/* === CCL SEARCH UI (compact) === */
+.card.p-5{ position:relative; }
+.ccl-search-wrap{ position:absolute; right:14px; top:10px; width:280px; }
+@media (max-width:1200px){ .ccl-search-wrap{ width:220px; } }
+.ccl-search{ height:34px; line-height:34px; width:100%;
+  background:#0b1220; color:#e6edf7; border:1px solid #2b3a55; border-radius:10px; padding:0 12px; font-size:14px; }
+.ccl-search::placeholder{ color:#9fb2c8; letter-spacing:.02em; }
+.ccl-search:focus{ outline:none; border-color:#3b82f6; box-shadow:none; }
+/* === CCL SEARCH highlight (simple blue, no glow) === */
+.ccl-hl{ background:#3b82f6; color:#fff; font-weight:700; padding:0 .2em; border-radius:3px; }
+
 </style>
 <style>
 /* === Canva-style Header Highlight (Dark) — CSS-only === */
@@ -182,13 +195,485 @@ thead th.colhdr:hover{
   content:""; position:absolute; inset:-1px; border-radius:16px; pointer-events:none;
   box-shadow:0 0 0 1px rgba(99,102,241,.35), 0 0 24px rgba(99,102,241,.15) inset;
 }
-</style></head>
+
+/* Drivers scoped normal height + MSG icon + elapsed blink */
+#section_drivers_bottom thead th{ font-size: inherit;            /* match Main Dispatch font */
+  line-height: 1.1;              /* tighten a bit for normal row height */
+                /* NORMAL row padding */ padding-top:6px; padding-bottom:6px; }
+#section_drivers_bottom tbody td{ font-size: inherit;            /* match Main Dispatch font */
+  line-height: 1.1;              /* tighten a bit for normal row height */
+                /* NORMAL row padding */ padding-top:8px; padding-bottom:8px; }
+#section_drivers_bottom td.msg-cell{ text-align:center; }
+#section_drivers_bottom .msg-btn{
+  display:inline-grid; place-items:center;
+  width:28px; height:28px;       /* smaller button so row height stays normal */
+  padding:0;                     /* no extra padding */
+  border-radius:8px;
+  border:1px solid #334155;
+  background:#0f172a; color:#cbd5e1;
+  vertical-align:middle;
+}
+#section_drivers_bottom .msg-btn:hover{ background:#101a2b; }
+#section_drivers_bottom .elapsed{ color:#cfe7ff; opacity:.9; }
+#section_drivers_bottom .elapsed.late{ color:#ff3b30; animation:drv-blink 0.9s steps(2,start) infinite; font-weight:400; text-shadow:none; }
+@keyframes drv-blink{ 50%{ opacity:.35; } }
+
+
+/* drivers col-resize */
+#section_drivers_bottom{ overflow-x:auto; }
+#section_drivers_bottom table{ table-layout:auto; min-width:max-content; }
+#section_drivers_bottom thead th{ position:relative; }
+#section_drivers_bottom .col-grip{ position:absolute; top:0; right:-2px; width:8px; height:100%; cursor:col-resize; user-select:none; }
+body.dragging-col{ cursor:col-resize; user-select:none; }
+
+
+/* Accumulated Hours coloring */
+#section_drivers_bottom td.acc-hrs.ok{ color:#44d07e; }
+#section_drivers_bottom td.acc-hrs.over{ color:#ff3b30; }
+
+
+/* Driver header sort icon */
+#section_drivers_bottom thead th{ position:relative; padding-right:28px; }
+#section_drivers_bottom .sort-btn{
+  position:absolute; right:8px; top:50%; transform:translateY(-50%);
+  width:16px; height:16px; display:inline-flex; align-items:center; justify-content:center;
+  cursor:pointer; opacity:.6; transition:opacity .15s ease, filter .15s ease;
+}
+#section_drivers_bottom .sort-btn svg{ width:16px; height:16px; stroke:#49a2ff; fill:none; stroke-width:2; }
+#section_drivers_bottom .sort-btn:hover{ opacity:1; filter:drop-shadow(0 0 4px rgba(73,162,255,.7)); }
+#section_drivers_bottom thead th.active-sort .sort-btn{ opacity:1; }
+#section_drivers_bottom thead th.active-sort.asc .sort-btn svg{ stroke:#7cc4ff; }
+#section_drivers_bottom thead th.active-sort.desc .sort-btn svg{ stroke:#7cc4ff; transform:translateY(-50%) rotate(180deg); }
+
+
+/* === Drivers column filter dropdown === */
+#section_drivers_bottom .sort-btn{ pointer-events:auto; } /* allow clicking icon */
+#section_drivers_bottom .sort-btn svg{ color:#3aa3ff; }   /* iPhone blue */
+.pp-col-filter{
+  position:fixed; z-index:10005; width:320px; max-height:380px; overflow:hidden;
+  background:#0f1726; color:#eaf2ff; border:1px solid #263350; border-radius:12px;
+  box-shadow:0 20px 45px rgba(0,0,0,.45);
+}
+.pp-col-filter .ppf-head{
+  display:flex; align-items:center; gap:10px; padding:10px 12px; border-bottom:1px solid #203050;
+}
+.pp-col-filter .ppf-head input{
+  flex:1; background:#0b1220; border:1px solid #2a3b62; color:#cfe3ff; border-radius:8px;
+  padding:10px 12px; outline:none;
+}
+.pp-col-filter .ppf-list{
+  max-height:300px; overflow:auto; padding:6px 0;
+}
+.pp-col-filter .ppf-item{
+  display:flex; align-items:center; gap:10px; padding:8px 12px; cursor:pointer;
+}
+.pp-col-filter .ppf-item:hover{ background:#111b32; }
+.pp-col-filter .ppf-item input{ width:16px; height:16px; }
+.pp-col-filter .ppf-foot{
+  display:flex; justify-content:space-between; align-items:center; gap:8px;
+  padding:10px 12px; border-top:1px solid #203050;
+}
+.pp-col-filter .ppf-btn{
+  background:#0b1220; color:#cfe3ff; border:1px solid #2a3b62; border-radius:8px;
+  padding:8px 12px; cursor:pointer;
+}
+.pp-col-filter .ppf-btn.primary{
+  background:linear-gradient(90deg,#1b78ff,#41c0ff); color:#021225; border:none;
+}
+
+</style><style id="portpro_theme_overrides">
+/* === PortPro-style Theme Overrides (STYLE-ONLY) ===
+   NOTE: No HTML/JS/words/features changed. Pure CSS overrides.
+*/
+:root{
+  --bg:#0b1220;          /* deeper canvas */
+  --panel:#0e1523;       /* darker card */
+  --ink:#e6edf7;         /* text */
+  --muted:#a4b8d4;
+  --line:#223049;        /* border */
+  --brand:#0ea5e9;       /* sky */
+  --brand-2:#06b6d4;     /* cyan */
+  --accent:#93c5fd;      /* header accent */
+}
+body{ color:var(--ink); background:var(--bg); }
+
+/* Cards: stronger borders + subtle neon edge */
+.card{
+  background:var(--panel)!important;
+  border:1px solid var(--line)!important;
+  border-radius:16px!important;
+  box-shadow:
+    0 10px 28px rgba(0,0,0,.45),
+    inset 0 0 0 1px rgba(56,189,248,.10);
+}
+.card:hover{ box-shadow:
+  0 14px 34px rgba(0,0,0,.5),
+  inset 0 0 0 1px rgba(56,189,248,.18);
+}
+
+/* Tabs: crisp pill with inner glow on active */
+.tab{
+  background:#0b1220!important;
+  border:1px solid #2a3d61!important;
+  color:#d7e3f4!important;
+  transition:box-shadow .18s ease, border-color .18s ease, background .18s ease;
+}
+.tab:hover{ border-color:#3a5a8f!important; }
+.tab.active{
+  background:#0f2140!important;
+  border-color:#4a6aa0!important;
+  box-shadow:0 0 0 2px rgba(74,106,160,.35) inset, 0 6px 16px rgba(0,0,0,.35)!important;
+  color:#eaf2ff!important;
+}
+
+/* Pills (badges) */
+.pill{
+  background:#0f172a!important;
+  border:1px solid var(--line)!important;
+  color:#dbe7ff!important;
+}
+
+/* Buttons: unify radius and border, keep existing IDs/flows */
+.btn{
+  background:#0b1220;
+  border:1px solid var(--line);
+  color:#e5efff;
+  border-radius:12px;
+}
+.btn:hover{ background:#10192e; }
+.btn:disabled{ opacity:.45; cursor:not-allowed; }
+
+/* iOS primary variant stays, just smoother hover via variable */
+.btn-ios{ background:var(--brand); border-color:var(--brand); }
+.btn-ios:hover{ background:#1aa3ff; }
+
+/* Table header: glassy gradient + accent underglow */
+.relative.overflow-auto thead th{
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,0) 40%),
+    linear-gradient(180deg, #0f172a 0%, #121a27 70%, #0f172a 100%) !important;
+  border-bottom:1px solid #2b3a55!important;
+  backdrop-filter:saturate(140%) blur(4px);
+  color:#e6edf7!important;
+  letter-spacing:.02em;
+  box-shadow:
+    inset 0 -2px 0 0 #2b3a55,
+    0 8px 18px rgba(0,0,0,.35);
+}
+.relative.overflow-auto thead tr::after{
+  content:"";
+  position:sticky; left:0; right:0; bottom:-1px; height:5px; display:block; z-index:21; pointer-events:none;
+  background: linear-gradient(90deg, transparent 0%, var(--accent) 18%, var(--accent) 82%, transparent 100%);
+  box-shadow:0 0 14px var(--accent), 0 0 32px var(--accent), 0 0 64px var(--accent), 0 0 96px var(--accent);
+  filter:saturate(160%) brightness(1.25);
+}
+
+/* Table rows: subtle zebra + hover */
+tbody tr:nth-child(odd){ background:#141d2c!important; }
+tbody tr:nth-child(even){ background:#0f1623!important; }
+tbody tr:hover{ background:#12203a!important; }
+tbody tr.selected{ background:#213c74cc!important; }
+
+/* Column header separators + drag states */
+thead th.colhdr + th.colhdr{ box-shadow:-1px 0 0 0 rgba(51,65,85,.35) inset; }
+thead th.colhdr.dragging{ background:#1e3a8a!important; box-shadow:inset 0 0 0 3px #60a5fa, 0 0 0 2px rgba(96,165,250,.35)!important; }
+thead th.colhdr.drop-target{ background:#0b1731!important; box-shadow:inset 0 0 0 3px #93c5fd!important; }
+
+/* Checkboxes */
+.chk{ accent-color:#94a3b8; filter:grayscale(1); }
+.chk.active{ accent-color:#3b82f6; filter:none; }
+
+/* Modals: borders + depth only (no functional changes) */
+.modal .box{
+  background:#0b1220!important;
+  border:1px solid #2b3a55!important;
+  border-radius:18px!important;
+  box-shadow:0 16px 40px rgba(0,0,0,.55);
+}
+
+/* Edit/Create modal inner cards */
+#edit_modal .rounded-2xl,
+#create_modal .panel{
+  border:1px solid #2b3a55!important;
+  background:#0d1524!important;
+  box-shadow: inset 0 0 0 1px rgba(99,102,241,.15);
+}
+#edit_modal .rounded-2xl:after,
+#create_modal .panel:after{
+  content:"";
+  position:absolute; inset:-1px; border-radius:16px; pointer-events:none;
+  box-shadow:0 0 0 1px rgba(99,102,241,.25), 0 0 24px rgba(99,102,241,.12) inset;
+}
+
+/* Inputs inside modals */
+#edit_modal input, #edit_modal textarea,
+#create_modal input, #create_modal textarea{
+  background:#0f172a!important;
+  border:1px solid #334155!important;
+  color:#e5e7eb!important;
+  border-radius:12px!important;
+}
+
+/* Custom dropdown triggers in modals */
+#edit_modal .ccl-dd-trigger, #create_modal .ccl-dd-trigger{
+  background:#0f172a!important;
+  border:1px solid #334155!important;
+  color:#e5e7eb!important;
+}
+
+/* Header gradient bar */
+.brand-grad{
+  background:linear-gradient(120deg, #0b2a55 0%, #0f766e 100%)!important;
+  border-bottom:1px solid #1f2e49;
+}
+
+/* Driver badge counts (no text/feature change) */
+#drv_body .text-xs{ font-weight:600; letter-spacing:.01em; }
+
+/* Smooth scrollbars (dark) */
+* { scrollbar-width: thin; scrollbar-color: #334155 #0b1220; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: #0b1220; border-radius: 9999px; }
+::-webkit-scrollbar-thumb { background: #334155; border-radius: 9999px; border: 2px solid #0b1220; }
+::-webkit-scrollbar-thumb:hover { background: #475569; }
+</style><style id="tab_tray_active_theme">
+/* === Tab Tray + Active Highlight (style-only) === */
+.tab-tray{
+  display:flex; gap:8px; padding:6px;
+  border:1px solid rgba(60,90,130,.55);
+  background: radial-gradient(1200px 240px at 10% -20%, rgba(59,130,246,0.08), transparent 40%),
+              linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,0));
+  border-radius: 18px;
+  box-shadow: inset 0 0 0 1px rgba(56,189,248,.12), 0 10px 24px rgba(0,0,0,.35);
+}
+.tab{
+  border:1px solid rgba(70,100,140,.55);
+  background:#0b1220;
+  color:#cfe4ff;
+  border-radius: 12px;
+  padding:10px 14px;
+  transition: background .15s ease, box-shadow .15s ease, border-color .15s ease;
+}
+.tab:hover{ border-color:#3a5a8f; background:#0f1830; }
+.tab.active{
+  background: linear-gradient(180deg, #0f213c, #0a1628);
+  border-color:#4a6aa0;
+  box-shadow:
+    inset 0 0 0 2px rgba(99,102,241,.28),
+    0 0 0 1px rgba(56,189,248,.2),
+    0 8px 22px rgba(0,0,0,.45);
+  color:#eaf2ff;
+}
+/* Small number badges already rendered; keep color but add subtle ring */
+.tab .badge, .tab .count, .tab span.rounded-full{
+  box-shadow: 0 0 0 1px rgba(56,189,248,.25);
+}
+
+/* Align tray area if wrapper exists */
+.tabs-wrap, nav .tabs, .tab-container{ display:block; }
+</style><style id="tab_border_override">
+/* === Tabs: remove inner borders (style-only) === */
+.tab { border: none !important; }
+.tab:hover { border-color: transparent !important; }
+.tab.active {
+  border: none !important;
+  /* keep the active look without an inner ring */
+  box-shadow:
+    0 8px 22px rgba(0,0,0,.45),
+    0 0 14px rgba(56,189,248,.22);
+}
+</style><style id="tab_bright_override">
+/* === Brighter tray + active tab highlight (style-only) === */
+.tab-tray{
+  border-color: rgba(140, 190, 255, 0.85) !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(99, 179, 237, .20),
+    0 0 0 1px rgba(99, 179, 237, .25),
+    0 10px 24px rgba(0,0,0,.45) !important;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,0) 40%) !important;
+}
+.tab{
+  border: none !important;
+  background: #0b1220 !important;
+}
+.tab:hover{
+  background:#0f1830 !important;
+  box-shadow: 0 0 0 1px rgba(99,179,237,.18) !important;
+}
+.tab.active{
+  background: linear-gradient(180deg, #0f213c, #0a1628) !important;
+  box-shadow:
+    0 0 0 1px rgba(99,179,237,.40),
+    0 8px 22px rgba(0,0,0,.50),
+    0 0 24px rgba(99,179,237,.25) !important;
+  color:#eaf2ff !important;
+}
+.tab .badge, .tab .count, .tab span.rounded-full{
+  box-shadow: 0 0 0 1px rgba(99,179,237,.30) !important;
+}
+</style><style id="tab_visual_pass_v2">
+/* === Tabs visual pass v2 (style-only) === */
+/* 1) Main tray: brighter, clearer outline */
+.tab-tray{
+  border-color: rgba(140,190,255,0.95) !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(99,179,237,.25),
+    0 0 0 2px rgba(99,179,237,.20),
+    0 14px 28px rgba(0,0,0,.45) !important;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,0) 45%) !important;
+  border-radius: 18px !important;
+  padding: 6px !important;
+}
+
+/* 2) Tabs default: blended (no inner border), subtle dark background */
+.tab{
+  border: none !important;
+  background: rgba(10,16,28,.55) !important;
+  color: #d7e8ff !important;
+  border-radius: 12px !important;
+  padding: 10px 14px !important;
+  transition: box-shadow .15s ease, background .15s ease, transform .15s ease;
+  box-shadow: none !important;
+  opacity: .92;
+}
+.tab:hover{
+  background: rgba(14,22,38,.72) !important;
+  box-shadow: 0 0 0 1px rgba(99,179,237,.20) !important;
+}
+/* 3) Active tab: obvious highlight */
+.tab.active{
+  background: linear-gradient(180deg, #1a2943, #0f1c32) !important;
+  color: #ffffff !important;
+  box-shadow:
+    0 0 0 2px rgba(99,179,237,.45),
+    0 10px 24px rgba(0,0,0,.55),
+    0 0 28px rgba(99,179,237,.22) !important;
+  transform: translateZ(0);
+}
+
+/* 4) Badges inside tabs: unify color */
+.tab .badge,
+.tab .count,
+.tab span.rounded-full,
+.tab .pill{
+  background: rgba(27,102,177,.95) !important;  /* unified blue */
+  color: #eaf6ff !important;
+  border: none !important;
+  box-shadow: 0 0 0 1px rgba(99,179,237,.35) !important;
+}
+
+/* Keep non-tab chips elsewhere unchanged */
+</style><style>
+/* --- Stop funnel icon flipping --- */
+#section_drivers_bottom thead th.active-sort.asc .sort-btn svg,
+#section_drivers_bottom thead th.active-sort.desc .sort-btn svg{
+  transform:none !important;
+}
+</style>
+
+<style>
+/* === FORCE-HIDE FILTER ICONS on specific Driver columns ===
+   Drivers header order:
+   1: Checkbox | 2: ID | 3: Acc Hrs | 4: Driver | 5: MSG | 6: Status | 7: ETA | 8: Elaps Time
+   Hide on 1,2,3,5,7,8 (keep Driver + Status).
+*/
+#section_drivers_bottom thead th:nth-child(1) .sort-btn,
+#section_drivers_bottom thead th:nth-child(2) .sort-btn,
+#section_drivers_bottom thead th:nth-child(3) .sort-btn,
+#section_drivers_bottom thead th:nth-child(5) .sort-btn,
+#section_drivers_bottom thead th:nth-child(7) .sort-btn,
+#section_drivers_bottom thead th:nth-child(8) .sort-btn { display: none !important; }
+#section_drivers_bottom thead th:nth-child(1) svg,
+#section_drivers_bottom thead th:nth-child(2) svg,
+#section_drivers_bottom thead th:nth-child(3) svg,
+#section_drivers_bottom thead th:nth-child(5) svg,
+#section_drivers_bottom thead th:nth-child(7) svg,
+#section_drivers_bottom thead th:nth-child(8) svg { display: none !important; }
+</style>
+
+
+<style>
+/* v11 — Search bar spacing tweak */
+.ccl-search-tight { margin-top: 0 !important; margin-bottom: 6px !important; padding-top: 0 !important; }
+.ccl-search-tight input[type="search"],
+.ccl-search-tight input[type="text"] { margin-top: 0 !important; }
+</style>
+<script>
+// v11 — tighten search bar spacing + brighter highlight + force-first-row
+(function(){
+  function ready(fn){ if(document.readyState!=='loading') fn(); else document.addEventListener('DOMContentLoaded', fn, {once:true}); }
+  ready(function(){
+    // 1) Tighten the search bar spacing
+    (function tightenSearch(){
+      // Heuristic: find a search input near the tabs/header and pull it up visually
+      const candidates = Array.from(document.querySelectorAll('input[type="search"], input[type="text"]'))
+        .filter(el => {
+          const ph = (el.getAttribute('placeholder')||'').toLowerCase();
+          const id = (el.id||'').toLowerCase();
+          const cls = (el.className||'').toLowerCase();
+          // Likely search fields
+          return ph.includes('search') || id.includes('search') || cls.includes('search');
+        });
+      // Pick the first visible candidate
+      const vis = candidates.find(el => {
+        const s = getComputedStyle(el);
+        return s.display!=='none' && s.visibility!=='hidden' && el.offsetParent!==null;
+      });
+      if(vis){
+        const holder = vis.closest('.search, .search-bar, .searchbar, .controls, .toolbar, .panel, .row, div');
+        if(holder){ holder.classList.add('ccl-search-tight'); }
+        // Also nudge up by negative margin if needed (subtle)
+        vis.style.marginTop = '0px';
+        if(holder && !/ccl-tabs|tabs_container/.test(holder.id||'')){
+          holder.style.marginTop = '0px';
+        }
+      }
+    })();
+
+    // 2) Override highlight to be REALLY bright and always first row
+    function brightFocusRowById(id){
+      const body = document.getElementById('pending_body') || document.querySelector('#section_pending tbody');
+      if(!body || !id) return;
+      const row = body.querySelector('tr[data-id="'+CSS.escape(id)+'"]');
+      if(!row) return;
+      // Move to very top
+      if(body.firstChild !== row){
+        body.insertBefore(row, body.firstChild);
+      }
+      // Very bright highlight (vivid yellow)
+      row.style.transition = 'background 120ms ease-in';
+      const old = row.style.backgroundColor;
+      row.style.backgroundColor = 'rgba(255, 238, 0, 0.9)'; // brighter
+      setTimeout(function(){ row.style.backgroundColor = old || ''; }, 800);
+      try{ row.scrollIntoView({block:'center'}); }catch(_){}
+    }
+
+    // Hook into the v10 flow after render
+    document.addEventListener('click', function(e){
+      const t = e.target;
+      if(!t) return;
+      if(t.id === 'btn_create_update' || (t.closest && t.closest('#btn_create_update'))){
+        setTimeout(function(){
+          try{
+            const id = (document.getElementById('c_id')||{}).value || '';
+            if(id) brightFocusRowById(id.trim());
+          }catch(_){}
+        }, 150);
+      }
+    }, true);
+  });
+})();
+</script>
+
+</head>
 <body class="min-h-screen">
 <header class="brand-grad p-4 flex items-center justify-between">
 <h1 class="text-lg font-semibold">Coastal City Logistics — Dispatch Board</h1>
 </header>
 <main class="max-w-screen-2xl w-full mx-auto p-6 space-y-6">
-<div class="flex items-center gap-2" id="tabs_container">
+<div class="flex items-center gap-2 tab-tray" id="tabs_container">
 <!-- Original order: Pickups, Assigned, Completed, Pending (renamed visually) -->
 <button class="tab active" id="tab_pending" onclick="switchTab('pending')">Main Dispatch <span class="ml-2 px-2 py-0.5 rounded-full text-xs bg-yellow-900 text-yellow-200" id="badge_pending">0</span></button>
 <button class="tab" id="tab_pickups" onclick="switchTab('pickups')">Pickups <span class="ml-2 px-2 py-0.5 rounded-full text-xs bg-blue-900 text-blue-200" id="badge_pickups">0</span></button>
@@ -265,7 +750,7 @@ thead th.colhdr:hover{
 <!-- MAIN DISPATCH (Pending) -->
 <section class="space-y-4 hidden" id="section_pending">
 <div class="card p-5">
-<h2 class="text-xl font-bold text-yellow-300 mb-3">Main Dispatch</h2>
+<h2 class="text-xl font-bold text-yellow-300 mb-3">Main Dispatch</h2><div class="ccl-search-wrap"><input id="pending_search" class="ccl-search" type="text" placeholder="SEARCH" /></div>
 <div class="relative overflow-auto rounded-xl" style="max-height:320px">
 <table>
 <thead><tr></tr></thead>
@@ -289,9 +774,13 @@ thead th.colhdr:hover{
 <thead>
 <tr>
 <th style="width:42px"></th>
-<th>Driver</th><th>Employee ID</th>
-<th>Assigned</th>
+<th style="width:100px">ID</th>
+<th style="width:90px">Acc Hrs</th>
+<th style="width:220px">Driver</th>
+<th style="width:74px" class="right">MSG</th>
 <th>Status</th>
+<th style="width:90px">ETA</th>
+<th style="width:120px">Elaps Time</th>
 </tr>
 </thead>
 <tbody id="drv_body"></tbody>
@@ -703,8 +1192,24 @@ function enableHeaderDnD(theadEl, driverOffset, checkboxOffset){
         });
         td0.appendChild(cb); tr.appendChild(td0);
         const load=counts[d.id]||0;
-        tr.insertAdjacentHTML('beforeend','<td>'+d.name+'</td>'+'<td>'+(d.empId||"—")+'</td>'+'<td><span class="ml-1 px-2 py-0.5 rounded-full text-xs bg-blue-900 text-blue-200">'+load+'</span></td>'+'<td>'+(d.status||"AVL")+'</td>');
-        tr.addEventListener('click',function(e){ if(e.target.tagName.toLowerCase()==='input') return; cb.checked=!cb.checked; cb.dispatchEvent(new Event('change')); });
+        
+    // New columns: ID, Driver, MSG, Status, ETA, Elaps Time
+    const tdId=document.createElement('td'); tdId.textContent=(d.empId||"—"); tr.appendChild(tdId);
+    
+    const tdAcc=document.createElement('td'); tdAcc.className='acc-hrs'; tdAcc.textContent=(d._accHrsStr||'—');
+    if(d._accOver){ tdAcc.classList.add('over'); } else { tdAcc.classList.add('ok'); }
+    tr.appendChild(tdAcc);
+const tdName=document.createElement('td'); tdName.textContent=d.name; tr.appendChild(tdName);
+    const tdMsg=document.createElement('td'); tdMsg.className='msg-cell';
+    tdMsg.innerHTML='<button class="msg-btn" title="Message driver" data-emp="'+(d.empId||'')+'">'+
+      '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">'+
+      '<rect x="3" y="5" width="18" height="14" rx="3" stroke="currentColor" stroke-width="1.5"/>'+
+      '<path d="M5 7l7 6 7-6" stroke="currentColor" stroke-width="1.5" fill="none"/></svg></button>';
+    tr.appendChild(tdMsg);
+    const tdStatus=document.createElement('td'); tdStatus.textContent=(d.status||"AVL"); tr.appendChild(tdStatus);
+    const tdEta=document.createElement('td'); tdEta.className='eta'; tdEta.textContent=(d.etaStr||"—"); tr.appendChild(tdEta);
+    const tdEl=document.createElement('td'); tdEl.className='elapsed'; tdEl.textContent=(d._elapsedStr||"—"); if(d._isLate) tdEl.classList.add('late'); tr.appendChild(tdEl);
+tr.addEventListener('click',function(e){ if(e.target.tagName.toLowerCase()==='input') return; cb.checked=!cb.checked; cb.dispatchEvent(new Event('change')); });
         body.appendChild(tr);
       });
     }
@@ -1305,14 +1810,1568 @@ document.addEventListener('dblclick', function(e){
   .wrap{position:fixed;inset:46px 8px 8px 8px}
   iframe{width:100%;height:100%;border:1px solid #243045;border-radius:14px}
 </style>
+<style>
+/* --- Stop funnel icon flipping --- */
+#section_drivers_bottom thead th.active-sort.asc .sort-btn svg,
+#section_drivers_bottom thead th.active-sort.desc .sort-btn svg{
+  transform:none !important;
+}
+</style>
+
+<style>
+/* === FORCE-HIDE FILTER ICONS on specific Driver columns ===
+   Drivers header order:
+   1: Checkbox | 2: ID | 3: Acc Hrs | 4: Driver | 5: MSG | 6: Status | 7: ETA | 8: Elaps Time
+   Hide on 1,2,3,5,7,8 (keep Driver + Status).
+*/
+#section_drivers_bottom thead th:nth-child(1) .sort-btn,
+#section_drivers_bottom thead th:nth-child(2) .sort-btn,
+#section_drivers_bottom thead th:nth-child(3) .sort-btn,
+#section_drivers_bottom thead th:nth-child(5) .sort-btn,
+#section_drivers_bottom thead th:nth-child(7) .sort-btn,
+#section_drivers_bottom thead th:nth-child(8) .sort-btn { display: none !important; }
+#section_drivers_bottom thead th:nth-child(1) svg,
+#section_drivers_bottom thead th:nth-child(2) svg,
+#section_drivers_bottom thead th:nth-child(3) svg,
+#section_drivers_bottom thead th:nth-child(5) svg,
+#section_drivers_bottom thead th:nth-child(7) svg,
+#section_drivers_bottom thead th:nth-child(8) svg { display: none !important; }
+</style>
+
 </head><body>
   <div class="top">Driver GPS • Long Beach Port</div>
   <div class="wrap">
     <iframe loading="lazy" allowfullscreen referrerpolicy="no-referrer-when-downgrade" src="${embedSrc}"></iframe>
   </div>
+
+<script>
+(function(){
+  const ETA_BASELINES={'DSV':40,'APM TERMINALS':40,'SSA MARINE':35,'FENIX':45,'TRAPAC':30,'EVERPORT':35,'YUSEN':30};
+  function baselineForCustomer(n){ if(!n) return 40; const u=String(n).toUpperCase(); for(const k in ETA_BASELINES){ if(u.includes(k)) return ETA_BASELINES[k]; } return 40; }
+  function parseCustomer(s){ if(!s) return ''; const m=String(s).replace(/^enoute/i,'Enroute').match(/(?:Enroute|Arrived)\s*(?:To|At)?\s*[:\-]?\s*(.*)$/i); return m&&m[1]?m[1].trim():''; }
+  function fmtHM(t){ const d=t instanceof Date?t:new Date(t); if(isNaN(d)) return '—'; const h=String(d.getHours()).padStart(2,'0'), m=String(d.getMinutes()).padStart(2,'0'); return h+':'+m; }
+  function fmtElapsed(ms){ if(!ms||ms<0) return '—'; const mm=Math.floor(ms/60000); if(mm<60) return mm+' mins'; const h=Math.floor(mm/60), m=mm%60; return h+'h '+m+'m'; }
+  function arr(){ return (typeof drivers!=='undefined'?drivers:(window.drivers=window.drivers||[])); }
+  function tick(){
+    const a=arr(), now=Date.now();
+    a.forEach(d=>{
+const s=(d.status||'').trim(), cust=parseCustomer(s);
+      if(!d.phase){ d.phase=/^enroute\b/i.test(s)?'ENROUTE':(/^arrived\b/i.test(s)?'ARRIVED':'OTHER'); }
+      if(!d.phaseStartedAt && (d.phase==='ENROUTE'||d.phase==='ARRIVED')) d.phaseStartedAt=now;
+      if(d.phase==='ENROUTE'){
+        const exp=d.expectedMins||baselineForCustomer(cust), start=d.phaseStartedAt||now;
+        d.etaStr=fmtHM(start+exp*60000); const el=now-start; d._elapsedStr=fmtElapsed(el); d._isLate=(el/60000) > exp+5; if(d._isLate){ d._elapsedStr = d._elapsedStr + ' (Exp. ' + exp + 'm)'; }
+      }else if(d.phase==='ARRIVED'){
+        d.etaStr='—'; const el=now-(d.phaseStartedAt||now); d._elapsedStr=fmtElapsed(el); d._isLate=false;
+      }else{ d.etaStr='—'; d._elapsedStr='—'; d._isLate=false; }
+    
+      /* ACCUMULATED HOURS */
+      if(d.shiftStartedAt){
+        const hrs = (now - d.shiftStartedAt)/3600000;
+        const rounded = Math.round(hrs*100)/100;
+        d._accHrsStr = String(rounded);
+        d._accOver = hrs >= 8;
+      } else {
+        d._accHrsStr = '—';
+        d._accOver = false;
+      }
+});
+if(typeof renderDrivers==='function') renderDrivers();
+  }
+  setInterval(tick,30000); window.addEventListener('load', ()=>setTimeout(tick,300));
+  if(typeof renderDrivers==='function'){ try{ renderDrivers(); }catch(_){} }
+})();
+</script>
+
+
+<!-- DEMO INIT FOR DRIVERS -->
+<script>
+(function(){
+  const now = Date.now();
+  try{
+    if(Array.isArray(drivers)){
+      const byEmp = id => drivers.find(d => String(d.empId)===String(id));
+      let d;
+      d = byEmp('53939'); if(d){ d.status='Arrived : APM Terminals (Pier 400)'; d.phase='ARRIVED'; d.phaseStartedAt=now-12*60000; }
+      d = byEmp('54545'); if(d){ d.status='Enroute : SSA Marine (Pier A)'; d.phase='ENROUTE'; d.phaseStartedAt=now-55*60000; d.expectedMins=35; }
+      d = byEmp('554421'); if(d){ d.status='Arrived : Fenix Marine Services (Pier 300)'; d.phase='ARRIVED'; d.phaseStartedAt=now-8*60000; }
+      d = byEmp('598771'); if(d){ d.status='Enroute : TraPac Terminal (Pier G)'; d.phase='ENROUTE'; d.phaseStartedAt=now-50*60000; d.expectedMins=30; }
+    }
+  }catch(_){}
+  if(typeof renderDrivers==='function'){ try{ renderDrivers(); }catch(_){} }
+})();
+</script>
+
+
+<!-- DRIVER MESSAGE MODAL -->
+<style>
+#driverMsgOverlay{ position:fixed; inset:0; background:rgba(2,8,23,.55); display:none; z-index:1000; }
+#driverMsgModal{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:1001; }
+#driverMsgModal .card{ width:480px; max-width:92vw; background:#0b1322; border:1px solid #1f2a44; border-radius:16px; box-shadow:0 10px 40px rgba(0,0,0,.5); color:#e5edf8; }
+#driverMsgModal .hd{ padding:16px 18px; border-bottom:1px solid #1e2a43; font-size:18px; font-weight:700; }
+#driverMsgModal .bd{ padding:16px 18px; }
+#driverMsgModal label{ display:block; font-size:13px; opacity:.85; margin-bottom:6px; }
+#driverMsgModal .to{ margin-bottom:12px; font-weight:600; }
+#driverMsgModal textarea{ width:100%; min-height:120px; background:#0a1220; color:#dbeafe; border:1px solid #2a3a5d; border-radius:12px; padding:10px 12px; resize:vertical; }
+#driverMsgModal .ft{ display:flex; gap:10px; justify-content:flex-end; padding:14px 18px 18px; }
+#driverMsgModal .btn{ height:38px; padding:0 16px; border-radius:10px; border:1px solid #2a3a5d; background:#0f172a; color:#e5edf8; cursor:pointer; }
+#driverMsgModal .btn.primary{ background:#0a84ff; color:#ffffff; border:0; font-weight:700; }
+#driverMsgModal .btn:hover{ filter:brightness(1.05); }
+</style>
+<div id="driverMsgOverlay"></div>
+<div id="driverMsgModal" role="dialog" aria-modal="true" aria-labelledby="driverMsgTitle">
+  <div class="card">
+    <div class="hd" id="driverMsgTitle">Message Driver</div>
+    <div class="bd">
+      <div class="to" id="driverMsgTo">To: —</div>
+      <label for="driverMsgText">Message</label>
+      <textarea id="driverMsgText" placeholder="Type your message…"></textarea>
+    </div>
+    <div class="ft">
+      <button class="btn" id="driverMsgCancel">Cancel</button>
+      <button class="btn primary" id="driverMsgSend">Update Driver</button>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  const $ = sel => document.querySelector(sel);
+  const overlay = $('#driverMsgOverlay');
+  const modal = $('#driverMsgModal');
+  const elTo  = $('#driverMsgTo');
+  const elText= $('#driverMsgText');
+  const btnCancel = $('#driverMsgCancel');
+  const btnSend   = $('#driverMsgSend');
+  let currentEmp = null;
+
+  function openModal(empId, driverName){
+    currentEmp = empId || null;
+    elTo.textContent = 'To: ' + (driverName||empId||'—');
+    elText.value='';
+    overlay.style.display='block';
+    modal.style.display='flex';
+    elText.focus();
+  }
+  function closeModal(){
+    overlay.style.display='none';
+    modal.style.display='none';
+  }
+  overlay.addEventListener('click', closeModal);
+  btnCancel.addEventListener('click', closeModal);
+  btnSend.addEventListener('click', function(){
+    const msg = elText.value.trim();
+    if(!msg) { elText.focus(); return; }
+    if(typeof onDriverMessage==='function'){
+      try{ onDriverMessage(currentEmp, msg); }catch(_){}
+    } else {
+      console.log('Send to driver', currentEmp, msg);
+    }
+    closeModal();
+  });
+
+  document.addEventListener('click', function(e){
+    const btn = e.target.closest && e.target.closest('.msg-btn');
+    if(!btn) return;
+    const emp = btn.getAttribute('data-emp') || '';
+    let name = emp;
+    try{
+      if(Array.isArray(drivers)){
+        const d = drivers.find(dd => String(dd.empId)===String(emp));
+        if(d) name = d.name || name;
+      }
+    }catch(_){}
+    openModal(emp, name);
+  });
+  if(typeof renderDrivers==='function'){ try{ renderDrivers(); }catch(_){} }
+})();
+</script>
+
+
+<script>
+// DEMO INIT EXTRA ETA
+window.addEventListener('load', function(){
+  try{
+    if(typeof updateDriverETA==='function'){
+      updateDriverETA({ employeeId:'54545', minutesRemaining: 6, expectedMins: 35 });
+      updateDriverETA({ employeeId:'598771', minutesRemaining: 12, expectedMins: 30 });
+    }
+  }catch(_){}
+});
+</script>
+
+
+<script>(function(){
+  const sec=document.querySelector('#section_drivers_bottom');
+  if(!sec) return;
+  const table=sec.querySelector('table'); if(table){ table.style.minWidth='max-content'; }
+  const ths=sec.querySelectorAll('thead th');
+  ths.forEach(function(th){
+    const grip=document.createElement('span'); grip.className='col-grip'; th.appendChild(grip);
+    let startX=0, startW=0;
+    function onDown(e){ startX=e.clientX; startW=th.offsetWidth;
+      document.body.classList.add('dragging-col');
+      document.addEventListener('mousemove',onMove); document.addEventListener('mouseup',onUp);
+      e.preventDefault();
+    }
+    function onMove(e){
+      const dx=e.clientX-startX; const w=Math.max(40, startW+dx);
+      th.style.width=w+'px';
+    }
+    function onUp(){ document.body.classList.remove('dragging-col');
+      document.removeEventListener('mousemove',onMove); document.removeEventListener('mouseup',onUp);
+    }
+    grip.addEventListener('mousedown', onDown);
+  });
+})();</script>
+
+
+<script>
+<script>
+/* DEMO INIT ACC HRS (robust) */
+(function(){
+  function apply(){
+    try{
+      if(!Array.isArray(window.drivers)) return false;
+      const now = Date.now();
+      const get = id => window.drivers.find(d => String(d.empId)===String(id));
+      const setHrs = (d, hrs) => {
+        if(!d) return;
+        d.shiftStartedAt = now - Math.floor(hrs*3600000);
+        const rounded = Math.round(hrs*100)/100;
+        d._accHrsStr = String(rounded);
+        d._accOver   = hrs >= 8;
+      };
+      setHrs(get('53939'), 11.5);
+      setHrs(get('54545'), 11.57);
+      setHrs(get('554421'), 6.2);   // under 8h -> green
+      setHrs(get('598771'), 7.4);   // under 8h -> green
+      if (typeof renderDrivers==='function'){ try{ renderDrivers(); }catch(_){} }
+      return true;
+    }catch(e){ return false; }
+  }
+  if(!apply()){
+    let tries=0;
+    const t=setInterval(function(){
+      if(apply()||++tries>50) clearInterval(t);
+    }, 200);
+  }
+})();
+</script>
+
+
+<style>
+/* Force iPhone messages blue */
+#driverMsgModal .ft .btn.primary{ background:#0a84ff !important; color:#ffffff !important; border:0 !important; font-weight:700; }
+#driverMsgModal .ft .btn.primary:hover{ filter:brightness(1.05); }
+</style>
+
+
+<script>
+// Fallback DOM fill for Acc Hrs demo (no dependency on app state)
+(function(){
+  const demoHrs = { "53939": 11.5, "54545": 11.57, "554421": 6.2, "598771": 7.4 };
+  function fill(){
+    const sec = document.querySelector('#section_drivers_bottom');
+    if(!sec) return false;
+    let changed = false;
+    sec.querySelectorAll('tbody tr').forEach(tr => {
+      const acc = tr.querySelector('td.acc-hrs');
+      if(!acc) return;
+      const idCell = acc.previousElementSibling;
+      if(!idCell) return;
+      const id = (idCell.textContent||'').trim();
+      const hrs = demoHrs[id];
+      if(hrs == null) return;
+      acc.textContent = String(Math.round(hrs*100)/100);
+      acc.classList.remove('ok','over');
+      if(hrs >= 8){ acc.classList.add('over'); } else { acc.classList.add('ok'); }
+      changed = true;
+    });
+    return changed;
+  }
+  function tryFill(){
+    if(fill()) return;
+    let tries = 0;
+    const t = setInterval(function(){
+      if(fill() || ++tries > 60) clearInterval(t);
+    }, 200);
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', tryFill);
+  }else{
+    tryFill();
+  }
+})();
+</script>
+
+
+<script>
+/* Robust Acc Hrs filler (works even if row builder didn't add classes) */
+(function(){
+  const demoHrs = { "53939": 11.5, "54545": 11.57, "554421": 6.2, "598771": 7.4 };
+  function findAccCol(){
+    const sec = document.querySelector('#section_drivers_bottom');
+    if(!sec) return -1;
+    const ths = Array.from(sec.querySelectorAll('thead th'));
+    return ths.findIndex(th => (th.textContent||'').trim().toLowerCase() === 'acc hrs');
+  }
+  function fill(){
+    const sec = document.querySelector('#section_drivers_bottom');
+    if(!sec) return false;
+    const idx = findAccCol();
+    if(idx < 0) return false;
+    let changed = false;
+    sec.querySelectorAll('tbody tr').forEach(tr => {
+      const tds = tr.querySelectorAll('td');
+      if(!tds.length || idx >= tds.length) return;
+      const cell = tds[idx];
+      const idCell = tds[Math.max(0, idx-1)];
+      const id = (idCell.textContent||'').trim();
+      const hrs = demoHrs[id];
+      if(hrs == null) return;
+      cell.textContent = String(Math.round(hrs*100)/100);
+      cell.style.color = (hrs >= 8) ? '#ff3b30' : '#44d07e';
+      changed = true;
+    });
+    return changed;
+  }
+  function start(){
+    fill();
+    const tbody = document.querySelector('#section_drivers_bottom tbody');
+    if(tbody){
+      const obs = new MutationObserver(() => fill());
+      obs.observe(tbody, { childList: true });
+    }
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', start);
+  }else{
+    start();
+  }
+})();
+</script>
+
+
+<style>
+/* Elevate modal above any icons/content */
+#driverMsgOverlay{ z-index:10000 !important; }
+#driverMsgModal{ z-index:10001 !important; }
+</style>
+
+
+<style>
+#pp_toast{ position:fixed; left:50%; right:auto; bottom:24px; background:#0b1322; color:#e5edf8; border:1px solid #23304c; border-radius:10px; padding:10px 14px; font-weight:600; box-shadow:0 10px 30px rgba(0,0,0,.35); opacity:0; transform:translate(-50%, 8px); transition:opacity .2s ease, transform .2s ease; z-index:10002; pointer-events:none; }
+#pp_toast.show{ opacity:1; transform:translate(-50%, 0); }
+</style>
+<div id="pp_toast" role="status" aria-live="polite">Message Sent</div>
+<script>
+(function(){
+  function showToast(msg){
+    var el=document.getElementById('pp_toast'); if(!el) return;
+    el.textContent = msg||'Message Sent';
+    el.classList.add('show');
+    clearTimeout(el._t); el._t=setTimeout(function(){ el.classList.remove('show'); }, 1600);
+  }
+  // Hook into Update Driver button
+  document.addEventListener('click', function(e){
+    var btn=e.target.closest && e.target.closest('#driverMsgSend');
+    if(!btn) return;
+    setTimeout(function(){ showToast('Message Sent'); }, 80);
+  });
+})();
+</script>
+
+
+<script>
+// Sorting for Drivers table A-Z / Z-A with funnel icon per header
+(function(){
+  const SEC_ID = '#section_drivers_bottom';
+  let sortState = { col: null, dir: 'asc' };
+
+  function addIcons(){
+    const sec = document.querySelector(SEC_ID); if(!sec) return;
+    const ths = sec.querySelectorAll('thead th');
+    ths.forEach((th, idx) => {
+      if(th.querySelector('.sort-btn')) return;
+      const btn = document.createElement('span');
+      btn.className = 'sort-btn';
+      btn.title = 'Sort A–Z (click again Z–A)';
+      btn.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">
+         <path d="M3 4h18M6 9h12M9 14h6M11 19h2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>`;
+      th.appendChild(btn);
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        if(sortState.col === idx){
+          sortState.dir = (sortState.dir === 'asc') ? 'desc' : 'asc';
+        }else{
+          sortState.col = idx;
+          sortState.dir = 'asc';
+        }
+        ths.forEach(h => h.classList.remove('active-sort','asc','desc'));
+        th.classList.add('active-sort', sortState.dir);
+        tryRenderThenSort();
+      });
+    });
+  }
+
+  function getCellText(td){
+    if(!td) return '';
+    const dv = td.getAttribute('data-value');
+    if(dv) return dv;
+    let t = td.textContent || '';
+    return t.trim().toLowerCase();
+  }
+
+  function cmp(a,b){
+    const na = parseFloat(a), nb = parseFloat(b);
+    const isNumA = !isNaN(na) && /^[-+]?\d+(\.\d+)?$/.test(a);
+    const isNumB = !isNaN(nb) && /^[-+]?\d+(\.\d+)?$/.test(b);
+    if(isNumA && isNumB){ return na - nb; }
+    return a.localeCompare(b, undefined, { sensitivity:'base' });
+  }
+
+  function applySortDOM(){
+    const sec = document.querySelector(SEC_ID);
+    if(!sec) return;
+    const tbody = sec.querySelector('tbody'); if(!tbody) return;
+    if(sortState.col == null) return;
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    rows.sort((r1, r2) => {
+      const t1 = getCellText(r1.children[sortState.col]);
+      const t2 = getCellText(r2.children[sortState.col]);
+      const c = cmp(t1, t2);
+      return sortState.dir === 'asc' ? c : -c;
+    });
+    rows.forEach(r => tbody.appendChild(r));
+  }
+
+  function hookRender(){
+    if(window._pp_renderPatched) return;
+    if(typeof window.renderDrivers === 'function'){
+      const orig = window.renderDrivers;
+      window.renderDrivers = function(){
+        const res = orig.apply(this, arguments);
+        applySortDOM();
+        return res;
+      };
+      window._pp_renderPatched = true;
+    }
+  }
+
+  function tryRenderThenSort(){
+    if(typeof window.renderDrivers === 'function'){
+      try{ window.renderDrivers(); }catch(_){}
+    }else{
+      applySortDOM();
+    }
+  }
+
+  function init(){
+    addIcons();
+    hookRender();
+    const sec = document.querySelector(SEC_ID);
+    if(sec){
+      const obs = new MutationObserver(() => { addIcons(); applySortDOM(); });
+      obs.observe(sec, { childList:true, subtree:true });
+    }
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', init);
+  }else{
+    init();
+  }
+})();
+</script>
+
+
+<script>
+(function(){
+  const SEC = document.querySelector('#section_drivers_bottom');
+  if(!SEC) return;
+  if(window.__pp_sortPatched2) return; window.__pp_sortPatched2 = true;
+  let sortState = { col: null, dir: 'asc' };
+
+  function addIconsAndBind(){
+    const ths = SEC.querySelectorAll('thead th');
+    ths.forEach((th, idx) => {
+      const label = (th.textContent || '').trim();
+      if(!label) return;
+      if(!th.querySelector('.sort-btn')){
+        const btn = document.createElement('span');
+        btn.className = 'sort-btn';
+        btn.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">
+  <path d="M4 5h16l-7 8v6l-2 1v-7L4 5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+</svg>`;
+        th.appendChild(btn);
+      }
+      if(!th._ppBound2){
+        th._ppBound2 = true;
+        th.addEventListener('click', function(){
+          if(sortState.col === idx){
+            sortState.dir = (sortState.dir === 'asc') ? 'desc' : 'asc';
+          }else{
+            sortState.col = idx;
+            sortState.dir = 'asc';
+          }
+          ths.forEach(h => h.classList.remove('active-sort','asc','desc'));
+          th.classList.add('active-sort', sortState.dir);
+          applySort();
+        });
+      }
+    });
+  }
+
+  function timeToMinutes(t){
+    const m = /^(\d{1,2}):(\d{2})$/.exec(t);
+    if(!m) return NaN;
+    return parseInt(m[1],10)*60 + parseInt(m[2],10);
+  }
+  function parseElaps(txt){
+    const m = txt.match(/(\d+)\s*m/);
+    return m ? parseInt(m[1],10) : NaN;
+  }
+  function keyFor(thText, cell){
+    const raw = (cell?.getAttribute('data-value') || cell?.textContent || '').trim();
+    const txt = raw.toLowerCase();
+    switch(thText){
+      case 'ID': return parseInt(txt,10);
+      case 'Acc Hrs': return parseFloat(txt);
+      case 'ETA': { const v = timeToMinutes(txt); return isNaN(v) ? Number.POSITIVE_INFINITY : v; }
+      case 'Elaps Time': { const v = parseElaps(txt); return isNaN(v) ? Number.POSITIVE_INFINITY : v; }
+      default: return txt;
+    }
+  }
+  function applySort(){
+    const theadThs = SEC.querySelectorAll('thead th');
+    if(sortState.col == null || !theadThs.length) return;
+    const label = (theadThs[sortState.col].textContent || '').trim();
+    const tbody = SEC.querySelector('tbody'); if(!tbody) return;
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    rows.sort((r1, r2) => {
+      const t1 = keyFor(label, r1.children[sortState.col]);
+      const t2 = keyFor(label, r2.children[sortState.col]);
+      const n1 = (typeof t1 === 'number'), n2 = (typeof t2 === 'number');
+      const c = (n1 && n2) ? (t1 - t2) : String(t1).localeCompare(String(t2), undefined, { sensitivity:'base' });
+      return sortState.dir === 'asc' ? c : -c;
+    });
+    rows.forEach(r => tbody.appendChild(r));
+  }
+
+  if(typeof window.renderDrivers === 'function' && !window.__pp_sortHooked2){
+    const orig = window.renderDrivers;
+    window.renderDrivers = function(){
+      const res = orig.apply(this, arguments);
+      try{ addIconsAndBind(); applySort(); }catch(e){}
+      return res;
+    };
+    window.__pp_sortHooked2 = true;
+  }
+
+  addIconsAndBind();
+  const tb = SEC.querySelector('tbody');
+  if(tb){
+    const obs = new MutationObserver(() => addIconsAndBind());
+    obs.observe(tb, { childList:true });
+  }
+})();
+</script>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  var gpsBtn = document.getElementById("tab_drivergps");
+  if (gpsBtn) {
+    gpsBtn.addEventListener("click", function () {
+      // Long Beach Port coordinates
+      const longBeachPort = "33.7676,-118.1981";
+      // Open Google Maps centered on Long Beach Port in a new tab
+      window.open(`https://www.google.com/maps/@${longBeachPort},14z`, "_blank");
+    });
+  }
+});
+</script>
+
+
+<script>
+// ===== SAFETY-NET: Create sheet buttons (capture-phase, globals, and onclick backup) =====
+(function(){
+  function ready(fn){ if(document.readyState!=='loading') fn(); else document.addEventListener('DOMContentLoaded', fn); }
+  ready(function(){
+    const modal = document.getElementById('create_modal');
+    function openCreate(){ if(modal){ modal.style.display='flex'; } }
+    function closeCreate(){ if(modal){ modal.style.display='none'; } }
+    if(typeof window.openConfirm!=='function'){
+      window.openConfirm = function(msg, yes){ if(confirm(msg)) { try{ yes&&yes(); }catch(e){} } };
+    }
+    function gv(id){ const el=document.getElementById(id); return (el && (el.value||'')).trim(); }
+    function resetFields(){
+      ['c_id','c_window','c_from','c_to','c_container','c_bkpin','c_seal','c_appt','c_pudate','c_deliveryDate','c_lfd','c_returnDate','c_returnPort','c_customer','c_chassis','c_size','c_pin','c_instruction']
+      .forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+      const leT=document.getElementById('c_dd_loadempty'); if(leT) leT.textContent='Select…';
+      const ieT=document.getElementById('c_dd_impexp');   if(ieT) ieT.textContent='Select…';
+    }
+    function doCancel(){
+      openConfirm('Confirm cancel? Your entries will be lost.', function(){ closeCreate(); });
+    }
+    function doUpdate(){
+      const id = gv('c_id');
+      if(!id){ if(typeof toast==='function') toast('Enter a Job #'); return; }
+      const rec = {
+        id, from: gv('c_from'), to: gv('c_to'),
+        container: gv('c_container'),
+        appt: gv('c_loadempty'),
+        bk: gv('c_bkpin'),
+        ie: gv('c_impexp'),
+        seal: gv('c_seal'),
+        window: gv('c_window'),
+        remark: gv('c_instruction'),
+        pudate: gv('c_pudate'),
+        deliveryDate: gv('c_deliveryDate'),
+        lfd: gv('c_lfd'),
+        returnDate: gv('c_returnDate'),
+        returnPort: gv('c_returnPort'),
+        customer: gv('c_customer'),
+        chassis: gv('c_chassis'),
+        size: gv('c_size'),
+        pin: gv('c_pin'),
+        status: 'Pending'
+      };
+      openConfirm('Create this new pickup in Main Dispatch?', function(){
+        if(!Array.isArray(window.pending)) window.pending = [];
+        window.pending.push(rec);
+        try{ typeof renderPending==='function' && renderPending(); }catch(_){}
+        try{ typeof updateBadges==='function' && updateBadges(); }catch(_){}
+        closeCreate();
+        try{ typeof switchTab==='function' && switchTab('pending'); }catch(_){}
+        try{ typeof toast==='function' && toast('Pickup created'); }catch(_){}
+      });
+    }
+    // Expose globals as a backstop
+    window.CCL_createOpen = openCreate;
+    window.CCL_createCancel = doCancel;
+    window.CCL_createUpdate = doUpdate;
+
+    // Bind directly (overwriting inline handlers if any)
+    const bOpen   = document.getElementById('btn_create_pending');
+    const bCancel = document.getElementById('btn_create_cancel');
+    const bUpdate = document.getElementById('btn_create_update');
+    if(bOpen){   bOpen.onclick   = function(e){ e.preventDefault(); resetFields(); openCreate(); }; }
+    if(bCancel){ bCancel.onclick = function(e){ e.preventDefault(); doCancel(); }; }
+    if(bUpdate){ bUpdate.onclick = function(e){ e.preventDefault(); doUpdate(); }; }
+
+    // Capture-phase delegate so nothing can swallow the click
+    document.addEventListener('click', function(ev){
+      const t = ev.target;
+      if(!t) return;
+      if(t.closest && t.closest('#btn_create_pending')){ ev.preventDefault(); resetFields(); openCreate(); }
+      else if(t.closest && t.closest('#btn_create_cancel')){ ev.preventDefault(); doCancel(); }
+      else if(t.closest && t.closest('#btn_create_update')){ ev.preventDefault(); doUpdate(); }
+    }, true);
+  });
+})();
+</script>
+
+
+<script>
+// ===== V3 RELIABLE CREATE: adds visual debug + direct row insert fallback =====
+(function(){
+  function ready(fn){ if(document.readyState!=='loading') fn(); else document.addEventListener('DOMContentLoaded', fn); }
+  ready(function(){
+    function banner(msg){
+      var id='ccl_debug_banner';
+      var el=document.getElementById(id);
+      if(!el){
+        el=document.createElement('div'); el.id=id;
+        el.style.cssText='position:fixed;left:12px;bottom:12px;z-index:99999;padding:8px 12px;border-radius:10px;background:#0b3b61;color:#e0f2fe;font:12px/1.3 ui-sans-serif,system-ui,Segoe UI,Roboto;box-shadow:0 6px 16px rgba(0,0,0,.35)';
+        document.body.appendChild(el);
+      }
+      el.textContent = 'Create Debug: ' + msg;
+      setTimeout(()=>{ if(el && el.parentNode) el.parentNode.removeChild(el); }, 4500);
+      try{ console.log('[CCL]', msg); }catch(_){}
+    }
+
+    const modal = document.getElementById('create_modal');
+    function closeCreate(){ if(modal) modal.style.display='none'; }
+
+    if(typeof window.openConfirm!=='function'){
+      window.openConfirm = function(msg, yes){ if(confirm(msg)){ try{ yes&&yes(); }catch(e){} } };
+    }
+    function gv(id){ const el=document.getElementById(id); return (el && (el.value||'')).trim(); }
+
+    function forceInsertRow(rec){
+      // Minimal guaranteed DOM insert into Pending
+      const body = document.getElementById('pending_body');
+      if(!body){ banner('No pending_body found.'); return; }
+      const tr = document.createElement('tr'); tr.dataset.id = rec.id || '';
+      const td0=document.createElement('td'); td0.innerHTML='<input type="checkbox" class="chk">'; tr.appendChild(td0);
+      const tdDrv=document.createElement('td'); tdDrv.textContent = rec.driverName || '—'; tr.appendChild(tdDrv);
+      function td(val){ const td=document.createElement('td'); td.innerHTML = (val && String(val).trim()) ? String(val) : '<span class="dash-center">—</span>'; tr.appendChild(td); }
+      ['arrival','container','chassis','size','pin','ie','bk','pudate','appt','from','to','deliveryDate','lfd','returnDate','returnPort','customer','remark','carrier','mbl','status']
+        .forEach(k=>td(rec[k]));
+      body.appendChild(tr);
+      banner('Direct row inserted.');
+    }
+
+    function doUpdate(){
+      const id = gv('c_id');
+      if(!id){ banner('Missing Job #'); return; }
+      const rec = {
+        id, from: gv('c_from'), to: gv('c_to'),
+        container: gv('c_container'),
+        appt: gv('c_loadempty'),
+        bk: gv('c_bkpin'),
+        ie: gv('c_impexp'),
+        seal: gv('c_seal'),
+        window: gv('c_window'),
+        remark: gv('c_instruction'),
+        pudate: gv('c_pudate'),
+        deliveryDate: gv('c_deliveryDate'),
+        lfd: gv('c_lfd'),
+        returnDate: gv('c_returnDate'),
+        returnPort: gv('c_returnPort'),
+        customer: gv('c_customer'),
+        chassis: gv('c_chassis'),
+        size: gv('c_size'),
+        pin: gv('c_pin'),
+        status: 'Pending'
+      };
+      openConfirm('Create this new pickup in Main Dispatch?', function(){
+        try{
+          if(!Array.isArray(window.pending)) window.pending = [];
+          window.pending.push(rec);
+          banner('Added to array. Count now ' + window.pending.length);
+          var rendered = false;
+          try{
+            if(typeof renderPending==='function'){ renderPending(); rendered=true; banner('renderPending called.'); }
+          }catch(e){}
+          if(!rendered) forceInsertRow(rec);
+          try{ typeof updateBadges==='function' && updateBadges(); }catch(_){}
+          closeCreate();
+          try{ typeof switchTab==='function' && switchTab('pending'); }catch(_){}
+        }catch(e){ banner('ERROR: ' + (e && e.message)); }
+      });
+    }
+
+    // Bind buttons hard
+    ['btn_create_update','btn_create_cancel','btn_create_pending'].forEach(function(id){
+      const el = document.getElementById(id);
+      if(!el) return;
+      el.addEventListener('click', function(ev){
+        ev.preventDefault();
+        if(id==='btn_create_update') doUpdate();
+        if(id==='btn_create_cancel') { openConfirm('Confirm cancel? Your entries will be lost.', function(){ closeCreate(); }); }
+        if(id==='btn_create_pending') { document.getElementById('create_modal').style.display='flex'; }
+      }, true);
+    });
+  });
+})();
+</script>
+
+
+<script>
+/* =========================
+   CCL CREATE NEW — HARD REWRITE (v4)
+   - No dependencies on old handlers
+   - Works even if other code blocks events
+   - Renders via existing renderPending() OR our own DOM builder
+   ========================= */
+(function(){
+  function ready(fn){ if(document.readyState!=='loading') fn(); else document.addEventListener('DOMContentLoaded', fn, {once:true}); }
+  ready(function(){
+    const IDs = {
+      open:   'btn_create_pending',
+      cancel: 'btn_create_cancel',
+      update: 'btn_create_update',
+      modal:  'create_modal'
+    };
+
+    const F = {
+      gv(id){ const el=document.getElementById(id); return (el && (el.value||'')).trim(); },
+      // Data extraction from fields
+      collect(){
+        return {
+          id: F.gv('c_id'),
+          window: F.gv('c_window'),
+          from: F.gv('c_from'),
+          to: F.gv('c_to'),
+          customer: F.gv('c_customer'),
+          container: F.gv('c_container'),
+          appt: F.gv('c_loadempty'),         // Load / Empty (hidden)
+          ie: F.gv('c_impexp'),              // Import / Export (hidden)
+          bk: F.gv('c_bkpin'),               // BK # / PIN
+          seal: F.gv('c_seal'),
+          pudate: F.gv('c_pudate'),
+          deliveryDate: F.gv('c_deliveryDate'),
+          lfd: F.gv('c_lfd'),
+          returnDate: F.gv('c_returnDate'),
+          returnPort: F.gv('c_returnPort'),
+          chassis: F.gv('c_chassis'),
+          size: F.gv('c_size'),
+          pin: F.gv('c_pin'),
+          remark: F.gv('c_instruction'),
+          status: 'Pending'
+        };
+      },
+      open(){ const m=document.getElementById(IDs.modal); if(m){ m.style.display='flex'; }},
+      close(){ const m=document.getElementById(IDs.modal); if(m){ m.style.display='none'; }},
+      confirm(msg, yes){ 
+        if(typeof window.openConfirm==='function'){ window.openConfirm(msg, yes); }
+        else if(window.confirm(msg)){ try{ yes&&yes(); }catch(e){} }
+      },
+      ensureModel(){
+        if(!window.state) window.state = { selectedPending:new Set(), selectedInprogress:new Set(), currentTab:'pickups' };
+        if(!Array.isArray(window.pending)) window.pending = [];
+      },
+      // Safe render: use app's renderPending if present, otherwise do a minimal render
+      render(){
+        // Preferred: app renderer
+        if(typeof window.renderPending === 'function'){ try{ window.renderPending(); return; }catch(e){} }
+        // Fallback: append a simple row to pending_body
+        const body = document.getElementById('pending_body')
+                  || (document.querySelector('#section_pending tbody') || document.querySelector('#section_pending table tbody'));
+        if(!body) return;
+        const last = window.pending[window.pending.length-1] || {};
+        const tr = document.createElement('tr'); tr.dataset.id = last.id || '';
+        // Checkbox
+        const td0=document.createElement('td'); td0.innerHTML='<input type="checkbox" class="chk">'; tr.appendChild(td0);
+        // Driver placeholder
+        const tdD=document.createElement('td'); tdD.textContent = last.driverName || '—'; tr.appendChild(tdD);
+        // Cells (match your DEFAULT_ORDER)
+        const keys = ['arrival','container','chassis','size','pin','ie','bk','pudate','appt','from','to','deliveryDate','lfd','returnDate','returnPort','customer','remark','carrier','mbl','status'];
+        keys.forEach(k=>{
+          const td=document.createElement('td'); const v=(last[k]==null?'':String(last[k])).trim();
+          td.innerHTML = v ? v : '<span class="dash-center">—</span>'; tr.appendChild(td);
+        });
+        body.appendChild(tr);
+        // Try to update badges if available
+        if(typeof window.updateBadges==='function'){ try{ window.updateBadges(); }catch(e){} }
+      },
+      // Bind by cloning nodes (removes previous listeners)
+      bind(id, handler){
+        const el = document.getElementById(id); if(!el || !el.parentNode) return;
+        const clone = el.cloneNode(true);
+        el.parentNode.replaceChild(clone, el);
+        clone.addEventListener('click', function(ev){ ev.preventDefault(); handler(); }, {capture:true});
+      }
+    };
+
+    // Wire up buttons
+    F.bind(IDs.open,   function(){ F.open(); });
+    F.bind(IDs.cancel, function(){ F.confirm('Confirm cancel? Your entries will be lost.', F.close); });
+    F.bind(IDs.update, function(){
+      const rec = F.collect();
+      if(!rec.id){ if(typeof toast==='function') toast('Enter a Job #'); return; }
+      F.confirm('Create this new pickup in Main Dispatch?', function(){
+        F.ensureModel();
+        window.pending.push(rec);
+        F.render();
+        F.close();
+        if(typeof window.switchTab==='function'){ try{ window.switchTab('pending'); }catch(e){} }
+        if(typeof toast==='function'){ try{ toast('Pickup created'); }catch(e){} }
+      });
+    });
+
+    // As an absolute last resort: delegate at document level
+    document.addEventListener('click', function(ev){
+      const t = ev.target;
+      if(!t) return;
+      const hit = (id)=> t.id===id || (t.closest && t.closest('#'+id));
+      if(hit(IDs.open)){ ev.preventDefault(); F.open(); }
+      if(hit(IDs.cancel)){ ev.preventDefault(); F.confirm('Confirm cancel? Your entries will be lost.', F.close); }
+      if(hit(IDs.update)){ ev.preventDefault(); const rec=F.collect(); if(!rec.id){ return; } F.ensureModel(); window.pending.push(rec); F.render(); F.close(); }
+    }, true);
+  });
+})();
+</script>
+
+
+<script>
+// ===== v5: Force-render to Main Dispatch + manual tab activation & badge bump =====
+(function(){
+  function ready(fn){ if(document.readyState!=='loading') fn(); else document.addEventListener('DOMContentLoaded', fn, {once:true}); }
+  ready(function(){
+    function showPendingSection(){
+      try{
+        if(window.state) state.currentTab='pending';
+      }catch(_){}
+      var tabs = ['pickups','assigned','inprogress','completed','pending'];
+      tabs.forEach(function(k){
+        var sec = document.getElementById('section_'+k);
+        var tab = document.getElementById('tab_'+k);
+        if(sec){ sec.style.display = (k==='pending') ? '' : 'none'; }
+        if(tab){ if(k==='pending') tab.classList.add('active'); else tab.classList.remove('active'); }
+      });
+    }
+    function bumpBadge(){
+      var el = document.getElementById('badge_pending');
+      if(!el) return;
+      var n = parseInt((el.textContent||'0').replace(/\D+/g,''),10);
+      if(!isFinite(n)) n = 0;
+      el.textContent = (n+1);
+    }
+
+    // Hook the already-added v4 handler if present
+    var oldUpdate = window.CCL_createUpdate;
+    window.CCL_createUpdate = function(){
+      if(typeof oldUpdate === 'function'){
+        oldUpdate();
+        // After old flow runs, ensure visibility and counts
+        showPendingSection();
+        try{ if(typeof updateBadges!=='function') bumpBadge(); }catch(_){}
+      }
+    };
+
+    // Also bind directly in case global not used
+    var btn = document.getElementById('btn_create_update');
+    if(btn){
+      btn.addEventListener('click', function(_, called){
+        // Delay to run after any existing listeners push to array
+        setTimeout(function(){
+          showPendingSection();
+          try{ if(typeof updateBadges!=='function') bumpBadge(); }catch(_){}
+        }, 50);
+      }, true);
+    }
+  });
+})();
+</script>
+
+
+<script>
+// ===== v6: Force show + render + focus new row in Main Dispatch =====
+(function(){
+  function ready(fn){ if(document.readyState!=='loading') fn(); else document.addEventListener('DOMContentLoaded', fn, {once:true}); }
+  ready(function(){
+    function showPendingSection(){
+      try{ if(window.state) state.currentTab='pending'; }catch(_){}
+      ['pickups','assigned','inprogress','completed','pending'].forEach(function(k){
+        var sec = document.getElementById('section_'+k);
+        var tab = document.getElementById('tab_'+k);
+        if(sec){ sec.style.display = (k==='pending') ? '' : 'none'; }
+        if(tab){ if(k==='pending') tab.classList.add('active'); else tab.classList.remove('active'); }
+      });
+    }
+    function renderAndFocus(id){
+      var ok=false;
+      try{ if(typeof renderPending==='function'){ renderPending(); ok=true; } }catch(_){}
+      if(!ok){
+        // If renderPending missing, try minimal reinsert from existing pending array
+        try{
+          var body = document.getElementById('pending_body') || document.querySelector('#section_pending tbody');
+          if(body && Array.isArray(window.pending)){
+            body.innerHTML='';
+            window.pending.forEach(function(a){
+              var tr=document.createElement('tr'); tr.dataset.id=a.id||'';
+              var td0=document.createElement('td'); td0.innerHTML='<input type="checkbox" class="chk">'; tr.appendChild(td0);
+              var tdD=document.createElement('td'); tdD.textContent = a.driverName || '—'; tr.appendChild(tdD);
+              function td(val){ var td=document.createElement('td'); td.innerHTML = (val && String(val).trim()) ? String(val) : '<span class="dash-center">—</span>'; tr.appendChild(td); }
+              ['arrival','container','chassis','size','pin','ie','bk','pudate','appt','from','to','deliveryDate','lfd','returnDate','returnPort','customer','remark','carrier','mbl','status']
+                .forEach(function(k){ td(a[k]); });
+              body.appendChild(tr);
+            });
+          }
+        }catch(_){}
+      }
+      // Focus/flash
+      try{
+        var row = document.querySelector('#section_pending tr[data-id="'+CSS.escape(id)+'"]');
+        if(row){
+          row.scrollIntoView({block:'center'});
+          row.style.transition='background 300ms ease';
+          var old = row.style.backgroundColor;
+          row.style.backgroundColor='rgba(59,130,246,.25)';
+          setTimeout(function(){ row.style.backgroundColor=old||''; }, 800);
+        }
+      }catch(_){}
+    }
+    function bumpBadge(){
+      var el = document.getElementById('badge_pending');
+      if(!el) return;
+      var n = parseInt((el.textContent||'0').replace(/\D+/g,''),10); if(!isFinite(n)) n=0;
+      el.textContent = (n+1);
+    }
+    // Wrap existing CCL_createUpdate if present
+    var prev = window.CCL_createUpdate;
+    window.CCL_createUpdate = function(){
+      var idBefore = null;
+      try{ idBefore = document.getElementById('c_id').value.trim(); }catch(_){}
+      if(typeof prev==='function'){ prev(); }
+      setTimeout(function(){
+        showPendingSection();
+        renderAndFocus(idBefore);
+        try{ if(typeof updateBadges!=='function') bumpBadge(); }catch(_){}
+      }, 60);
+    };
+    // Ensure direct button also triggers the above
+    var btn = document.getElementById('btn_create_update');
+    if(btn){
+      btn.addEventListener('click', function(){
+        setTimeout(function(){
+          try{
+            var idNow = document.getElementById('c_id').value.trim();
+            showPendingSection();
+            renderAndFocus(idNow);
+            if(typeof updateBadges!=='function') bumpBadge();
+          }catch(_){}
+        }, 80);
+      }, true);
+    }
+  });
+})();
+</script>
+
+
+<script>
+/* ===== v7: DIRECT-TO-MAIN-DISPATCH (no internal pending array required) ===== */
+(function(){
+  function ready(fn){ if(document.readyState!=='loading') fn(); else document.addEventListener('DOMContentLoaded', fn, {once:true}); }
+  ready(function(){
+    function gv(id){ const el=document.getElementById(id); return (el && (el.value||'')).trim(); }
+    function dash(v){ return (v && String(v).trim()) ? String(v) : '<span class="dash-center">—</span>'; }
+    function showMainDispatch(){
+      // Your "Main Dispatch" section is the Pending board in this file
+      ['pickups','assigned','inprogress','completed','pending'].forEach(function(k){
+        const sec=document.getElementById('section_'+k);
+        const tab=document.getElementById('tab_'+k);
+        if(sec) sec.style.display = (k==='pending') ? '' : 'none';
+        if(tab){ if(k==='pending') tab.classList.add('active'); else tab.classList.remove('active'); }
+      });
+      try{ if(window.state) state.currentTab='pending'; }catch(_){}
+    }
+    function bumpBadge(){
+      const el = document.getElementById('badge_pending'); if(!el) return;
+      const n = parseInt((el.textContent||'0').replace(/\D+/g,''),10); el.textContent = isFinite(n) ? (n+1) : 1;
+    }
+    function insertDirectRow(rec){
+      const body = document.getElementById('pending_body') || document.querySelector('#section_pending tbody');
+      if(!body) return false;
+      const tr = document.createElement('tr');
+      tr.dataset.id = rec.id || '';
+      // Checkbox
+      const td0 = document.createElement('td'); td0.innerHTML = '<input type="checkbox" class="chk">'; tr.appendChild(td0);
+      // Driver placeholder (Main Dispatch has no driver yet)
+      const tdD = document.createElement('td'); tdD.innerHTML = dash(rec.driverName || ''); tr.appendChild(tdD);
+      // Column cells in your default order
+      const order = ['arrival','container','chassis','size','pin','ie','bk','pudate','appt','from','to','deliveryDate','lfd','returnDate','returnPort','customer','remark','carrier','mbl','status'];
+      order.forEach(function(k){
+        const td = document.createElement('td'); td.innerHTML = dash(rec[k]); tr.appendChild(td);
+      });
+      // Put new rows at the top
+      if(body.firstChild) body.insertBefore(tr, body.firstChild); else body.appendChild(tr);
+      // Flash highlight
+      try{
+        tr.style.transition='background 300ms ease';
+        tr.style.backgroundColor='rgba(59,130,246,.25)';
+        setTimeout(function(){ tr.style.backgroundColor=''; }, 900);
+      }catch(_){}
+      return true;
+    }
+
+    // Replace the existing Update handler with a direct DOM insert
+    function directUpdateFlow(){
+      const rec = {
+        id: gv('c_id'),
+        from: gv('c_from'),
+        to: gv('c_to'),
+        customer: gv('c_customer'),
+        container: gv('c_container'),
+        appt: gv('c_loadempty'),
+        ie: gv('c_impexp'),
+        bk: gv('c_bkpin'),
+        seal: gv('c_seal'),
+        pudate: gv('c_pudate'),
+        deliveryDate: gv('c_deliveryDate'),
+        lfd: gv('c_lfd'),
+        returnDate: gv('c_returnDate'),
+        returnPort: gv('c_returnPort'),
+        chassis: gv('c_chassis'),
+        size: gv('c_size'),
+        pin: gv('c_pin'),
+        remark: gv('c_instruction'),
+        status: 'Pending'
+      };
+      if(!rec.id){ try{ toast && toast('Enter a Job #'); }catch(_){ alert('Enter a Job #'); } return; }
+      // Confirm using your modal if present, else window.confirm
+      function go(){
+        showMainDispatch();
+        const ok = insertDirectRow(rec);
+        if(ok){
+          try{ document.getElementById('create_modal').style.display='none'; }catch(_){}
+          try{ if(typeof updateBadges==='function') updateBadges(); else bumpBadge(); }catch(_){ bumpBadge(); }
+          try{ toast && toast('Pickup created'); }catch(_){}
+        } else {
+          alert('Could not find Main Dispatch table body.');
+        }
+      }
+      if(typeof window.openConfirm==='function') window.openConfirm('Create this new pickup in Main Dispatch?', go);
+      else if(confirm('Create this new pickup in Main Dispatch?')) go();
+    }
+
+    // Hard-bind the Update button to the direct flow
+    var btn = document.getElementById('btn_create_update');
+    if(btn){
+      // Remove previous listeners by cloning
+      const clone = btn.cloneNode(true); btn.parentNode.replaceChild(clone, btn);
+      clone.addEventListener('click', function(ev){ ev.preventDefault(); directUpdateFlow(); }, {capture:true});
+    }
+  });
+})();
+</script>
+
+
+<script>
+/* ===== v8: Insert into ALL Main-Dispatch candidates (handles any table) ===== */
+(function(){
+  function ready(fn){ if(document.readyState!=='loading') fn(); else document.addEventListener('DOMContentLoaded', fn, {once:true}); }
+  ready(function(){
+    function gv(id){ const el=document.getElementById(id); return (el && (el.value||'')).trim(); }
+    function dash(v){ return (v && String(v).trim()) ? String(v) : '<span class="dash-center">—</span>'; }
+
+    function candidateBodies(){
+      // Try the most likely Main Dispatch bodies first
+      const sels = [
+        '#pending_body',
+        '#section_pending tbody',
+        '#p1_body',
+        '#section_pickups tbody'
+      ];
+      const arr = [];
+      sels.forEach(sel => { document.querySelectorAll(sel).forEach(el => { if(el && !arr.includes(el)) arr.push(el); }); });
+      return arr;
+    }
+    function ensureMainDispatchVisible(){
+      // Prefer showing pending; if not present, show pickups
+      const order = ['pending','pickups'];
+      order.forEach(function(k, idx){
+        const sec = document.getElementById('section_'+k);
+        const tab = document.getElementById('tab_'+k);
+        if(sec){ sec.style.display = (idx===0) ? '' : 'none'; }
+        if(tab){ if(idx===0) tab.classList.add('active'); else tab.classList.remove('active'); }
+      });
+      try{ if(window.state) state.currentTab='pending'; }catch(_){}
+    }
+    function bumpBadges(){
+      ['badge_pending','badge_pickups'].forEach(function(id){
+        const el = document.getElementById(id); if(!el) return;
+        const n = parseInt((el.textContent||'0').replace(/\D+/g,''),10);
+        el.textContent = isFinite(n) ? (n+1) : 1;
+      });
+    }
+    function buildRow(rec){
+      const tr = document.createElement('tr');
+      tr.dataset.id = rec.id || '';
+      const td0 = document.createElement('td'); td0.innerHTML = '<input type="checkbox" class="chk">'; tr.appendChild(td0);
+      const tdD = document.createElement('td'); tdD.innerHTML = dash(rec.driverName || ''); tr.appendChild(tdD);
+      const order = ['arrival','container','chassis','size','pin','ie','bk','pudate','appt','from','to','deliveryDate','lfd','returnDate','returnPort','customer','remark','carrier','mbl','status'];
+      order.forEach(function(k){
+        const td = document.createElement('td'); td.innerHTML = dash(rec[k]); tr.appendChild(td);
+      });
+      tr.style.transition='background 300ms ease'; tr.style.backgroundColor='rgba(59,130,246,.22)';
+      setTimeout(function(){ tr.style.backgroundColor=''; }, 900);
+      return tr;
+    }
+    function insertIntoAllTargets(rec){
+      const bodies = candidateBodies();
+      let inserted = 0;
+      bodies.forEach(function(tb){
+        // prevent duplicate rows for the same ID
+        if(rec.id && tb.querySelector('tr[data-id="'+CSS.escape(rec.id)+'"]')) return;
+        const tr = buildRow(rec);
+        if(tb.firstChild) tb.insertBefore(tr, tb.firstChild); else tb.appendChild(tr);
+        inserted++;
+      });
+      return inserted > 0;
+    }
+
+    function collect(){
+      return {
+        id: gv('c_id'),
+        from: gv('c_from'),
+        to: gv('c_to'),
+        customer: gv('c_customer'),
+        container: gv('c_container'),
+        appt: gv('c_loadempty'),
+        ie: gv('c_impexp'),
+        bk: gv('c_bkpin'),
+        seal: gv('c_seal'),
+        pudate: gv('c_pudate'),
+        deliveryDate: gv('c_deliveryDate'),
+        lfd: gv('c_lfd'),
+        returnDate: gv('c_returnDate'),
+        returnPort: gv('c_returnPort'),
+        chassis: gv('c_chassis'),
+        size: gv('c_size'),
+        pin: gv('c_pin'),
+        remark: gv('c_instruction'),
+        status: 'Pending'
+      };
+    }
+
+    function directUpdate(){
+      const rec = collect();
+      if(!rec.id){ try{ toast && toast('Enter a Job #'); }catch(_){ alert('Enter a Job #'); } return; }
+      function go(){
+        ensureMainDispatchVisible();
+        const ok = insertIntoAllTargets(rec);
+        if(ok){
+          try{ document.getElementById('create_modal').style.display='none'; }catch(_){}
+          try{ if(typeof updateBadges==='function') updateBadges(); else bumpBadges(); }catch(_){ bumpBadges(); }
+          try{ toast && toast('Pickup created'); }catch(_){}
+        } else {
+          alert('Could not find a Main Dispatch table body to insert into.');
+        }
+      }
+      if(typeof window.openConfirm==='function') window.openConfirm('Create this new pickup in Main Dispatch?', go);
+      else if(confirm('Create this new pickup in Main Dispatch?')) go();
+    }
+
+    // Force-bind Update button to the direct update (no arrays)
+    const btn = document.getElementById('btn_create_update');
+    if(btn){
+      const clone = btn.cloneNode(true); btn.parentNode.replaceChild(clone, btn);
+      clone.addEventListener('click', function(ev){ ev.preventDefault(); directUpdate(); }, {capture:true});
+    }
+  });
+})();
+</script>
+
+
+<script>
+/* ===== v9: Heuristic direct insert into VISIBLE Main Dispatch + diagnostics ===== */
+(function(){
+  function ready(fn){ if(document.readyState!=='loading') fn(); else document.addEventListener('DOMContentLoaded', fn, {once:true}); }
+  ready(function(){
+    function gv(id){ const el=document.getElementById(id); return (el && (el.value||'')).trim(); }
+    function dash(v){ return (v && String(v).trim()) ? String(v) : '<span class="dash-center">—</span>'; }
+    function isVisible(el){ if(!el) return false; const s=getComputedStyle(el); return s.display!=='none' && s.visibility!=='hidden' && el.offsetParent!==null; }
+
+    function banner(lines){
+      try{
+        var b=document.getElementById('ccl_diag'); if(!b){
+          b=document.createElement('div'); b.id='ccl_diag';
+          b.style.cssText='position:fixed;right:12px;bottom:12px;z-index:99999;min-width:260px;max-width:420px;padding:10px 12px;border-radius:12px;background:#0a1220;color:#e2e8f0;font:12px/1.35 ui-sans-serif,system-ui,Segoe UI,Roboto;box-shadow:0 10px 24px rgba(0,0,0,.5)';
+          document.body.appendChild(b);
+        }
+        b.innerHTML = Array.isArray(lines) ? lines.map(x=>'<div>'+x+'</div>').join('') : String(lines||'');
+        setTimeout(()=>{ try{ b.remove(); }catch(_){ } }, 3500);
+      }catch(_){}
+    }
+
+    function ensureMainDispatchVisible(){
+      // prefer pending; fallback to pickups
+      const prefs = ['pending','pickups'];
+      let chosen = null;
+      for(const key of prefs){
+        const sec = document.getElementById('section_'+key);
+        if(sec){ chosen = key; break; }
+      }
+      if(!chosen) return null;
+      ['pickups','assigned','inprogress','completed','pending'].forEach(function(k){
+        const sec=document.getElementById('section_'+k);
+        const tab=document.getElementById('tab_'+k);
+        if(sec){ sec.style.display = (k===chosen) ? '' : 'none'; }
+        if(tab){ if(k===chosen) tab.classList.add('active'); else tab.classList.remove('active'); }
+      });
+      try{ if(window.state) state.currentTab=chosen; }catch(_){}
+      return chosen;
+    }
+
+    function visibleMainBodies(){
+      // Focus on visible section first
+      const sections = Array.from(document.querySelectorAll('[id^="section_"]')).filter(isVisible);
+      let bodies = [];
+      sections.forEach(sec => {
+        const tbs = sec.querySelectorAll('tbody');
+        tbs.forEach(tb => { if(isVisible(tb) && !bodies.includes(tb)) bodies.push(tb); });
+      });
+      // fallback: known IDs
+      ['#pending_body','#p1_body','#section_pending tbody','#section_pickups tbody'].forEach(sel=>{
+        document.querySelectorAll(sel).forEach(tb => { if(!bodies.includes(tb)) bodies.push(tb); });
+      });
+      return bodies;
+    }
+
+    function buildRow(rec){
+      const tr = document.createElement('tr');
+      tr.dataset.id = rec.id || '';
+      const td0 = document.createElement('td'); td0.innerHTML = '<input type="checkbox" class="chk">'; tr.appendChild(td0);
+      const tdD = document.createElement('td'); tdD.innerHTML = dash(rec.driverName || ''); tr.appendChild(tdD);
+      const order = ['arrival','container','chassis','size','pin','ie','bk','pudate','appt','from','to','deliveryDate','lfd','returnDate','returnPort','customer','remark','carrier','mbl','status'];
+      order.forEach(function(k){
+        const td = document.createElement('td'); td.innerHTML = dash(rec[k]); tr.appendChild(td);
+      });
+      tr.style.transition='background 300ms ease'; tr.style.backgroundColor='rgba(59,130,246,.22)';
+      setTimeout(function(){ tr.style.backgroundColor=''; }, 900);
+      return tr;
+    }
+
+    function insertDirect(rec){
+      const targets = visibleMainBodies();
+      let hits = 0, targetIds = [];
+      targets.forEach(tb => {
+        // avoid duplicate by data-id
+        if(rec.id && tb.querySelector('tr[data-id="'+CSS.escape(rec.id)+'"]')) return;
+        const tr = buildRow(rec);
+        if(tb.firstChild) tb.insertBefore(tr, tb.firstChild); else tb.appendChild(tr);
+        hits++; targetIds.push('#'+(tb.id||'tbody')+' ('+(tb.closest('[id^=\"section_\"]')?.id||'no-section')+')');
+      });
+      return {hits, targetIds};
+    }
+
+    function collect(){
+      return {
+        id: gv('c_id'),
+        from: gv('c_from'),
+        to: gv('c_to'),
+        customer: gv('c_customer'),
+        container: gv('c_container'),
+        appt: gv('c_loadempty'),
+        ie: gv('c_impexp'),
+        bk: gv('c_bkpin'),
+        seal: gv('c_seal'),
+        pudate: gv('c_pudate'),
+        deliveryDate: gv('c_deliveryDate'),
+        lfd: gv('c_lfd'),
+        returnDate: gv('c_returnDate'),
+        returnPort: gv('c_returnPort'),
+        chassis: gv('c_chassis'),
+        size: gv('c_size'),
+        pin: gv('c_pin'),
+        remark: gv('c_instruction'),
+        status: 'Pending'
+      };
+    }
+
+    function directUpdate(){
+      const rec = collect();
+      if(!rec.id){ try{ toast && toast('Enter a Job #'); }catch(_){ alert('Enter a Job #'); } return; }
+      function go(){
+        const chosen = ensureMainDispatchVisible();
+        const res = insertDirect(rec);
+        if(res.hits>0){
+          try{ document.getElementById('create_modal').style.display='none'; }catch(_){}
+          try{ if(typeof updateBadges==='function') updateBadges(); }catch(_){}
+          banner(['Inserted into '+res.hits+' table Bod'+'ies', 'Targets:'].concat(res.targetIds));
+        } else {
+          banner('No visible Main Dispatch tbody found. I can hard-target a specific ID if you tell me.');
+          alert('Could not find a visible Main Dispatch table body.');
+        }
+      }
+      if(typeof window.openConfirm==='function') window.openConfirm('Create this new pickup in Main Dispatch?', go);
+      else if(confirm('Create this new pickup in Main Dispatch?')) go();
+    }
+
+    // Force-bind Update to directUpdate
+    const btn = document.getElementById('btn_create_update');
+    if(btn){
+      const clone = btn.cloneNode(true); btn.parentNode.replaceChild(clone, btn);
+      clone.addEventListener('click', function(ev){ ev.preventDefault(); directUpdate(); }, {capture:true});
+    }
+  });
+})();
+</script>
+
+
+<script>
+/* ===== v10: Canonical insert into Main Dispatch model (window.pending) + forced render ===== */
+(function(){
+  function ready(fn){ if(document.readyState!=='loading') fn(); else document.addEventListener('DOMContentLoaded', fn, {once:true}); }
+  ready(function(){
+    function gv(id){ const el=document.getElementById(id); return (el && (el.value||'')).trim(); }
+    function ensureModel(){
+      if(!window.state) window.state = { selectedPending:new Set(), selectedInprogress:new Set(), currentTab:'pickups' };
+      if(!Array.isArray(window.pending)) window.pending = [];
+    }
+    function dedupeById(arr, id){
+      if(!id) return arr;
+      const seen = new Set(); const out = [];
+      for(const r of arr){
+        const key = (r && r.id) ? String(r.id) : '';
+        if(!key) { out.push(r); continue; }
+        if(key === String(id)){
+          if(seen.has(key)) continue;
+          seen.add(key);
+          out.push(r);
+        } else {
+          out.push(r);
+        }
+      }
+      return out;
+    }
+    function saveLocal(){
+      try{ localStorage.setItem('ccl_pending', JSON.stringify(window.pending)); }catch(_){}
+    }
+    function showMain(){
+      try{ state.currentTab='pending'; }catch(_){}
+      ['pickups','assigned','inprogress','completed','pending'].forEach(function(k){
+        const sec=document.getElementById('section_'+k);
+        const tab=document.getElementById('tab_'+k);
+        if(sec) sec.style.display = (k==='pending') ? '' : 'none';
+        if(tab){ if(k==='pending') tab.classList.add('active'); else tab.classList.remove('active'); }
+      });
+    }
+    function renderAndFocus(id){
+      // Render via app; then focus when tbody updates
+      let focused = false;
+      try{
+        if(typeof renderPending==='function'){ renderPending(); }
+      }catch(_){}
+      try{
+        const body = document.getElementById('pending_body') || document.querySelector('#section_pending tbody');
+        if(!body) return;
+        const target = ()=> body.querySelector('tr[data-id="'+CSS.escape(id)+'"]');
+        let row = target();
+        if(row){
+          row.scrollIntoView({block:'center'});
+          row.style.transition='background 300ms ease'; row.style.backgroundColor='rgba(59,130,246,.22)'; setTimeout(()=>{ row.style.backgroundColor=''; }, 900);
+          focused = true;
+        } else {
+          // Wait for a render pass to complete then focus
+          const mo = new MutationObserver(function(){
+            const r = target();
+            if(r){
+              try{ r.scrollIntoView({block:'center'}); r.style.transition='background 300ms ease'; r.style.backgroundColor='rgba(59,130,246,.22)'; setTimeout(()=>{ r.style.backgroundColor=''; }, 900); }catch(_){}
+              mo.disconnect();
+            }
+          });
+          mo.observe(body, {childList:true, subtree:false});
+          setTimeout(()=>{ try{ mo.disconnect(); }catch(_){} }, 1500);
+        }
+      }catch(_){}
+    }
+    function bumpBadge(){
+      try{
+        if(typeof updateBadges==='function'){ updateBadges(); return; }
+      }catch(_){}
+      const el = document.getElementById('badge_pending'); if(!el) return;
+      const n = parseInt((el.textContent||'0').replace(/\D+/g,''),10); el.textContent = isFinite(n) ? (n+1) : 1;
+    }
+
+    function onUpdate(){
+      const rec = {
+        id: gv('c_id'),
+        from: gv('c_from'),
+        to: gv('c_to'),
+        customer: gv('c_customer'),
+        container: gv('c_container'),
+        appt: gv('c_loadempty'),
+        ie: gv('c_impexp'),
+        bk: gv('c_bkpin'),
+        seal: gv('c_seal'),
+        pudate: gv('c_pudate'),
+        deliveryDate: gv('c_deliveryDate'),
+        lfd: gv('c_lfd'),
+        returnDate: gv('c_returnDate'),
+        returnPort: gv('c_returnPort'),
+        chassis: gv('c_chassis'),
+        size: gv('c_size'),
+        pin: gv('c_pin'),
+        remark: gv('c_instruction'),
+        status: 'Pending'
+      };
+      if(!rec.id){ try{ toast && toast('Enter a Job #'); }catch(_){ alert('Enter a Job #'); } return; }
+      function go(){
+        ensureModel();
+        // Unshift to the top; remove older duplicate if exists
+        window.pending = (window.pending || []).filter(x => !x || String(x.id) !== String(rec.id));
+        window.pending.unshift(rec);
+        window.pending = dedupeById(window.pending, rec.id);
+        saveLocal();
+        showMain();
+        renderAndFocus(rec.id);
+        try{ document.getElementById('create_modal').style.display='none'; }catch(_){}
+        bumpBadge();
+        try{ toast && toast('Pickup created'); }catch(_){}
+      }
+      if(typeof window.openConfirm==='function') window.openConfirm('Create this new pickup in Main Dispatch?', go);
+      else if(confirm('Create this new pickup in Main Dispatch?')) go();
+    }
+
+    // Bind Update hard
+    (function(){
+      const btn = document.getElementById('btn_create_update');
+      if(!btn || !btn.parentNode) return;
+      const clone = btn.cloneNode(true); btn.parentNode.replaceChild(clone, btn);
+      clone.addEventListener('click', function(ev){ ev.preventDefault(); onUpdate(); }, {capture:true});
+    })();
+  });
+})();
+</script>
+
+
+<script>
+(function(){
+  const SEARCH_ID = 'pending_search';
+  const TBODY_ID  = 'pending_body';
+  const SECTION_ID = 'section_pending';
+
+  function ready(fn){ if(document.readyState!=='loading') fn(); else document.addEventListener('DOMContentLoaded', fn); }
+  function escRx(s){ return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+  function clearAll(tbody){
+    // show all rows and remove prior highlights
+    Array.from(tbody.rows).forEach(tr=>{ tr.style.display=''; });
+    tbody.querySelectorAll('span.ccl-hl').forEach(span=> span.replaceWith(document.createTextNode(span.textContent)));
+  }
+
+  function highlightMatchesInCell(td, rx){
+    if(td.querySelector('input,button,svg')) return false;
+    const text = td.textContent || '';
+    if(!rx.test(text)) return false;
+    rx.lastIndex = 0;
+    const frag = document.createDocumentFragment();
+    let last = 0;
+    text.replace(rx, function(m, offset){
+      if(offset>last) frag.appendChild(document.createTextNode(text.slice(last, offset)));
+      const mark = document.createElement('span'); mark.className = 'ccl-hl'; mark.textContent = m;
+      frag.appendChild(mark); last = offset + m.length; return m;
+    });
+    if(last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
+    td.textContent = ''; td.appendChild(frag);
+    return true;
+  }
+
+  function doSearch(){
+    const input = document.getElementById(SEARCH_ID);
+    const tbody = document.getElementById(TBODY_ID);
+    const section = document.getElementById(SECTION_ID);
+    const scroller = section ? section.querySelector('.relative.overflow-auto') : null;
+    if(!input || !tbody) return;
+
+    clearAll(tbody);
+    const q = (input.value || '').trim();
+    if(!q){ if(scroller) scroller.scrollTo({top:0}); return; }
+
+    const rx = new RegExp(escRx(q), 'gi');
+    let firstVisible = null;
+
+    Array.from(tbody.rows).forEach(tr=>{
+      let hit = false;
+      Array.from(tr.cells).forEach(td=>{ if(highlightMatchesInCell(td, rx)) hit = true; });
+      if(!hit){ tr.style.display = 'none'; }
+      else if(!firstVisible){ firstVisible = tr; }
+    });
+
+    if(firstVisible && scroller){
+      scroller.scrollTo({ top:firstVisible.offsetTop - 6, behavior:'smooth' });
+    }
+  }
+
+  function bind(){
+    const input = document.getElementById(SEARCH_ID);
+    if(!input) return;
+    ['input','keyup','change'].forEach(evt=> input.addEventListener(evt, doSearch));
+  }
+  ready(bind);
+})();
+</script>
+
 </body></html>`;
     }
 
+<script>
     function openGpsTab(){
       // Build HTML and open as a Blob URL in a NEW TAB
       const html = buildGpsHtml();
@@ -1330,6 +3389,7 @@ document.addEventListener('dblclick', function(e){
     btn.onclick = openGpsTab;
     btn.onkeydown = function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); openGpsTab(); } };
   });
+  if(typeof renderDrivers==='function'){ try{ renderDrivers(); }catch(_){} }
 })();
 </script>
 <script>
@@ -1384,7 +3444,6 @@ document.getElementById('btn_create_update')?.addEventListener('click', function
   });
 });
 </script>
-
 <script>
 (function(){
   function ready(fn){ if(document.readyState!=='loading') fn(); else document.addEventListener('DOMContentLoaded', fn); }
@@ -1451,7 +3510,782 @@ document.getElementById('btn_create_update')?.addEventListener('click', function
     cancelBtn = rebind(cancelBtn, doCancel);
     updateBtn = rebind(updateBtn, doUpdate);
   });
+  if(typeof renderDrivers==='function'){ try{ renderDrivers(); }catch(_){} }
 })();
 </script>
+
+<script>
+(function(){
+  const ETA_BASELINES={'DSV':40,'APM TERMINALS':40,'SSA MARINE':35,'FENIX':45,'TRAPAC':30,'EVERPORT':35,'YUSEN':30};
+  function baselineForCustomer(n){ if(!n) return 40; const u=String(n).toUpperCase(); for(const k in ETA_BASELINES){ if(u.includes(k)) return ETA_BASELINES[k]; } return 40; }
+  function parseCustomer(s){ if(!s) return ''; const m=String(s).replace(/^enoute/i,'Enroute').match(/(?:Enroute|Arrived)\s*(?:To|At)?\s*[:\-]?\s*(.*)$/i); return m&&m[1]?m[1].trim():''; }
+  function fmtHM(t){ const d=t instanceof Date?t:new Date(t); if(isNaN(d)) return '—'; const h=String(d.getHours()).padStart(2,'0'), m=String(d.getMinutes()).padStart(2,'0'); return h+':'+m; }
+  function fmtElapsed(ms){ if(!ms||ms<0) return '—'; const mm=Math.floor(ms/60000); if(mm<60) return mm+' mins'; const h=Math.floor(mm/60), m=mm%60; return h+'h '+m+'m'; }
+  function arr(){ return (typeof drivers!=='undefined'?drivers:(window.drivers=window.drivers||[])); }
+  function tick(){
+    const a=arr(), now=Date.now();
+    a.forEach(d=>{
+      const s=(d.status||'').trim(), cust=parseCustomer(s);
+      if(!d.phase){ d.phase=/^enroute\b/i.test(s)?'ENROUTE':(/^arrived\b/i.test(s)?'ARRIVED':'OTHER'); }
+      if(!d.phaseStartedAt && (d.phase==='ENROUTE'||d.phase==='ARRIVED')) d.phaseStartedAt=now;
+      if(d.phase==='ENROUTE'){
+        const exp=d.expectedMins||baselineForCustomer(cust), start=d.phaseStartedAt||now;
+        d.etaStr=fmtHM(start+exp*60000); const el=now-start; d._elapsedStr=fmtElapsed(el); d._isLate=(el/60000) > exp+5; if(d._isLate){ d._elapsedStr = d._elapsedStr + ' (Exp. ' + exp + 'm)'; }
+      }else if(d.phase==='ARRIVED'){
+        d.etaStr='—'; const el=now-(d.phaseStartedAt||now); d._elapsedStr=fmtElapsed(el); d._isLate=false;
+      }else{ d.etaStr='—'; d._elapsedStr='—'; d._isLate=false; }
+    });
+    if(typeof renderDrivers==='function') renderDrivers();
+  }
+  setInterval(tick,30000); window.addEventListener('load', ()=>setTimeout(tick,300));
+  if(typeof renderDrivers==='function'){ try{ renderDrivers(); }catch(_){} }
+})();
+</script>
+
+
+<!-- DEMO INIT FOR DRIVERS -->
+<script>
+(function(){
+  const now = Date.now();
+  try{
+    if(Array.isArray(drivers)){
+      const byEmp = id => drivers.find(d => String(d.empId)===String(id));
+      let d;
+      d = byEmp('53939'); if(d){ d.status='Arrived : APM Terminals (Pier 400)'; d.phase='ARRIVED'; d.phaseStartedAt=now-12*60000; }
+      d = byEmp('54545'); if(d){ d.status='Enroute : SSA Marine (Pier A)'; d.phase='ENROUTE'; d.phaseStartedAt=now-55*60000; d.expectedMins=35; }
+      d = byEmp('554421'); if(d){ d.status='Arrived : Fenix Marine Services (Pier 300)'; d.phase='ARRIVED'; d.phaseStartedAt=now-8*60000; }
+      d = byEmp('598771'); if(d){ d.status='Enroute : TraPac Terminal (Pier G)'; d.phase='ENROUTE'; d.phaseStartedAt=now-50*60000; d.expectedMins=30; }
+    }
+  }catch(_){}
+  if(typeof renderDrivers==='function'){ try{ renderDrivers(); }catch(_){} }
+})();
+</script>
+
+
+<!-- DRIVER MESSAGE MODAL -->
+<style>
+#driverMsgOverlay{ position:fixed; inset:0; background:rgba(2,8,23,.55); display:none; z-index:1000; }
+#driverMsgModal{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:1001; }
+#driverMsgModal .card{ width:480px; max-width:92vw; background:#0b1322; border:1px solid #1f2a44; border-radius:16px; box-shadow:0 10px 40px rgba(0,0,0,.5); color:#e5edf8; }
+#driverMsgModal .hd{ padding:16px 18px; border-bottom:1px solid #1e2a43; font-size:18px; font-weight:700; }
+#driverMsgModal .bd{ padding:16px 18px; }
+#driverMsgModal label{ display:block; font-size:13px; opacity:.85; margin-bottom:6px; }
+#driverMsgModal .to{ margin-bottom:12px; font-weight:600; }
+#driverMsgModal textarea{ width:100%; min-height:120px; background:#0a1220; color:#dbeafe; border:1px solid #2a3a5d; border-radius:12px; padding:10px 12px; resize:vertical; }
+#driverMsgModal .ft{ display:flex; gap:10px; justify-content:flex-end; padding:14px 18px 18px; }
+#driverMsgModal .btn{ height:38px; padding:0 16px; border-radius:10px; border:1px solid #2a3a5d; background:#0f172a; color:#e5edf8; cursor:pointer; }
+#driverMsgModal .btn.primary{ background:linear-gradient(90deg,#1ea0ff,#47e9ff); color:#0b1322; border:0; font-weight:700; }
+#driverMsgModal .btn:hover{ filter:brightness(1.05); }
+</style>
+<div id="driverMsgOverlay"></div>
+<div id="driverMsgModal" role="dialog" aria-modal="true" aria-labelledby="driverMsgTitle">
+  <div class="card">
+    <div class="hd" id="driverMsgTitle">Message Driver</div>
+    <div class="bd">
+      <div class="to" id="driverMsgTo">To: —</div>
+      <label for="driverMsgText">Message</label>
+      <textarea id="driverMsgText" placeholder="Type your message…"></textarea>
+    </div>
+    <div class="ft">
+      <button class="btn" id="driverMsgCancel">Cancel</button>
+      <button class="btn primary" id="driverMsgSend">Update Driver</button>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  const $ = sel => document.querySelector(sel);
+  const overlay = $('#driverMsgOverlay');
+  const modal = $('#driverMsgModal');
+  const elTo  = $('#driverMsgTo');
+  const elText= $('#driverMsgText');
+  const btnCancel = $('#driverMsgCancel');
+  const btnSend   = $('#driverMsgSend');
+  let currentEmp = null;
+
+  function openModal(empId, driverName){
+    currentEmp = empId || null;
+    elTo.textContent = 'To: ' + (driverName||empId||'—');
+    elText.value='';
+    overlay.style.display='block';
+    modal.style.display='flex';
+    elText.focus();
+  }
+  function closeModal(){
+    overlay.style.display='none';
+    modal.style.display='none';
+  }
+  overlay.addEventListener('click', closeModal);
+  btnCancel.addEventListener('click', closeModal);
+  btnSend.addEventListener('click', function(){
+    const msg = elText.value.trim();
+    if(!msg) { elText.focus(); return; }
+    if(typeof onDriverMessage==='function'){
+      try{ onDriverMessage(currentEmp, msg); }catch(_){}
+    } else {
+      console.log('Send to driver', currentEmp, msg);
+    }
+    closeModal();
+  });
+
+  document.addEventListener('click', function(e){
+    const btn = e.target.closest && e.target.closest('.msg-btn');
+    if(!btn) return;
+    const emp = btn.getAttribute('data-emp') || '';
+    let name = emp;
+    try{
+      if(Array.isArray(drivers)){
+        const d = drivers.find(dd => String(dd.empId)===String(emp));
+        if(d) name = d.name || name;
+      }
+    }catch(_){}
+    openModal(emp, name);
+  });
+  if(typeof renderDrivers==='function'){ try{ renderDrivers(); }catch(_){} }
+})();
+</script>
+
+
+<script>
+// DEMO INIT EXTRA ETA
+window.addEventListener('load', function(){
+  try{
+    if(typeof updateDriverETA==='function'){
+      updateDriverETA({ employeeId:'54545', minutesRemaining: 6, expectedMins: 35 });
+      updateDriverETA({ employeeId:'598771', minutesRemaining: 12, expectedMins: 30 });
+    }
+  }catch(_){}
+});
+</script>
+
+
+<script>(function(){
+  const sec=document.querySelector('#section_drivers_bottom');
+  if(!sec) return;
+  const table=sec.querySelector('table'); if(table){ table.style.minWidth='max-content'; }
+  const ths=sec.querySelectorAll('thead th');
+  ths.forEach(function(th){
+    const grip=document.createElement('span'); grip.className='col-grip'; th.appendChild(grip);
+    let startX=0, startW=0;
+    function onDown(e){ startX=e.clientX; startW=th.offsetWidth;
+      document.body.classList.add('dragging-col');
+      document.addEventListener('mousemove',onMove); document.addEventListener('mouseup',onUp);
+      e.preventDefault();
+    }
+    function onMove(e){
+      const dx=e.clientX-startX; const w=Math.max(40, startW+dx);
+      th.style.width=w+'px';
+    }
+    function onUp(){ document.body.classList.remove('dragging-col');
+      document.removeEventListener('mousemove',onMove); document.removeEventListener('mouseup',onUp);
+    }
+    grip.addEventListener('mousedown', onDown);
+  });
+})();</script>
+
+
+<script>
+// Fallback DOM fill for Acc Hrs demo (no dependency on app state)
+(function(){
+  const demoHrs = { "53939": 11.5, "54545": 11.57, "554421": 6.2, "598771": 7.4 };
+  function fill(){
+    const sec = document.querySelector('#section_drivers_bottom');
+    if(!sec) return false;
+    let changed = false;
+    sec.querySelectorAll('tbody tr').forEach(tr => {
+      const acc = tr.querySelector('td.acc-hrs');
+      if(!acc) return;
+      const idCell = acc.previousElementSibling;
+      if(!idCell) return;
+      const id = (idCell.textContent||'').trim();
+      const hrs = demoHrs[id];
+      if(hrs == null) return;
+      acc.textContent = String(Math.round(hrs*100)/100);
+      acc.classList.remove('ok','over');
+      if(hrs >= 8){ acc.classList.add('over'); } else { acc.classList.add('ok'); }
+      changed = true;
+    });
+    return changed;
+  }
+  function tryFill(){
+    if(fill()) return;
+    let tries = 0;
+    const t = setInterval(function(){
+      if(fill() || ++tries > 60) clearInterval(t);
+    }, 200);
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', tryFill);
+  }else{
+    tryFill();
+  }
+})();
+</script>
+
+
+<script>
+// Sorting for Drivers table A-Z / Z-A with funnel icon per header
+(function(){
+  const SEC_ID = '#section_drivers_bottom';
+  let sortState = { col: null, dir: 'asc' };
+
+  function addIcons(){
+    const sec = document.querySelector(SEC_ID); if(!sec) return;
+    const ths = sec.querySelectorAll('thead th');
+    ths.forEach((th, idx) => {
+      if(th.querySelector('.sort-btn')) return;
+      const btn = document.createElement('span');
+      btn.className = 'sort-btn';
+      btn.title = 'Sort A–Z (click again Z–A)';
+      btn.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">
+         <path d="M3 4h18M6 9h12M9 14h6M11 19h2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>`;
+      th.appendChild(btn);
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        if(sortState.col === idx){
+          sortState.dir = (sortState.dir === 'asc') ? 'desc' : 'asc';
+        }else{
+          sortState.col = idx;
+          sortState.dir = 'asc';
+        }
+        ths.forEach(h => h.classList.remove('active-sort','asc','desc'));
+        th.classList.add('active-sort', sortState.dir);
+        tryRenderThenSort();
+      });
+    });
+  }
+
+  function getCellText(td){
+    if(!td) return '';
+    const dv = td.getAttribute('data-value');
+    if(dv) return dv;
+    let t = td.textContent || '';
+    return t.trim().toLowerCase();
+  }
+
+  function cmp(a,b){
+    const na = parseFloat(a), nb = parseFloat(b);
+    const isNumA = !isNaN(na) && /^[-+]?\d+(\.\d+)?$/.test(a);
+    const isNumB = !isNaN(nb) && /^[-+]?\d+(\.\d+)?$/.test(b);
+    if(isNumA && isNumB){ return na - nb; }
+    return a.localeCompare(b, undefined, { sensitivity:'base' });
+  }
+
+  function applySortDOM(){
+    const sec = document.querySelector(SEC_ID);
+    if(!sec) return;
+    const tbody = sec.querySelector('tbody'); if(!tbody) return;
+    if(sortState.col == null) return;
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    rows.sort((r1, r2) => {
+      const t1 = getCellText(r1.children[sortState.col]);
+      const t2 = getCellText(r2.children[sortState.col]);
+      const c = cmp(t1, t2);
+      return sortState.dir === 'asc' ? c : -c;
+    });
+    rows.forEach(r => tbody.appendChild(r));
+  }
+
+  function hookRender(){
+    if(window._pp_renderPatched) return;
+    if(typeof window.renderDrivers === 'function'){
+      const orig = window.renderDrivers;
+      window.renderDrivers = function(){
+        const res = orig.apply(this, arguments);
+        applySortDOM();
+        return res;
+      };
+      window._pp_renderPatched = true;
+    }
+  }
+
+  function tryRenderThenSort(){
+    if(typeof window.renderDrivers === 'function'){
+      try{ window.renderDrivers(); }catch(_){}
+    }else{
+      applySortDOM();
+    }
+  }
+
+  function init(){
+    addIcons();
+    hookRender();
+    const sec = document.querySelector(SEC_ID);
+    if(sec){
+      const obs = new MutationObserver(() => { addIcons(); applySortDOM(); });
+      obs.observe(sec, { childList:true, subtree:true });
+    }
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', init);
+  }else{
+    init();
+  }
+})();
+</script>
+
+
+<script>
+(function(){
+  const SEC = document.querySelector('#section_drivers_bottom');
+  if(!SEC) return;
+  if(window.__pp_sortPatched2) return; window.__pp_sortPatched2 = true;
+  let sortState = { col: null, dir: 'asc' };
+
+  function addIconsAndBind(){
+    const ths = SEC.querySelectorAll('thead th');
+    ths.forEach((th, idx) => {
+      const label = (th.textContent || '').trim();
+      if(!label) return;
+      if(!th.querySelector('.sort-btn')){
+        const btn = document.createElement('span');
+        btn.className = 'sort-btn';
+        btn.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">
+  <path d="M4 5h16l-7 8v6l-2 1v-7L4 5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+</svg>`;
+        th.appendChild(btn);
+      }
+      if(!th._ppBound2){
+        th._ppBound2 = true;
+        th.addEventListener('click', function(){
+          if(sortState.col === idx){
+            sortState.dir = (sortState.dir === 'asc') ? 'desc' : 'asc';
+          }else{
+            sortState.col = idx;
+            sortState.dir = 'asc';
+          }
+          ths.forEach(h => h.classList.remove('active-sort','asc','desc'));
+          th.classList.add('active-sort', sortState.dir);
+          applySort();
+        });
+      }
+    });
+  }
+
+  function timeToMinutes(t){
+    const m = /^(\d{1,2}):(\d{2})$/.exec(t);
+    if(!m) return NaN;
+    return parseInt(m[1],10)*60 + parseInt(m[2],10);
+  }
+  function parseElaps(txt){
+    const m = txt.match(/(\d+)\s*m/);
+    return m ? parseInt(m[1],10) : NaN;
+  }
+  function keyFor(thText, cell){
+    const raw = (cell?.getAttribute('data-value') || cell?.textContent || '').trim();
+    const txt = raw.toLowerCase();
+    switch(thText){
+      case 'ID': return parseInt(txt,10);
+      case 'Acc Hrs': return parseFloat(txt);
+      case 'ETA': { const v = timeToMinutes(txt); return isNaN(v) ? Number.POSITIVE_INFINITY : v; }
+      case 'Elaps Time': { const v = parseElaps(txt); return isNaN(v) ? Number.POSITIVE_INFINITY : v; }
+      default: return txt;
+    }
+  }
+  function applySort(){
+    const theadThs = SEC.querySelectorAll('thead th');
+    if(sortState.col == null || !theadThs.length) return;
+    const label = (theadThs[sortState.col].textContent || '').trim();
+    const tbody = SEC.querySelector('tbody'); if(!tbody) return;
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    rows.sort((r1, r2) => {
+      const t1 = keyFor(label, r1.children[sortState.col]);
+      const t2 = keyFor(label, r2.children[sortState.col]);
+      const n1 = (typeof t1 === 'number'), n2 = (typeof t2 === 'number');
+      const c = (n1 && n2) ? (t1 - t2) : String(t1).localeCompare(String(t2), undefined, { sensitivity:'base' });
+      return sortState.dir === 'asc' ? c : -c;
+    });
+    rows.forEach(r => tbody.appendChild(r));
+  }
+
+  if(typeof window.renderDrivers === 'function' && !window.__pp_sortHooked2){
+    const orig = window.renderDrivers;
+    window.renderDrivers = function(){
+      const res = orig.apply(this, arguments);
+      try{ addIconsAndBind(); applySort(); }catch(e){}
+      return res;
+    };
+    window.__pp_sortHooked2 = true;
+  }
+
+  addIconsAndBind();
+  const tb = SEC.querySelector('tbody');
+  if(tb){
+    const obs = new MutationObserver(() => addIconsAndBind());
+    obs.observe(tb, { childList:true });
+  }
+})();
+</script>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  var gpsBtn = document.getElementById("tab_drivergps");
+  if (gpsBtn) {
+    gpsBtn.addEventListener("click", function () {
+      // Long Beach Port coordinates
+      const longBeachPort = "33.7676,-118.1981";
+      // Open Google Maps centered on Long Beach Port in a new tab
+      window.open(`https://www.google.com/maps/@${longBeachPort},14z`, "_blank");
+    });
+  }
+});
+</script>
+
+
+<script>
+(function(){
+  const SEARCH_ID = 'pending_search';
+  const TBODY_ID  = 'pending_body';
+  const SECTION_ID = 'section_pending';
+
+  function ready(fn){ if(document.readyState!=='loading') fn(); else document.addEventListener('DOMContentLoaded', fn); }
+  function escRx(s){ return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+  function clearAll(tbody){
+    // show all rows and remove prior highlights
+    Array.from(tbody.rows).forEach(tr=>{ tr.style.display=''; });
+    tbody.querySelectorAll('span.ccl-hl').forEach(span=> span.replaceWith(document.createTextNode(span.textContent)));
+  }
+
+  function highlightMatchesInCell(td, rx){
+    if(td.querySelector('input,button,svg')) return false;
+    const text = td.textContent || '';
+    if(!rx.test(text)) return false;
+    rx.lastIndex = 0;
+    const frag = document.createDocumentFragment();
+    let last = 0;
+    text.replace(rx, function(m, offset){
+      if(offset>last) frag.appendChild(document.createTextNode(text.slice(last, offset)));
+      const mark = document.createElement('span'); mark.className = 'ccl-hl'; mark.textContent = m;
+      frag.appendChild(mark); last = offset + m.length; return m;
+    });
+    if(last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
+    td.textContent = ''; td.appendChild(frag);
+    return true;
+  }
+
+  function doSearch(){
+    const input = document.getElementById(SEARCH_ID);
+    const tbody = document.getElementById(TBODY_ID);
+    const section = document.getElementById(SECTION_ID);
+    const scroller = section ? section.querySelector('.relative.overflow-auto') : null;
+    if(!input || !tbody) return;
+
+    clearAll(tbody);
+    const q = (input.value || '').trim();
+    if(!q){ if(scroller) scroller.scrollTo({top:0}); return; }
+
+    const rx = new RegExp(escRx(q), 'gi');
+    let firstVisible = null;
+
+    Array.from(tbody.rows).forEach(tr=>{
+      let hit = false;
+      Array.from(tr.cells).forEach(td=>{ if(highlightMatchesInCell(td, rx)) hit = true; });
+      if(!hit){ tr.style.display = 'none'; }
+      else if(!firstVisible){ firstVisible = tr; }
+    });
+
+    if(firstVisible && scroller){
+      scroller.scrollTo({ top:firstVisible.offsetTop - 6, behavior:'smooth' });
+    }
+  }
+
+  function bind(){
+    const input = document.getElementById(SEARCH_ID);
+    if(!input) return;
+    ['input','keyup','change'].forEach(evt=> input.addEventListener(evt, doSearch));
+  }
+  ready(bind);
+})();
+</script>
+
 </body>
 </html>
+
+<script>
+(function(){
+  const SEC_SEL = '#section_drivers_bottom';
+  let openMenu = null;
+  const activeFilters = new Map(); // colIdx -> Set(values)
+
+  function getCellValue(td){
+    if(!td) return '';
+    const v = td.getAttribute('data-value') || td.textContent || '';
+    return v.trim();
+  }
+
+  function uniqueValuesForCol(colIdx){
+    const sec = document.querySelector(SEC_SEL);
+    const vals = new Set();
+    sec.querySelectorAll('tbody tr').forEach(tr => {
+      const v = getCellValue(tr.children[colIdx]);
+      if(v) vals.add(v);
+    });
+    return Array.from(vals).sort((a,b)=>a.localeCompare(b, undefined, {sensitivity:'base'}));
+  }
+
+  function applyFilters(){
+    const sec = document.querySelector(SEC_SEL);
+    const rows = sec.querySelectorAll('tbody tr');
+    rows.forEach(tr => {
+      let show = true;
+      activeFilters.forEach((set, idx) => {
+        if(set && set.size>0){
+          const val = getCellValue(tr.children[idx]);
+          if(!set.has(val)) show = false;
+        }
+      });
+      tr.style.display = show ? '' : 'none';
+    });
+  }
+
+  function closeMenu(){
+    if(openMenu && openMenu.parentNode){
+      openMenu.parentNode.removeChild(openMenu);
+    }
+    openMenu = null;
+    document.removeEventListener('click', onDocClick, true);
+    window.removeEventListener('resize', closeMenu);
+    window.removeEventListener('scroll', closeMenu, true);
+  }
+
+  function onDocClick(e){
+    if(!openMenu) return;
+    if(!openMenu.contains(e.target)) closeMenu();
+  }
+
+  function openFilterFor(th, colIdx){
+    closeMenu();
+    const rect = th.getBoundingClientRect();
+    const menu = document.createElement('div');
+    menu.className = 'pp-col-filter';
+
+    const head = document.createElement('div');
+    head.className = 'ppf-head';
+    const search = document.createElement('input');
+    search.placeholder = 'Search...';
+    head.appendChild(search);
+    menu.appendChild(head);
+
+    const list = document.createElement('div');
+    list.className = 'ppf-list';
+    menu.appendChild(list);
+
+    const foot = document.createElement('div');
+    foot.className = 'ppf-foot';
+    const clearBtn = document.createElement('button');
+    clearBtn.className = 'ppf-btn';
+    clearBtn.textContent = 'Clear';
+    const applyBtn = document.createElement('button');
+    applyBtn.className = 'ppf-btn primary';
+    applyBtn.textContent = 'Apply';
+    foot.appendChild(clearBtn);
+    foot.appendChild(applyBtn);
+    menu.appendChild(foot);
+
+    document.body.appendChild(menu);
+    // position just under the header cell
+    const top = rect.bottom + 6;
+    const left = Math.min(rect.left, window.innerWidth - 340);
+    menu.style.top = top + 'px';
+    menu.style.left = left + 'px';
+
+    const selected = new Set(activeFilters.get(colIdx) || []);
+
+    function renderItems(){
+      list.innerHTML = '';
+      const allVals = uniqueValuesForCol(colIdx);
+      const q = search.value.trim().toLowerCase();
+      // "Select All"
+      const allItem = document.createElement('div');
+      allItem.className = 'ppf-item';
+      const allCb = document.createElement('input'); allCb.type='checkbox';
+      const allLbl = document.createElement('span'); allLbl.textContent = 'SELECT ALL';
+      // selected if every visible value is selected
+      const visibleVals = allVals.filter(v => !q || v.toLowerCase().includes(q));
+      const everySel = visibleVals.length>0 && visibleVals.every(v => selected.has(v));
+      allCb.checked = everySel;
+      allItem.appendChild(allCb); allItem.appendChild(allLbl);
+      list.appendChild(allItem);
+
+      allCb.addEventListener('change', ()=>{
+        if(allCb.checked){
+          visibleVals.forEach(v => selected.add(v));
+        }else{
+          visibleVals.forEach(v => selected.delete(v));
+        }
+        renderItems();
+      });
+
+      // actual values
+      visibleVals.forEach(v => {
+        const item = document.createElement('div');
+        item.className = 'ppf-item';
+        const cb = document.createElement('input'); cb.type='checkbox'; cb.checked = selected.has(v);
+        const lbl = document.createElement('span'); lbl.textContent = v || '(blank)';
+        item.appendChild(cb); item.appendChild(lbl);
+        list.appendChild(item);
+        item.addEventListener('click', (e)=>{
+          if(e.target.tagName !== 'INPUT'){ cb.checked = !cb.checked; }
+          if(cb.checked) selected.add(v); else selected.delete(v);
+        });
+      });
+    }
+
+    renderItems();
+
+    applyBtn.addEventListener('click', ()=>{
+      if(selected.size===0){
+        activeFilters.delete(colIdx);
+      }else{
+        activeFilters.set(colIdx, new Set(selected));
+      }
+      applyFilters();
+      closeMenu();
+    });
+
+    clearBtn.addEventListener('click', ()=>{
+      activeFilters.delete(colIdx);
+      applyFilters();
+      closeMenu();
+    });
+
+    search.addEventListener('input', renderItems);
+
+    openMenu = menu;
+    setTimeout(()=>{
+      document.addEventListener('click', onDocClick, true);
+      window.addEventListener('resize', closeMenu);
+      window.addEventListener('scroll', closeMenu, true);
+      search.focus();
+    },0);
+  }
+
+  // Bind filter icon clicks
+  function bindFilterIcons(){
+    const sec = document.querySelector(SEC_SEL);
+    if(!sec) return;
+    const ths = sec.querySelectorAll('thead th');
+    ths.forEach((th, idx) => {
+      const icon = th.querySelector('.sort-btn'); // using same element as filter button
+      if(icon && !icon._ppFilterBound){
+        icon._ppFilterBound = true;
+        icon.addEventListener('click', (e)=>{
+          e.stopPropagation(); // don't trigger sorting
+          openFilterFor(th, idx);
+        });
+      }
+    });
+  }
+
+  // Observe changes (re-render)
+  const sec = document.querySelector(SEC_SEL);
+  if(sec){
+    const obs = new MutationObserver(()=> bindFilterIcons());
+    obs.observe(sec, { childList:true, subtree:true });
+  }
+  bindFilterIcons();
+})();
+</script>
+
+<!-- ===== FORCE-BIND: Create modal Cancel/Update (safe override) ===== -->
+<script>
+(function(){
+  function ready(fn){ if(document.readyState!=='loading') fn(); else document.addEventListener('DOMContentLoaded', fn); }
+  ready(function(){
+    var modal = document.getElementById('create_modal');
+
+    function resetCreateFields(){
+      ['c_id','c_window','c_from','c_to','c_container','c_bkpin','c_seal','c_appt','c_pudate','c_deliveryDate','c_lfd','c_returnDate','c_returnPort','c_customer','c_chassis','c_size','c_pin','c_instruction']
+      .forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+      var leH=document.getElementById('c_loadempty'); if(leH) leH.value='';
+      var ieH=document.getElementById('c_impexp');   if(ieH) ieH.value='';
+      var leT=document.getElementById('c_dd_loadempty'); if(leT) leT.textContent='Select…';
+      var ieT=document.getElementById('c_dd_impexp');   if(ieT) ieT.textContent='Select…';
+      try{
+        if(typeof initDropdown==='function'){
+          initDropdown('c_dd_loadempty','c_menu_loadempty', document.getElementById('c_loadempty'));
+          initDropdown('c_dd_impexp','c_menu_impexp', document.getElementById('c_impexp'));
+        }
+      }catch(_){}
+    }
+
+    function openCreate(){
+      if(!modal) return;
+      resetCreateFields();
+      modal.style.display='flex';
+    }
+    function closeCreate(){ if(modal) modal.style.display='none'; }
+
+    // Fallback confirm dialog if openConfirm is missing
+    if(typeof window.openConfirm !== 'function'){
+      window.openConfirm = function(msg, onYes){
+        if(confirm(msg)){ if(onYes) try{ onYes(); }catch(_){ } }
+      };
+    }
+
+    function gv(id){ var el=document.getElementById(id); return (el && (el.value||'')).trim(); }
+
+    function doCancel(){
+      openConfirm('Confirm cancel? Your entries will be lost.', function(){
+        closeCreate();
+      });
+    }
+
+    function doUpdate(){
+      var id = gv('c_id');
+      if(!id){ if(typeof toast==='function') toast('Enter a Job #'); return; }
+      var rec = {
+        id: id,
+        from: gv('c_from'),
+        to: gv('c_to'),
+        container: gv('c_container'),
+        appt: gv('c_loadempty'),      // Load / Empty
+        bk: gv('c_bkpin'),            // BK # / PIN
+        ie: gv('c_impexp'),           // Import / Export
+        seal: gv('c_seal'),
+        window: gv('c_window'),
+        remark: gv('c_instruction'),
+        pudate: gv('c_pudate'),
+        deliveryDate: gv('c_deliveryDate'),
+        lfd: gv('c_lfd'),
+        returnDate: gv('c_returnDate'),
+        returnPort: gv('c_returnPort'),
+        customer: gv('c_customer'),
+        chassis: gv('c_chassis'),
+        size: gv('c_size'),
+        pin: gv('c_pin'),
+        status: 'Pending'
+      };
+      openConfirm('Create this new pickup in Main Dispatch?', function(){
+        try{
+          // Ensure pending array exists
+          if(!Array.isArray(window.pending)) window.pending = [];
+          window.pending.push(rec);
+          if(typeof renderPending==='function') renderPending();
+          if(typeof updateBadges==='function') updateBadges();
+          closeCreate();
+          if(typeof switchTab==='function') switchTab('pending');
+          if(typeof toast==='function') toast('Pickup created');
+        }catch(e){ console.error(e); }
+      });
+    }
+
+    // Utility to replace existing buttons and bind fresh handlers
+    function bindFresh(id, handler){
+      var el = document.getElementById(id);
+      if(!el || !el.parentNode) return;
+      var clone = el.cloneNode(true);
+      el.parentNode.replaceChild(clone, el);
+      clone.addEventListener('click', function(ev){ ev.preventDefault(); handler(); });
+    }
+
+    bindFresh('btn_create_pending', openCreate);
+    bindFresh('btn_create_cancel',  doCancel);
+    bindFresh('btn_create_update',  doUpdate);
+  });
+})();
+</script>
