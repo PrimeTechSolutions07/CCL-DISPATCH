@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
@@ -1591,7 +1592,42 @@ function onDoc(e){ if(!menu.contains(e.target) && e.target!==trigger) close(); }
       const rec = arr.find(r=>r.id===selId) || {};
       document.getElementById('edit_title').textContent = title;
       document.getElementById('e_jobpill').textContent = (rec.id||'Job #') + (rec.window?(' • '+rec.window):'');
-      clearEditFields(); // always blank
+      
+// Prefill fields from record (and DOM fallback)
+try{
+  // If selection set is empty, allow checkbox-based selection
+  if((!selId || (state && state.selectedPending && state.selectedPending.size!==1)) && document.querySelector('#section_pending tbody input[type="checkbox"]:checked')){
+    var rEl = document.querySelector('#section_pending tbody input[type="checkbox"]:checked').closest('tr');
+    if(rEl) { selId = rEl.getAttribute('data-id'); state.selectedPending = new Set([selId]); rec = arr.find(r=>r.id===selId) || rec; }
+  }
+  eFrom.value = (rec.from||''); 
+  eTo.value = (rec.to||'');
+  eContainer.value = (rec.container||'');
+  eLoadEmpty.value = (rec.appt||'');
+  var ddLE = document.getElementById('dd_loadempty'); if(ddLE){ ddLE.textContent = eLoadEmpty.value || ddLE.textContent || 'Select…'; }
+  eBkPin.value = (rec.bk||'');
+  eImpExp.value = (rec.ie||'');
+  var ddIE = document.getElementById('dd_impexp'); if(ddIE){ ddIE.textContent = eImpExp.value || ddIE.textContent || 'Select…'; }
+  eSeal.value = (rec.seal||'');
+  eWindow.value = (rec.window||'');
+  eInstruction.value = (rec.remark||'');
+
+  // Fallback: read from row cells if any field is still blank
+  (function(){
+    var rowEl = document.querySelector('#section_pending tbody tr[data-id="'+selId+'"]');
+    if(!rowEl) return;
+    var byKey = {}; Array.from(rowEl.children).forEach(function(td){ if(td.dataset && td.dataset.colKey){ byKey[td.dataset.colKey] = (td.textContent||'').trim(); } });
+    function fillIfEmpty(inputId, key){
+      var el=document.getElementById(inputId); if(!el) return;
+      if(!el.value || !el.value.trim()){ var v=(byKey[key]||''); el.value = (v==='—')? '' : v; }
+    }
+    fillIfEmpty('e_from','from'); fillIfEmpty('e_to','to'); fillIfEmpty('e_container','container');
+    fillIfEmpty('e_loadempty','appt'); if(ddLE){ ddLE.textContent = document.getElementById('e_loadempty').value || ddLE.textContent || 'Select…'; }
+    fillIfEmpty('e_bkpin','bk'); fillIfEmpty('e_impexp','ie'); if(ddIE){ ddIE.textContent = document.getElementById('e_impexp').value || ddIE.textContent || 'Select…'; }
+    fillIfEmpty('e_seal','seal'); fillIfEmpty('e_window','window'); fillIfEmpty('e_instruction','remark');
+  })();
+}catch(_){}
+
       editModal.style.display='flex';
 // Ensure dropdowns are (re)initialized each time the modal opens
 try{
@@ -3917,8 +3953,8 @@ document.addEventListener("DOMContentLoaded", function() {
         el.value = text(val);
       });
       // Dropdown labels (if present)
-      try{ var dd1=document.getElementById('dd_loadempty'); if(dd1){ dd1.textContent = text(rec.loadempty || rec.appt || ''); } }catch(_){}
-      try{ var dd2=document.getElementById('dd_impexp'); if(dd2){ dd2.textContent = text(rec.ie || ''); } }catch(_){}
+      try{ var dd1=document.getElementById('dd_loadempty'); if(dd1){ if(!dd1.textContent || !dd1.textContent.trim()) dd1.textContent = text(rec.loadempty || rec.appt || ''); } }catch(_){}
+      try{ var dd2=document.getElementById('dd_impexp'); if(dd2){ if(!dd2.textContent || !dd2.textContent.trim()) dd2.textContent = text(rec.ie || ''); } }catch(_){}
       // Header pill
       try{
         var pill=document.getElementById('e_jobpill');
@@ -5634,6 +5670,567 @@ document.addEventListener('DOMContentLoaded', function(){
       }catch(_){}
       return r;
     };
+  });
+})();
+</script>
+
+<!-- === CCL: Force-Center Cells + Auto-Center On Edit (Main Dispatch) === -->
+<style id="ccl-center-on-edit">
+  /* Center everything inside Main Dispatch rows, including nested spans/divs */
+  #section_pending tbody td,
+  #section_pending tbody th { 
+    text-align: center !important; 
+    vertical-align: middle !important; 
+  }
+  #section_pending tbody td * { 
+    text-align: center !important; 
+  }
+</style>
+<script>
+(function(){
+  if (window.__CCL_CENTER_EDIT__) return; window.__CCL_CENTER_EDIT__ = true;
+  function ready(fn){ if(document.readyState!=='loading') fn(); else document.addEventListener('DOMContentLoaded', fn, {once:true}); }
+  ready(function(){
+    const TBODY = document.querySelector('#section_pending tbody');
+    if(!TBODY) return;
+
+    // Ensure any edited/changed cell keeps centered alignment.
+    function centerCellFrom(node){
+      try{
+        const el = (node && node.nodeType===3) ? node.parentElement : node;
+        const td = el && el.closest ? el.closest('td') : null;
+        if(td){
+          td.style.textAlign = 'center';
+          td.style.verticalAlign = 'middle';
+          td.classList.add('ccl-centered');
+          // Also center direct children that might carry left-align classes
+          Array.from(td.children || []).forEach(ch => { 
+            if (ch && ch.style) ch.style.textAlign = 'center'; 
+          });
+        }
+      }catch(_){}
+    }
+
+    // Input/Change listeners for inline edits
+    TBODY.addEventListener('input', e => centerCellFrom(e.target), true);
+    TBODY.addEventListener('change', e => centerCellFrom(e.target), true);
+
+    // Mutation observer catches programmatic updates after Edit modal save
+    const mo = new MutationObserver(list => {
+      list.forEach(m => {
+        if(m.type === 'characterData') centerCellFrom(m.target);
+        if(m.type === 'childList'){
+          m.addedNodes && m.addedNodes.forEach(n => centerCellFrom(n));
+          // If a whole row replaced, re-center all its cells
+          const tr = (m.target && m.target.closest) ? m.target.closest('tr') : null;
+          if(tr && TBODY.contains(tr)){
+            Array.from(tr.cells || []).forEach(td => centerCellFrom(td));
+          }
+        }
+      });
+    });
+    mo.observe(TBODY, {subtree:true, characterData:true, childList:true});
+
+    // Also run after table re-renders
+    try{
+      const orig = window.renderPending;
+      window.renderPending = function(){
+        const r = (typeof orig==='function') ? orig.apply(this, arguments) : undefined;
+        try{
+          TBODY.querySelectorAll('td').forEach(td => {
+            td.style.textAlign='center';
+            td.style.verticalAlign='middle';
+            Array.from(td.children || []).forEach(ch => { if(ch && ch.style) ch.style.textAlign='center'; });
+          });
+        }catch(_){}
+        return r;
+      };
+    }catch(_){}
+  });
+})();
+</script>
+
+<!-- === CCL: Inline Cell Editing + Persist === -->
+<script>
+(function(){
+  if (window.__CCL_INLINE_EDIT__) return; window.__CCL_INLINE_EDIT__ = true;
+  function ready(fn){ if(document.readyState!=='loading') fn(); else document.addEventListener('DOMContentLoaded', fn, {once:true}); }
+  ready(function(){
+    const TBL = document.querySelector('#section_pending'); if(!TBL) return;
+    const TBODY = TBL.querySelector('tbody'); if(!TBODY) return;
+
+    function makeEditable(){
+      TBODY.querySelectorAll('tr').forEach(function(tr){
+        Array.from(tr.cells).forEach(function(td, idx){
+          if(idx===0) return; // skip checkbox
+          td.setAttribute('contenteditable', 'true');
+          td.dataset.cclEditable = '1';
+          td.style.caretColor = 'auto';
+          td.style.outline = 'none';
+        });
+      });
+    }
+    makeEditable();
+
+    function saveCell(td){
+      try{
+        const tr = td.closest('tr');
+        const id = tr && tr.getAttribute('data-id');
+        const key = td && td.dataset && td.dataset.colKey;
+        if(!id || !key) return;
+        const rec = (window.pending||[]).find(r => r && String(r.id)===String(id));
+        const val = (td.textContent||'').trim();
+        if(rec){ rec[key] = val; }
+        try{ if(typeof saveLocal==='function') saveLocal(); }catch(_){}
+        try{ if(key==='deliveryDate' && typeof window.cclSortPendingByDeliveryDate==='function'){ window.cclSortPendingByDeliveryDate(); } }catch(_){}
+      }catch(_){}
+    }
+
+    TBODY.addEventListener('blur', function(e){
+      const td = e.target && e.target.closest ? e.target.closest('td[contenteditable="true"]') : null;
+      if(td) saveCell(td);
+    }, true);
+
+    TBODY.addEventListener('keydown', function(e){
+      if(e.key==='Enter'){
+        const td = e.target && e.target.closest ? e.target.closest('td[contenteditable="true"]') : null;
+        if(td){ e.preventDefault(); td.blur(); }
+      }
+    }, true);
+
+    try{
+      const orig = window.renderPending;
+      window.renderPending = function(){
+        const r=(typeof orig==='function')?orig.apply(this, arguments):undefined;
+        try{ makeEditable(); }catch(_){}
+        return r;
+      };
+    }catch(_){}
+  });
+})();
+</script>
+
+<!-- === CCL: Edit Prefill — DOM-Driven (Hard Bind) v3 === -->
+<script>
+(function(){
+  if (window.__CCL_EDIT_PREFILL_DOM_V3__) return; window.__CCL_EDIT_PREFILL_DOM_V3__ = true;
+  function ready(fn){ if(document.readyState!=='loading') fn(); else document.addEventListener('DOMContentLoaded', fn, {once:true}); }
+  ready(function(){
+    function getSelectedRow(){
+      const tb = document.querySelector('#section_pending tbody');
+      if(!tb) return null;
+      const chk = tb.querySelector('input[type="checkbox"]:checked');
+      if(chk) return chk.closest('tr');
+      const sel = tb.querySelector('tr.selected');
+      if(sel) return sel;
+      try{
+        if(window.state && state.selectedPending && state.selectedPending.size===1){
+          const id = [...state.selectedPending][0];
+          const byId = tb.querySelector('tr[data-id="'+id+'"]');
+          if(byId) return byId;
+        }
+      }catch(_){}
+      return null;
+    }
+
+    function cellMap(tr){
+      const map = {};
+      if(!tr) return map;
+      Array.from(tr.children).forEach(td => {
+        const k = td && td.dataset ? (td.dataset.colKey || td.dataset.col || td.getAttribute('data-col') || td.getAttribute('data-colkey')) : null;
+        if(!k) return;
+        map[k] = (td.textContent||'').trim();
+      });
+      return map;
+    }
+
+    function setIfEmpty(id, val){
+      const el = document.getElementById(id);
+      if(!el) return;
+      if(!el.value || !el.value.trim()) el.value = (val==='—') ? '' : (val||'');
+    }
+
+    function prefillFromDOM(){
+      const tr = getSelectedRow();
+      if(!tr) return false;
+      const map = cellMap(tr);
+      setIfEmpty('e_from',       map.from);
+      setIfEmpty('e_to',         map.to);
+      setIfEmpty('e_container',  map.container);
+      setIfEmpty('e_loadempty',  map.appt);
+      setIfEmpty('e_bkpin',      map.bk);
+      setIfEmpty('e_impexp',     map.ie);
+      setIfEmpty('e_seal',       map.seal);
+      setIfEmpty('e_window',     map.window);
+      setIfEmpty('e_instruction',map.remark);
+      const ddLE = document.getElementById('dd_loadempty');
+      if(ddLE){ ddLE.textContent = document.getElementById('e_loadempty')?.value || ddLE.textContent || 'Select…'; }
+      const ddIE = document.getElementById('dd_impexp');
+      if(ddIE){ ddIE.textContent = document.getElementById('e_impexp')?.value || ddIE.textContent || 'Select…'; }
+      return true;
+    }
+
+    if(typeof window.openEdit === 'function'){
+      const _orig = window.openEdit;
+      window.openEdit = function(){
+        const r = _orig.apply(this, arguments);
+        setTimeout(prefillFromDOM, 0);
+        return r;
+      };
+    }
+
+    const btn = document.getElementById('btn_edit_pending');
+    if(btn){
+      btn.addEventListener('click', function(){
+        setTimeout(prefillFromDOM, 40);
+      }, true);
+    }
+  });
+})();
+</script>
+
+<!-- === CCL: Strong Edit Prefill + Anti‑Wipe Guard v5 === -->
+<script>
+(function(){
+  if (window.__CCL_EDIT_PREFILL_V5__) return; window.__CCL_EDIT_PREFILL_V5__ = true;
+  function ready(fn){ if(document.readyState!=='loading') fn(); else document.addEventListener('DOMContentLoaded', fn, {once:true}); }
+  ready(function(){
+    const IDS = ['e_from','e_to','e_container','e_loadempty','e_bkpin','e_impexp','e_seal','e_window','e_instruction'];
+
+    function getSelectedRow(){
+      const tb = document.querySelector('#section_pending tbody'); if(!tb) return null;
+      const chk = tb.querySelector('input[type="checkbox"]:checked'); if(chk) return chk.closest('tr');
+      const sel = tb.querySelector('tr.selected'); if(sel) return sel;
+      try{
+        if(window.state && state.selectedPending && state.selectedPending.size===1){
+          const id = Array.from(state.selectedPending)[0];
+          const byId = tb.querySelector('tr[data-id="'+id+'"]'); if(byId) return byId;
+        }
+      }catch(_){}
+      return null;
+    }
+
+    function readMap(tr){
+      const map = {}; if(!tr) return map;
+      Array.from(tr.children).forEach(td => {
+        const k = td && td.dataset ? (td.dataset.colKey || td.dataset.col || td.getAttribute('data-col') || td.getAttribute('data-colkey')) : null;
+        if(!k) return; map[k] = (td.textContent||'').trim();
+      });
+      return map;
+    }
+
+    function strongPrefill(){
+      const tr = getSelectedRow(); if(!tr) return;
+      const map = readMap(tr);
+      const snap = {};
+      function setVal(id, val){
+        const el = document.getElementById(id);
+        if(!el) return;
+        const v = (val==='—') ? '' : (val||'');
+        el.value = v;
+        snap[id] = v;
+      }
+      setVal('e_from', map.from);
+      setVal('e_to', map.to);
+      setVal('e_container', map.container);
+      setVal('e_loadempty', map.appt);
+      setVal('e_bkpin', map.bk);
+      setVal('e_impexp', map.ie);
+      setVal('e_seal', map.seal);
+      setVal('e_window', map.window);
+      setVal('e_instruction', map.remark);
+      const ddLE = document.getElementById('dd_loadempty'); if(ddLE){ ddLE.textContent = document.getElementById('e_loadempty')?.value || ddLE.textContent || 'Select…'; }
+      const ddIE = document.getElementById('dd_impexp'); if(ddIE){ ddIE.textContent = document.getElementById('e_impexp')?.value || ddIE.textContent || 'Select…'; }
+
+      // Anti-wipe: temporarily block clears and restore blanks for a short period
+      window.__CCL_EDIT_PREFILL_LOCK = true;
+      try{
+        const origClear = window.clearEditFields;
+        if(typeof origClear==='function' && !window.__CCL_CLEAR_WRAP__){
+          window.__CCL_CLEAR_WRAP__ = true;
+          window.clearEditFields = function(){
+            if(window.__CCL_EDIT_PREFILL_LOCK) return; // swallow clears during lock window
+            return origClear.apply(this, arguments);
+          };
+        }
+      }catch(_){}
+
+      const start = Date.now();
+      const iv = setInterval(function(){
+        IDS.forEach(function(id){
+          const el = document.getElementById(id);
+          if(el && el.value==='' && (snap[id]||'')!==''){ el.value = snap[id]; }
+        });
+        const ddLE2 = document.getElementById('dd_loadempty'); if(ddLE2){ ddLE2.textContent = document.getElementById('e_loadempty')?.value || ddLE2.textContent || 'Select…'; }
+        const ddIE2 = document.getElementById('dd_impexp'); if(ddIE2){ ddIE2.textContent = document.getElementById('e_impexp')?.value || ddIE2.textContent || 'Select…'; }
+        if(Date.now()-start > 800){ window.__CCL_EDIT_PREFILL_LOCK = false; clearInterval(iv); }
+      }, 40);
+    }
+
+    if(typeof window.openEdit === 'function'){
+      const orig = window.openEdit;
+      window.openEdit = function(){
+        const r = orig.apply(this, arguments);
+        setTimeout(strongPrefill, 0);
+        return r;
+      };
+    }
+    const btn = document.getElementById('btn_edit_pending');
+    if(btn){ btn.addEventListener('click', function(){ setTimeout(strongPrefill, 40); }, true); }
+  });
+})();
+</script>
+
+<!-- === CCL: Edit Modal Watchdog (Stop Post-Open Wipes) v6 === -->
+<script>
+(function(){
+  if (window.__CCL_EDIT_WATCHDOG_V6__) return; window.__CCL_EDIT_WATCHDOG_V6__ = true;
+  function ready(fn){ if(document.readyState!=='loading') fn(); else document.addEventListener('DOMContentLoaded', fn, {once:true}); }
+  ready(function(){
+    const IDS = ['e_from','e_to','e_container','e_loadempty','e_bkpin','e_impexp','e_seal','e_window','e_instruction'];
+    const MODAL = document.getElementById('edit_modal');
+    if(!MODAL) return;
+
+    function isVisible(el){
+      return !!el && (el.offsetParent !== null || getComputedStyle(el).display !== 'none');
+    }
+
+    function snapshotFields(){
+      const snap = {};
+      IDS.forEach(id=>{
+        const el = document.getElementById(id);
+        snap[id] = el ? (el.value||'') : '';
+      });
+      // also snapshot dropdown text
+      const dd = {
+        loadempty: (document.getElementById('dd_loadempty')||{}).textContent || '',
+        impexp: (document.getElementById('dd_impexp')||{}).textContent || ''
+      };
+      return {fields:snap, dd};
+    }
+
+    function restoreIfBlank(snap){
+      let changed = false;
+      IDS.forEach(id=>{
+        const el = document.getElementById(id);
+        if(!el) return;
+        if(!el.value && snap.fields[id]){ el.value = snap.fields[id]; changed = true; }
+      });
+      const ddLE = document.getElementById('dd_loadempty');
+      if(ddLE && (!ddLE.textContent || !ddLE.textContent.trim()) && snap.dd.loadempty){
+        ddLE.textContent = snap.dd.loadempty; changed = true;
+      }
+      const ddIE = document.getElementById('dd_impexp');
+      if(ddIE && (!ddIE.textContent || !ddIE.textContent.trim()) && snap.dd.impexp){
+        ddIE.textContent = snap.dd.impexp; changed = true;
+      }
+      return changed;
+    }
+
+    function startWatchdog(){
+      if(!isVisible(MODAL)) return;
+      const snap = snapshotFields();
+
+      // MutationObserver on the modal subtree
+      const mo = new MutationObserver(()=>{ restoreIfBlank(snap); });
+      mo.observe(MODAL, {subtree:true, characterData:true, childList:true, attributes:true});
+
+      // Periodic check as a belt-and-suspenders
+      let alive = true;
+      const iv = setInterval(()=>{
+        if(!isVisible(MODAL)){ alive=false; mo.disconnect(); clearInterval(iv); return; }
+        restoreIfBlank(snap);
+      }, 120);
+
+      // Patch clearEditFields to NO-OP while modal visible
+      try{
+        const origClear = window.clearEditFields;
+        if(typeof origClear==='function' && !window.__CCL_CLEAR_WRAP_V6__){
+          window.__CCL_CLEAR_WRAP_V6__ = true;
+          window.clearEditFields = function(){
+            if(isVisible(MODAL)) return; // block while editing
+            return origClear.apply(this, arguments);
+          };
+        }
+      }catch(_){}
+    }
+
+    // Hook after openEdit and Edit button click
+    if(typeof window.openEdit === 'function'){
+      const orig = window.openEdit;
+      window.openEdit = function(){
+        const r = orig.apply(this, arguments);
+        setTimeout(startWatchdog, 0);
+        return r;
+      };
+    }
+    const btn = document.getElementById('btn_edit_pending');
+    if(btn){ btn.addEventListener('click', function(){ setTimeout(startWatchdog, 40); }, true); }
+  });
+})();
+</script>
+
+<!-- === CCL: EDIT MUST PREFILL FROM SELECTED JOB (Final) === -->
+<script>
+(function(){
+  if (window.__CCL_EDIT_PREFILL_FINAL__) return; window.__CCL_EDIT_PREFILL_FINAL__ = true;
+  function ready(fn){ if(document.readyState!=='loading') fn(); else document.addEventListener('DOMContentLoaded', fn, {once:true}); }
+  ready(function(){
+
+    const FIELD_IDS = {
+      from: 'e_from',
+      to: 'e_to',
+      container: 'e_container',
+      appt: 'e_loadempty',   // LOAD/EMPTY maps to 'appt' in data
+      bk: 'e_bkpin',
+      ie: 'e_impexp',
+      seal: 'e_seal',
+      window: 'e_window',
+      remark: 'e_instruction'
+    };
+
+    function text(v){ return (v==null || v==='—') ? '' : String(v); }
+
+    function getSelectedRow(){
+      const tb = document.querySelector('#section_pending tbody'); if(!tb) return null;
+      // 1) checkbox
+      const chk = tb.querySelector('input[type="checkbox"]:checked');
+      if(chk) return chk.closest('tr');
+      // 2) highlighted row
+      const sel = tb.querySelector('tr.selected');
+      if(sel) return sel;
+      // 3) app state
+      try{
+        if(window.state && state.selectedPending && state.selectedPending.size===1){
+          const id = Array.from(state.selectedPending)[0];
+          const byId = tb.querySelector('tr[data-id="'+id+'"]');
+          if(byId) return byId;
+        }
+      }catch(_){}
+      return null;
+    }
+
+    function getSelectedId(){
+      const tr = getSelectedRow();
+      return tr ? (tr.getAttribute('data-id') || '') : '';
+    }
+
+    function readDomMapByRow(tr){
+      const map = {}; if(!tr) return map;
+      Array.from(tr.children).forEach(td => {
+        const k = td && td.dataset ? (td.dataset.colKey || td.dataset.col || td.getAttribute('data-col') || td.getAttribute('data-colkey')) : null;
+        if(!k) return;
+        map[k] = (td.textContent||'').trim();
+      });
+      return map;
+    }
+
+    function findRecordById(id){
+      let rec = null;
+      // from window.pending
+      try{ if(Array.isArray(window.pending)){ rec = window.pending.find(r => r && String(r.id)===String(id)) || null; } }catch(_){}
+      if(rec) return rec;
+      // from localStorage ccl_pending
+      try{
+        const s = localStorage.getItem('ccl_pending');
+        if(s){ const arr = JSON.parse(s)||[]; rec = arr.find(r => r && String(r.id)===String(id)) || null; }
+      }catch(_){}
+      return rec;
+    }
+
+    function buildRecordFromMap(map){
+      // normalize minimal record using our known keys
+      return {
+        from: map.from, to: map.to, container: map.container, appt: map.appt,
+        bk: map.bk, ie: map.ie, seal: map.seal, window: map.window, remark: map.remark
+      };
+    }
+
+    function fillModal(rec, map){
+      // Use rec when available; fall back to DOM map
+      const src = Object.assign({}, map||{}, rec||{});
+      Object.keys(FIELD_IDS).forEach(k => {
+        const id = FIELD_IDS[k];
+        const el = document.getElementById(id);
+        if(!el) return;
+        el.value = text(src[k]);
+      });
+      // Update dropdown labels
+      const ddLE = document.getElementById('dd_loadempty');
+      if(ddLE){ ddLE.textContent = document.getElementById('e_loadempty')?.value || ddLE.textContent || 'Select…'; }
+      const ddIE = document.getElementById('dd_impexp');
+      if(ddIE){ ddIE.textContent = document.getElementById('e_impexp')?.value || ddIE.textContent || 'Select…'; }
+    }
+
+    function prefillSelected(){
+      const tr = getSelectedRow();
+      const selId = getSelectedId();
+      if(!tr || !selId) return false;
+
+      // Trust table selection (sync state if needed)
+      try{ state.selectedPending = new Set([selId]); }catch(_){}
+
+      const map = readDomMapByRow(tr);
+      let rec = findRecordById(selId);
+      if(!rec){ rec = buildRecordFromMap(map); }
+
+      fillModal(rec, map);
+      return true;
+    }
+
+    function lockAgainstClears(ms){
+      const MODAL = document.getElementById('edit_modal');
+      if(!MODAL) return;
+      const start = Date.now();
+      // wrap clearEditFields while modal visible
+      try{
+        const origClear = window.clearEditFields;
+        if(typeof origClear==='function' && !window.__CCL_CLEAR_WRAP_FINAL__){
+          window.__CCL_CLEAR_WRAP_FINAL__ = true;
+          window.clearEditFields = function(){
+            if(MODAL && (MODAL.offsetParent !== null || getComputedStyle(MODAL).display !== 'none')) return;
+            return origClear.apply(this, arguments);
+          };
+        }
+      }catch(_){}
+      const snap = {}; Object.keys(FIELD_IDS).forEach(k => {
+        const el = document.getElementById(FIELD_IDS[k]); snap[FIELD_IDS[k]] = el ? el.value : '';
+      });
+      const iv = setInterval(function(){
+        const elapsed = Date.now()-start;
+        Object.keys(FIELD_IDS).forEach(k=>{
+          const id = FIELD_IDS[k];
+          const el = document.getElementById(id);
+          if(el && !el.value && snap[id]) el.value = snap[id];
+        });
+        const ddLE2 = document.getElementById('dd_loadempty');
+        if(ddLE2){ ddLE2.textContent = document.getElementById('e_loadempty')?.value || ddLE2.textContent || 'Select…'; }
+        const ddIE2 = document.getElementById('dd_impexp');
+        if(ddIE2){ ddIE2.textContent = document.getElementById('e_impexp')?.value || ddIE2.textContent || 'Select…'; }
+        if(elapsed > ms){ clearInterval(iv); }
+      }, 60);
+    }
+
+    // Wrap openEdit: open modal first, then hard prefill + guard
+    if(typeof window.openEdit === 'function'){
+      const _orig = window.openEdit;
+      window.openEdit = function(){
+        const r = _orig.apply(this, arguments);
+        // schedule focused prefill and guard
+        setTimeout(function(){ prefillSelected(); lockAgainstClears(1200); }, 0);
+        setTimeout(function(){ prefillSelected(); }, 120);   // late pass (if a re-render happens)
+        setTimeout(function(){ prefillSelected(); }, 280);   // extra insurance
+        return r;
+      };
+    }
+
+    // Also bind the physical Edit button in case the app calls different paths
+    const btn = document.getElementById('btn_edit_pending');
+    if(btn){
+      btn.addEventListener('click', function(){
+        setTimeout(function(){ prefillSelected(); lockAgainstClears(1200); }, 40);
+      }, true);
+    }
   });
 })();
 </script>
