@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
@@ -667,6 +666,48 @@ thead th.colhdr.drop-target{ background:#0b1731!important; box-shadow:inset 0 0 
 })();
 </script>
 
+<style>
+
+<style>
+
+/* === CCL: Freeze first (checkbox) column across tables (header + body) === */
+.relative.overflow-auto table thead th:first-child,
+.relative.overflow-auto table tbody td:first-child{
+  position: sticky;
+  left: 0;
+  z-index: 4; /* keep header above body cells */
+  background: #0f172a; /* dark bg to match */
+}
+/* Divider on the right edge of the frozen column */
+.relative.overflow-auto table thead th:first-child,
+.relative.overflow-auto table tbody td:first-child{
+  box-shadow: 2px 0 0 rgba(255,255,255,0.06);
+}
+
+</style>
+<style>
+
+/* === CCL: Robust sticky first column (fix disappearing on horizontal scroll) === */
+/* Ensure the scroll container is the positioning context */
+.relative.overflow-auto{ position: relative; overflow: auto; }
+.relative.overflow-auto table{ border-collapse: separate; border-spacing: 0; }
+/* Freeze first column (header + body) and keep it above other cells */
+.relative.overflow-auto thead th:first-child,
+.relative.overflow-auto tbody td:first-child{
+  position: sticky;
+  left: 0;
+  z-index: 50; /* higher than other cells, so it never gets covered */
+  background: #0f172a; /* match the dark theme */
+  /* Maintain a consistent width so it doesn't jitter */
+  min-width: 44px; width: 44px; max-width: 44px;
+}
+/* Slight divider on the right edge for separation */
+.relative.overflow-auto thead th:first-child,
+.relative.overflow-auto tbody td:first-child{
+  box-shadow: 2px 0 0 rgba(255,255,255,0.06);
+}
+
+</style>
 </head>
 <body class="min-h-screen">
 <header class="brand-grad p-4 flex items-center justify-between">
@@ -690,7 +731,7 @@ thead th.colhdr.drop-target{ background:#0b1731!important; box-shadow:inset 0 0 
 <!-- PICKUPS -->
 <section class="space-y-4" id="section_pickups">
 <div class="card p-5">
-<h2 class="text-xl font-bold text-sky-300 mb-3">Pickups</h2>
+<h2 class="text-xl font-bold text-sky-300 mb-3"><span style="color:#007AFF;">Pickups</span></h2>
 <div class="relative overflow-auto rounded-xl" style="max-height:320px">
 <table>
 <thead><tr></tr></thead>
@@ -706,7 +747,7 @@ thead th.colhdr.drop-target{ background:#0b1731!important; box-shadow:inset 0 0 
 <!-- ASSIGNED -->
 <section class="space-y-4 hidden" id="section_assigned">
 <div class="card p-5">
-<h2 class="text-xl font-bold text-sky-300 mb-3">Assigned</h2>
+<h2 class="text-xl font-bold text-sky-300 mb-3"><span style="color:#007AFF;">Assigned</span></h2>
 <div class="relative overflow-auto rounded-xl" style="max-height:320px">
 <table>
 <thead><tr></tr></thead>
@@ -716,7 +757,7 @@ thead th.colhdr.drop-target{ background:#0b1731!important; box-shadow:inset 0 0 
 </div>
 <div class="flex items-center gap-3">
 <button class="btn bg-slate-700 hover:bg-slate-600 disabled:opacity-40" id="btn_remove">Remove</button>
-<button class="btn btn-ios disabled:opacity-40" id="btn_update">Update Driver</button>
+<button style="background-color:#2563eb; color:white; padding:0.5rem 1rem; border-radius:0.5rem;" onmouseover="this.style.backgroundColor=\'#1d4ed8\'" onmouseout="this.style.backgroundColor=\'#2563eb\'">Update Driver</button>
 </div>
 </section>
 <!-- COMPLETED -->
@@ -738,7 +779,7 @@ thead th.colhdr.drop-target{ background:#0b1731!important; box-shadow:inset 0 0 
 </section>
 <section class="space-y-4 hidden" id="section_completed">
 <div class="card p-5">
-<h2 class="text-xl font-bold text-sky-300 mb-3">Completed</h2>
+<h2 class="text-xl font-bold text-sky-300 mb-3"><span style="color:#007AFF;">Completed</span></h2>
 <div class="relative overflow-auto rounded-xl" style="max-height:320px">
 <table>
 <thead><tr></tr></thead>
@@ -750,7 +791,7 @@ thead th.colhdr.drop-target{ background:#0b1731!important; box-shadow:inset 0 0 
 <!-- MAIN DISPATCH (Pending) -->
 <section class="space-y-4 hidden" id="section_pending">
 <div class="card p-5">
-<h2 class="text-xl font-bold text-yellow-300 mb-3">Main Dispatch</h2><div class="ccl-search-wrap"><input id="pending_search" class="ccl-search" type="text" placeholder="SEARCH" /></div>
+<h2 class="text-xl font-bold text-yellow-300 mb-3"><span style="color:#007AFF;"><span style="color:#007AFF;">Main Dispatch</span></span></h2><div class="ccl-search-wrap"><input id="pending_search" class="ccl-search" type="text" placeholder="SEARCH" /></div>
 <div class="relative overflow-auto rounded-xl" style="max-height:320px">
 <table>
 <thead><tr></tr></thead>
@@ -761,14 +802,15 @@ thead th.colhdr.drop-target{ background:#0b1731!important; box-shadow:inset 0 0 
 <!-- Only Create New + Move -->
 <div class="flex items-center gap-3 mt-3">
 <button class="btn bg-blue-600 hover:bg-blue-700" id="btn_create_pending">Create New</button>
-<button class="btn" id="btn_edit_pending" style="background:#065f46; border-color:#047857; color:#d1fae5;">Edit</button>
-<button class="btn bg-slate-600 hover:bg-slate-500" id="btn_move_from_pending">Move</button>
+<button id="btn_edit_pending" style="background-color:#0f6d5c; color:white; padding:0.5rem 1rem; border-radius:0.5rem;" onmouseover="this.style.backgroundColor=\'#138d75\'" onmouseout="this.style.backgroundColor=\'#0f6d5c\'">Edit</button>
+<button class="btn bg-gray-500 hover:bg-gray-600" id="btn_delete_pending">Delete</button>
+<button class="btn bg-blue-600 hover:bg-blue-700" id="btn_move_from_pending">Dispatch</button>
 </div>
 </section>
 <!-- DRIVERS (BOTTOM) -->
 <section class="space-y-4" id="section_drivers_bottom">
 <div class="card p-5">
-<h2 class="text-xl font-bold text-sky-300 mb-3">Drivers</h2>
+<h2 class="text-xl font-bold text-sky-300 mb-3"><span style="color:#007AFF;">Drivers</span></h2>
 <div class="relative overflow-auto rounded-xl" style="max-height:220px">
 <table>
 <thead>
@@ -927,37 +969,70 @@ thead th.colhdr.drop-target{ background:#0b1731!important; box-shadow:inset 0 0 
 
     let assigned = [];
     let completed = [];
-    let pending = [...pickups]; // All start on Main Dispatch
+    let pending = [...pickups];
+/* === CCL CLEAN RESET 10 — inside app scope (overwrite scoped arrays) === */
+(function(){
+  try{
+    try{ localStorage.removeItem('ccl_pending_extras_v1'); }catch(_){}
+    try{ localStorage.removeItem('ccl_pending_deleted_ids'); }catch(_){}
+    function R(a){ return a[Math.floor(Math.random()*a.length)]; }
+    function D(n){ let s=''; for(let i=0;i<n;i++) s+=String(Math.floor(Math.random()*10)); return s; }
+    function C(){ var L='ABCDEFGHIJKLMNOPQRSTUVWXYZ', p=''; for(var i=0;i<4;i++) p+=L[Math.floor(Math.random()*L.length)]; return p + String(1000000 + Math.floor(Math.random()*9000000)); }
+    var F=['YTI','LBCT','APM','Fenix','SSA','TTI','Trapac','FMS'];
+    var T=['FedEx Ground','Amazon LGB3','Target DC','Costco DC','Walmart RDC','UPS','Best Buy DC','Home Depot'];
+    var W=['08–09 AM','09–10 AM','10–11 AM','11–12 PM','12–01 PM','01–02 PM','02–03 PM','03–04 PM','04–05 PM'];
+    var seed = Array.from({length:10}).map(function(_,i){ return { id:'CCL-'+String(8000+i)+'-'+D(2), from:R(F), to:R(T), container:C(), appt:String(650000+Math.floor(Math.random()*349999)), bk:'BK'+String(78000+Math.floor(Math.random()*1000)), window:R(W), status:'Open' }; });
+    pending = seed.slice(); pickups = []; assigned = []; completed = []; try{ inprogress = []; }catch(_){}
+    try{ localStorage.setItem('ccl_pending_extras_v1', JSON.stringify(seed)); }catch(_){}
+    try{ document.querySelectorAll('#pending_search').forEach(function(inp){ inp.value=''; }); }catch(_){}
+    try{ var body=document.getElementById('pending_body')||document.querySelector('#section_pending tbody'); if(body){ Array.from(body.rows).forEach(function(tr){ if(tr&&tr.style) tr.style.display=''; }); body.querySelectorAll('span.ccl-hl').forEach(function(s){ s.replaceWith(document.createTextNode(s.textContent)); }); } }catch(_){}
+    try{ if(typeof renderPending==='function') renderPending(); }catch(_){}
+    try{ if(typeof updateBadges==='function') updateBadges(); }catch(_){}
+    try{ if(typeof switchTab==='function') switchTab('pending'); }catch(_){}
+  }catch(e){ console.warn('CCL CLEAN RESET 10 (inner) error', e); }
+})();
+/* === end CCL CLEAN RESET 10 === */
+ // All start on Main Dispatch
     pickups.length = 0;
 
     // ---------- STATE ----------
     const state = { selectedPickups:new Set(), selectedAssigned:new Set(), selectedPending:new Set(), selectedInprogress:new Set(), selectedDriver:null, editOriginalId:null, editScope:null, currentTab:'pickups', createMode:null };
 
     // ---------- COLUMN DEFINITIONS ----------
+    
     const COLUMN_LABELS = {
-      arrival: 'Date Arrived',
-      container: 'Container #',
-      chassis: 'Chassis',
-      size: 'Size / Type',
-      pin: 'PIN #',
-      ie: 'Import / Export',
+      arrival: 'DATE OF ARRIVAL',
+      id: 'JOB',
+      container: 'CONTAINER',
+      chassis: 'CHASSIS',
+      size: 'SIZE TYPE',
+      pin: 'PIN',
+      ie: 'IMPORT / EXPORT',
       bk: 'BK/EDO',
-      from: 'Pick Port',
-      pudate: 'P/U Date',
-      appt: 'Appointment',
-      deliveryDate: 'Delivery Date',
-      to: 'Delivery',
-      lfd: 'LFD Date',
-      returnDate: 'Return Date',
-      returnPort: 'Return Port',
-      customer: 'Customer',
-      remark: 'Remark',
-      carrier: 'Carrier Name',	
-      mbl: 'MB/L No.',
-      status: 'Drop / Live'
+      from: 'PICK PORT',
+      pudate: 'P/U DATE',
+      appt: 'APPT TIME',
+      deliveryDate: 'DEL DATE',
+      to: 'DELIVERY',
+      lfd: 'LFD DATE',
+      returnDate: 'RETURN DATE',
+      returnPort: 'RETURN PORT',
+      customer: 'CUSTOMER',
+      remark: 'REMARK',
+      carrier: 'CARRIER NAME',
+      mbl: 'MB/L NO.',
+      status: 'DROP / LIVE'
     };
-    const DEFAULT_ORDER = ['arrival','container','chassis','size','pin','ie','bk','from','pudate','appt','deliveryDate','to','lfd','returnDate','returnPort','customer','remark','carrier','mbl','status'];
-    function getOrder(){
+
+    
+    const DEFAULT_ORDER = [
+      'arrival','id','container','chassis','size','pin','ie','bk',
+      'from','pudate','appt','deliveryDate','to','lfd','returnDate','returnPort',
+      'appt','customer','remark','carrier','mbl','status'
+    ];
+
+    try{ localStorage.removeItem('ccl_col_order'); localStorage.removeItem('ccl_col_order_all'); }catch(_){}
+function getOrder(){
       try{ const s=localStorage.getItem('ccl_col_order'); if(s){ const arr=JSON.parse(s); if(Array.isArray(arr)&&arr.length){ return arr.filter(k=>COLUMN_LABELS[k]); }} }catch(e){}
       return [...DEFAULT_ORDER];
     }
@@ -1300,6 +1375,24 @@ tr.addEventListener('click',function(e){ if(e.target.tagName.toLowerCase()==='in
       const table=document.querySelector('#section_pending table');
       const body=document.getElementById('pending_body'); if(!body) return; body.innerHTML='';
       buildHeader(table.tHead, true, true); // include driver col in Main Dispatch
+      try{
+        var hdrRow = table.tHead && table.tHead.rows && table.tHead.rows[0];
+        if(hdrRow && hdrRow.cells && hdrRow.cells.length > 1){
+          var cell = hdrRow.cells[1];
+          var label = (cell.textContent||'').trim();
+          if(label !== 'Job #'){ cell.textContent = 'Job #'; }
+        }
+      }catch(_){}
+      try{
+        // Rename the 2nd header cell ("Driver") to "Job #", only for Main Dispatch
+        var hdrRow = table.tHead && table.tHead.rows && table.tHead.rows[0];
+        if(hdrRow && hdrRow.cells && hdrRow.cells.length > 1){
+          var cell = hdrRow.cells[1];
+          // Only change if it currently says "Driver"
+          var txt = (cell.textContent||'').trim().toLowerCase();
+          if(txt === 'driver'){ cell.textContent = 'Job #'; }
+        }
+      }catch(_){}
       pending.forEach(function(a){
         const tr=document.createElement('tr');
         tr.dataset.id = a.id;
@@ -1838,6 +1931,21 @@ document.addEventListener('dblclick', function(e){
 #section_drivers_bottom thead th:nth-child(8) svg { display: none !important; }
 </style>
 
+
+<!-- Center cells for Main Dispatch rows (applies to new and existing) -->
+<style id="ccl-center-cells">
+  /* Main Dispatch only */
+  #section_pending tbody td,
+  #section_pending tbody th {
+    text-align: center !important;
+    vertical-align: middle !important;
+  }
+  /* Keep the very first checkbox column centered and compact */
+  #section_pending tbody td:first-child {
+    width: 40px;
+    text-align: center !important;
+  }
+</style>
 </head><body>
   <div class="top">Driver GPS • Long Beach Port</div>
   <div class="wrap">
@@ -1929,7 +2037,7 @@ if(typeof renderDrivers==='function') renderDrivers();
     </div>
     <div class="ft">
       <button class="btn" id="driverMsgCancel">Cancel</button>
-      <button class="btn primary" id="driverMsgSend">Update Driver</button>
+      <button id="driverMsgSend" style="background-color:#2563eb; color:white; padding:0.5rem 1rem; border-radius:0.5rem;" onmouseover="this.style.backgroundColor=\'#1d4ed8\'" onmouseout="this.style.backgroundColor=\'#2563eb\'">Send</button>
     </div>
   </div>
 </div>
@@ -2440,7 +2548,7 @@ document.addEventListener("DOMContentLoaded", function() {
       };
       openConfirm('Create this new pickup in Main Dispatch?', function(){
         if(!Array.isArray(window.pending)) window.pending = [];
-        window.pending.push(rec);
+        window.pending.unshift(rec);
         try{ typeof renderPending==='function' && renderPending(); }catch(_){}
         try{ typeof updateBadges==='function' && updateBadges(); }catch(_){}
         closeCreate();
@@ -2540,7 +2648,7 @@ document.addEventListener("DOMContentLoaded", function() {
       openConfirm('Create this new pickup in Main Dispatch?', function(){
         try{
           if(!Array.isArray(window.pending)) window.pending = [];
-          window.pending.push(rec);
+          window.pending.unshift(rec);
           banner('Added to array. Count now ' + window.pending.length);
           var rendered = false;
           try{
@@ -2665,7 +2773,7 @@ document.addEventListener("DOMContentLoaded", function() {
       if(!rec.id){ if(typeof toast==='function') toast('Enter a Job #'); return; }
       F.confirm('Create this new pickup in Main Dispatch?', function(){
         F.ensureModel();
-        window.pending.push(rec);
+        window.pending.unshift(rec);
         F.render();
         F.close();
         if(typeof window.switchTab==='function'){ try{ window.switchTab('pending'); }catch(e){} }
@@ -2680,7 +2788,7 @@ document.addEventListener("DOMContentLoaded", function() {
       const hit = (id)=> t.id===id || (t.closest && t.closest('#'+id));
       if(hit(IDs.open)){ ev.preventDefault(); F.open(); }
       if(hit(IDs.cancel)){ ev.preventDefault(); F.confirm('Confirm cancel? Your entries will be lost.', F.close); }
-      if(hit(IDs.update)){ ev.preventDefault(); const rec=F.collect(); if(!rec.id){ return; } F.ensureModel(); window.pending.push(rec); F.render(); F.close(); }
+      if(hit(IDs.update)){ ev.preventDefault(); const rec=F.collect(); if(!rec.id){ return; } F.ensureModel(); window.pending.unshift(rec); F.render(); F.close(); }
     }, true);
   });
 })();
@@ -3368,10 +3476,705 @@ document.addEventListener("DOMContentLoaded", function() {
 })();
 </script>
 
-</body></html>`;
+
+<!-- CCL: minimal, additive wiring for Create -> Main Dispatch (idempotent, v2) -->
+<script>
+(function(){
+  if (window.__ccl_create_pending_wired__) return;
+  window.__ccl_create_pending_wired__ = true;
+
+  function byId(id){ return document.getElementById(id); }
+
+  // Safe helper: use existing function if present, else a fallback.
+  function ensureRenderPending(){
+    if (typeof window.renderPending === 'function') return;
+    // Build a fallback that uses existing helpers if they exist.
+    window.renderPending = function(){
+      try{
+        var section = document.querySelector('#section_pending table');
+        var body = byId('pending_body');
+        if(!section || !body) return;
+
+        // If buildHeader/buildRowCells exist, use them so it matches other tabs.
+        if (typeof window.buildHeader === 'function' && typeof window.buildRowCells === 'function'){
+          var thead = section.tHead || section.createTHead();
+          window.buildHeader(thead, true, true); // with master checkbox + Driver column
+          body.innerHTML = '';
+          (window.pending || []).forEach(function(a){
+            var tr = document.createElement('tr');
+            tr.dataset.id = a.id;
+
+            // checkbox cell
+            var td0 = document.createElement('td');
+            var cb = document.createElement('input');
+            cb.type = 'checkbox'; cb.className = 'chk';
+            td0.appendChild(cb); tr.appendChild(td0);
+
+            // driver cell (pending has no driver yet)
+            var tdDriver = document.createElement('td');
+            tdDriver.textContent = (a.driverName || '—');
+            tr.appendChild(tdDriver);
+
+            window.buildRowCells(tr, a, 'Open');
+            body.appendChild(tr);
+          });
+        } else {
+          // Very simple fallback table render
+          body.innerHTML = '';
+          (window.pending || []).forEach(function(a){
+            var tr = document.createElement('tr');
+            tr.innerHTML = '<td>'+(a.id||'')+'</td>' +
+                           '<td>'+(a.from||'')+'</td>' +
+                           '<td>'+(a.to||'')+'</td>' +
+                           '<td>'+(a.container||'')+'</td>' +
+                           '<td>'+(a.appt||'')+'</td>' +
+                           '<td>'+(a.bk||'')+'</td>' +
+                           '<td>'+(a.window||'')+'</td>' +
+                           '<td>'+(a.status||'')+'</td>';
+            body.appendChild(tr);
+          });
+        }
+      }catch(e){ console.error('renderPending fallback error', e); }
+    };
+  }
+
+  function updateBadgesSafe(){
+    try{
+      if (typeof window.updateBadges === 'function') window.updateBadges();
+      else {
+        var bp = byId('badge_pending'); if(bp) bp.textContent = (window.pending && window.pending.length) || 0;
+      }
+    }catch(e){}
+  }
+
+  function closeCreateModal(){
+    var m = byId('create_modal');
+    if (m) m.style.display = 'none';
+  }
+
+  function openCreateModal(){
+    var m = byId('create_modal');
+    if (m) m.style.display = 'flex';
+  }
+
+  function wireDropdown(triggerId, menuId, hiddenId){
+    var trigger = byId(triggerId), menu = byId(menuId), hidden = byId(hiddenId);
+    if (!trigger || !menu || !hidden) return;
+    trigger.addEventListener('click', function(ev){
+      ev.preventDefault(); ev.stopPropagation();
+      menu.classList.toggle('hidden');
+    });
+    menu.querySelectorAll('div[data-val]').forEach(function(item){
+      item.addEventListener('click', function(){
+        var val = item.getAttribute('data-val');
+        hidden.value = val;
+        trigger.textContent = val;
+        menu.classList.add('hidden');
+      });
+    });
+    document.addEventListener('click', function(e){
+      if (!menu.classList.contains('hidden') && !menu.contains(e.target) && e.target!==trigger){
+        menu.classList.add('hidden');
+      }
+    });
+  }
+
+  function wireCreateFlow(){
+    // Open button
+    var btnOpen = byId('btn_create_pending');
+    if (btnOpen && !btnOpen.__wired){
+      btnOpen.__wired = true;
+      btnOpen.addEventListener('click', function(){
+        openCreateModal();
+      });
     }
 
+    // Cancel button
+    var btnCancel = byId('btn_create_cancel');
+    if (btnCancel && !btnCancel.__wired){
+      btnCancel.__wired = true;
+      btnCancel.addEventListener('click', function(){
+        // Simple confirm per your spec
+        var cm = byId('confirm_modal'), ct = byId('confirm_text'),
+            yes = byId('confirm_yes'), no = byId('confirm_no');
+        if (cm && ct && yes && no){
+          ct.textContent = 'Confirm cancel? Your entries will be lost.';
+          cm.style.display = 'flex';
+          var onNo = function(){ cm.style.display = 'none'; no.removeEventListener('click', onNo); yes.removeEventListener('click', onYes); };
+          var onYes = function(){
+            cm.style.display = 'none';
+            closeCreateModal();
+            no.removeEventListener('click', onNo);
+            yes.removeEventListener('click', onYes);
+          };
+          no.addEventListener('click', onNo);
+          yes.addEventListener('click', onYes);
+        } else {
+          closeCreateModal();
+        }
+      });
+    }
+
+    // Update button -> push to pending + render
+    var btnUpdate = byId('btn_create_update');
+    if (btnUpdate && !btnUpdate.__wired){
+      btnUpdate.__wired = true;
+      btnUpdate.addEventListener('click', function(){
+        try{
+          // Build the new pickup object from form fields
+          var rec = {
+            id: (byId('c_id')||{}).value || '',
+            from: (byId('c_from')||{}).value || '',
+            to: (byId('c_to')||{}).value || '',
+            container: (byId('c_container')||{}).value || '',
+            appt: (byId('c_appt')||{}).value || '',
+            bk: (byId('c_bkpin')||{}).value || '',
+            window: (byId('c_window')||{}).value || '',
+            pudate: (byId('c_pudate')||{}).value || '',
+            deliveryDate: (byId('c_deliveryDate')||{}).value || '',
+            lfd: (byId('c_lfd')||{}).value || '',
+            returnDate: (byId('c_returnDate')||{}).value || '',
+            returnPort: (byId('c_returnPort')||{}).value || '',
+            customer: (byId('c_customer')||{}).value || '',
+            chassis: (byId('c_chassis')||{}).value || '',
+            size: (byId('c_size')||{}).value || '',
+            pin: (byId('c_pin')||{}).value || '',
+            ie: (byId('c_impexp')||{}).value || '',
+            remark: (byId('c_instruction')||{}).value || '',
+            status: 'Open'
+          };
+          // Load/Empty chosen via custom dropdown
+          var le = (byId('c_loadempty')||{}).value || '';
+          if (le) rec.loadempty = le;
+
+          if (!window.pending) window.pending = [];
+          window.pending.unshift(rec);
+
+          ensureRenderPending();
+          window.renderPending();
+      if (typeof window.switchTab==='function'){ try{ window.switchTab('pending'); }catch(_){}} 
+      updateBadgesSafe();
+          // Close modal
+          closeCreateModal();
+
+          // Optional: soft toast if available
+          try{ if (typeof window.toast === 'function') window.toast('New pickup added to Main Dispatch.'); }catch(_){}
+
+        }catch(e){
+          console.error('Create->Pending failed:', e);
+        }
+      });
+    }
+
+    // Wire the two dropdowns inside Create modal (if present)
+    wireDropdown('c_dd_loadempty','c_menu_loadempty','c_loadempty');
+    wireDropdown('c_dd_impexp','c_menu_impexp','c_impexp');
+  }
+
+  // Initialize after DOM ready
+  function ready(fn){ if (document.readyState !== 'loading') fn(); else document.addEventListener('DOMContentLoaded', fn, {once:true}); }
+  ready(function(){
+    ensureRenderPending();
+    wireCreateFlow();
+    // First draw (in case tab starts active and table is empty)
+    try{ window.renderPending(); }catch(_){}
+  });
+})();
+</script>
+
+
+<!-- CCL: robust Main Dispatch activation + Create wiring (idempotent, v2) -->
 <script>
+(function(){
+  if (window.__ccl_force_main_dispatch__) return;
+  window.__ccl_force_main_dispatch__ = true;
+
+  function byId(id){ return document.getElementById(id); }
+
+  // Fallback switchTab implementation if missing
+  function ensureSwitchTab(){
+    if (typeof window.switchTab === 'function') return;
+    window.switchTab = function(name){
+      var sections = ['pickups','assigned','inprogress','completed','pending'];
+      sections.forEach(function(s){
+        var sec = byId('section_'+s);
+        var tab = byId('tab_'+s);
+        if (!sec || !tab) return;
+        if (s === name){
+          sec.classList.remove('hidden');
+          tab.classList.add('active');
+        } else {
+          sec.classList.add('hidden');
+          tab.classList.remove('active');
+        }
+      });
+    };
+  }
+
+  // Ensure Main Dispatch is visible by default on load
+  function activateMainDispatch(){
+    try{
+      ensureSwitchTab();
+      window.switchTab('pending');
+    }catch(e){ console.error('activateMainDispatch error', e); }
+  }
+
+  // Ensure renderPending exists (reuse existing helpers if available)
+  function ensureRenderPending(){
+    if (typeof window.renderPending === 'function') return;
+    window.renderPending = function(){
+      try{
+        var table = (byId('section_pending')||{}).querySelector && byId('section_pending').querySelector('table');
+        var body = byId('pending_body');
+        if(!table || !body) return;
+        // Use helpers if present
+        if (typeof window.buildHeader === 'function' && typeof window.buildRowCells === 'function'){
+          var thead = table.tHead || table.createTHead();
+          window.buildHeader(thead, true, true);
+          body.innerHTML = '';
+          (window.pending || []).forEach(function(a){
+            var tr = document.createElement('tr');
+            tr.dataset.id = a.id;
+            // checkbox
+            var td0=document.createElement('td');
+            var cb=document.createElement('input'); cb.type='checkbox'; cb.className='chk';
+            td0.appendChild(cb); tr.appendChild(td0);
+            // driver placeholder
+            var tdDriver=document.createElement('td'); tdDriver.textContent = a.driverName || '—'; tr.appendChild(tdDriver);
+            window.buildRowCells(tr, a, 'Open');
+            body.appendChild(tr);
+          });
+        }else{
+          // Simple fallback
+          body.innerHTML = '';
+          (window.pending || []).forEach(function(a){
+            var tr = document.createElement('tr');
+            tr.innerHTML = '<td></td><td>'+(a.driverName||'—')+'</td>' +
+                           '<td>'+(a.id||'')+'</td>' +
+                           '<td>'+(a.from||'')+'</td>' +
+                           '<td>'+(a.to||'')+'</td>' +
+                           '<td>'+(a.container||'')+'</td>' +
+                           '<td>'+(a.appt||'')+'</td>' +
+                           '<td>'+(a.bk||'')+'</td>' +
+                           '<td>'+(a.window||'')+'</td>' +
+                           '<td>'+(a.status||'')+'</td>';
+            body.appendChild(tr);
+          });
+        }
+      }catch(e){ console.error('renderPending error', e); }
+    };
+  }
+
+  function updateBadgesSafe(){
+    try{
+      if (typeof window.updateBadges === 'function') window.updateBadges();
+      else {
+        var bp = byId('badge_pending'); if(bp) bp.textContent = (window.pending && window.pending.length) || 0;
+      }
+    }catch(e){}
+  }
+
+  function openCreateModal(){ var m = byId('create_modal'); if(m){ m.style.display='flex'; } }
+  function closeCreateModal(){ var m = byId('create_modal'); if(m){ m.style.display='none'; } }
+
+  function genId(){
+    // Generate a unique Job # if user left it blank
+    var t = Date.now();
+    return 'CCL-' + (t % 1000000).toString().padStart(6,'0');
+  }
+
+  function wireCreateFlow(){
+    // Open
+    var btnOpen = byId('btn_create_pending');
+    if (btnOpen && !btnOpen.__wired){
+      btnOpen.__wired = true;
+      btnOpen.addEventListener('click', openCreateModal);
+    }
+    // Cancel
+    var btnCancel = byId('btn_create_cancel');
+    if (btnCancel && !btnCancel.__wired){
+      btnCancel.__wired = true;
+      btnCancel.addEventListener('click', function(){
+        var cm = byId('confirm_modal'), ct = byId('confirm_text'),
+            yes = byId('confirm_yes'), no = byId('confirm_no');
+        if (cm && ct && yes && no){
+          ct.textContent = 'Confirm cancel? Your entries will be lost.';
+          cm.style.display = 'flex';
+          var onNo = function(){ cm.style.display = 'none'; no.removeEventListener('click', onNo); yes.removeEventListener('click', onYes); };
+          var onYes = function(){ cm.style.display = 'none'; closeCreateModal(); no.removeEventListener('click', onNo); yes.removeEventListener('click', onYes); };
+          no.addEventListener('click', onNo);
+          yes.addEventListener('click', onYes);
+        } else {
+          closeCreateModal();
+        }
+      });
+    }
+    // Update
+    var btnUpdate = byId('btn_create_update');
+    if (btnUpdate && !btnUpdate.__wired){
+      btnUpdate.__wired = true;
+      btnUpdate.addEventListener('click', function(){
+        try{
+          var id = (byId('c_id')||{}).value || genId();
+          var rec = {
+            id: id.trim(),
+            from: (byId('c_from')||{}).value || '',
+            to: (byId('c_to')||{}).value || '',
+            container: (byId('c_container')||{}).value || '',
+            appt: (byId('c_appt')||{}).value || '',
+            bk: (byId('c_bkpin')||{}).value || '',
+            window: (byId('c_window')||{}).value || '',
+            pudate: (byId('c_pudate')||{}).value || '',
+            deliveryDate: (byId('c_deliveryDate')||{}).value || '',
+            lfd: (byId('c_lfd')||{}).value || '',
+            returnDate: (byId('c_returnDate')||{}).value || '',
+            returnPort: (byId('c_returnPort')||{}).value || '',
+            customer: (byId('c_customer')||{}).value || '',
+            chassis: (byId('c_chassis')||{}).value || '',
+            size: (byId('c_size')||{}).value || '',
+            pin: (byId('c_pin')||{}).value || '',
+            ie: (byId('c_impexp')||{}).value || '',
+            remark: (byId('c_instruction')||{}).value || '',
+            status: 'Open'
+          };
+          var le = (byId('c_loadempty')||{}).value || '';
+          if (le) rec.loadempty = le;
+
+          if (!window.pending) window.pending = [];
+          window.pending.unshift(rec);
+
+          ensureRenderPending();
+          window.renderPending();
+          updateBadgesSafe();
+
+          ensureSwitchTab();
+          window.switchTab('pending'); // force-show Main Dispatch
+          closeCreateModal();
+
+          try{ if (typeof window.toast === 'function') window.toast('New pickup added to Main Dispatch.'); }catch(_){}
+        }catch(e){ console.error('Create->Pending failed:', e); }
+      });
+    }
+  }
+
+  // Init
+  function ready(fn){ if (document.readyState !== 'loading') fn(); else document.addEventListener('DOMContentLoaded', fn, {once:true}); }
+  ready(function(){
+    ensureRenderPending();
+    wireCreateFlow();
+    activateMainDispatch(); // make Main Dispatch visible on load
+    try{ window.renderPending(); }catch(_){}
+  });
+})();
+</script>
+
+
+<!-- SAFEGUARD: Edit prefill (do not modify) -->
+<script>
+(function(){
+  if(window.__CCL_EDIT_PREFILL__) return; window.__CCL_EDIT_PREFILL__=true;
+  function ready(fn){ if(document.readyState!=='loading') fn(); else document.addEventListener('DOMContentLoaded', fn, {once:true}); }
+  ready(function(){
+    function text(v){ return (v==null?'':String(v)).trim(); }
+    function getSelected(scope){
+      try{
+        if(scope==='pending'){
+          if(window.state && state.selectedPending && state.selectedPending.size===1){
+            var id = String(Array.from(state.selectedPending)[0]);
+            var rec = Array.isArray(window.pending)? pending.find(function(r){ return r && String(r.id)===id; }) : null;
+            return {id:id, rec:rec||{}};
+          }
+        }else if(scope==='inprogress'){
+          if(window.state && state.selectedInprogress && state.selectedInprogress.size===1){
+            var id2 = String(Array.from(state.selectedInprogress)[0]);
+            var rec2 = Array.isArray(window.inprogress)? inprogress.find(function(r){ return r && String(r.id)===id2; }) : null;
+            return {id:id2, rec:rec2||{}};
+          }
+        }
+      }catch(_){}
+      return {id:'', rec:{}};
+    }
+    function prefill(){
+      // Determine scope from state; fallback to pending
+      var scope = (window.state && state.currentTab==='inprogress') ? 'inprogress' : 'pending';
+      var sel = getSelected(scope); var rec = sel.rec||{};
+      // Fill inputs if they exist
+      var map = {
+        e_from: 'from',
+        e_to: 'to',
+        e_container: 'container',
+        e_loadempty: 'loadempty',   // fallback to 'appt' below
+        e_bkpin: 'bk',
+        e_impexp: 'ie',
+        e_seal: 'seal',
+        e_window: 'window',
+        e_instruction: 'remark'
+      };
+      Object.keys(map).forEach(function(k){
+        var el = document.getElementById(k); if(!el) return;
+        var key = map[k];
+        var val = rec[key]; if((val==null || val==='') && key==='loadempty') val = rec.appt; // compatibility
+        el.value = text(val);
+      });
+      // Dropdown labels (if present)
+      try{ var dd1=document.getElementById('dd_loadempty'); if(dd1){ dd1.textContent = text(rec.loadempty || rec.appt || ''); } }catch(_){}
+      try{ var dd2=document.getElementById('dd_impexp'); if(dd2){ dd2.textContent = text(rec.ie || ''); } }catch(_){}
+      // Header pill
+      try{
+        var pill=document.getElementById('e_jobpill');
+        if(pill){ pill.textContent = text(rec.id||'Job #') + (rec.window?(' • '+text(rec.window)):''); }
+      }catch(_){}
+    }
+    // Wrap openEdit to prefill after it opens
+    try{
+      if(typeof window.openEdit === 'function' && !window.openEdit.__wrapped){
+        var _orig = window.openEdit;
+        window.openEdit = function(){ _orig.apply(this, arguments); setTimeout(prefill, 50); };
+        window.openEdit.__wrapped = true;
+      }
+    }catch(_){}
+    // Bind Edit buttons if not already bound
+    function bindBtn(id){
+      var btn = document.getElementById(id); if(!btn) return;
+      if(btn.__cclBound) return; btn.__cclBound = true;
+      btn.addEventListener('click', function(e){ 
+        e.preventDefault(); 
+        try{ if(typeof window.openEdit==='function'){ window.openEdit(); } }catch(_){}
+      }, true);
+    }
+    bindBtn('btn_edit_pending');
+    bindBtn('btn_ip_edit');
+  });
+})();
+</script>
+<!-- /SAFEGUARD -->
+\n
+<!-- SAFEGUARD: Persist Main Dispatch deletes across refresh (IDs only) -->
+<script>
+(function(){
+  if(window.__CCL_DELETE_IDS_PERSIST__) return; window.__CCL_DELETE_IDS_PERSIST__=true;
+  var KEY = 'ccl_pending_deleted_ids';
+  
+  // Also prune from persisted extras so deletes survive refresh even for newly created items
+  function pruneExtrasByIds(ids){
+    try{
+      var k='ccl_pending_extras_v1';
+      var raw=localStorage.getItem(k);
+      if(!raw) return;
+      var arr=JSON.parse(raw);
+      if(!Array.isArray(arr)) return;
+      var set=new Set(ids.map(String));
+      var pruned=arr.filter(function(rec){ return !rec || !set.has(String(rec.id||'')); });
+      if(pruned.length!==arr.length){ localStorage.setItem(k, JSON.stringify(pruned)); }
+    }catch(_){ /*noop*/ }
+  }
+
+function loadSet(){ try{ return new Set(JSON.parse(localStorage.getItem(KEY)||'[]')); }catch(_){ return new Set(); } }
+  function saveSet(S){ try{ localStorage.setItem(KEY, JSON.stringify(Array.from(S))); }catch(_){} }
+  function selectedPendingIds(){
+    try{ if(window.state && state.selectedPending && state.selectedPending.size){ return Array.from(state.selectedPending).map(String); } }catch(_){}
+    var ids=[], body=document.getElementById('pending_body')||document.querySelector('#section_pending tbody');
+    if(body){ Array.from(body.querySelectorAll('tr')).forEach(function(tr){ var cb=tr.querySelector('input[type="checkbox"]'); if(cb&&cb.checked){ ids.push(String(tr.dataset.id||'')); }}); }
+    return ids.filter(Boolean);
+  }
+  function pruneFromMemory(S){
+    try{ if(Array.isArray(window.pending) && S.size){ window.pending = pending.filter(function(r){ return !r || !S.has(String(r.id)); }); } }catch(_){}
+  }
+  function pruneFromDOM(S){
+    try{
+      var body=document.getElementById('pending_body')||document.querySelector('#section_pending tbody'); if(!body||!S.size) return;
+      S.forEach(function(id){ var tr=body.querySelector('tr[data-id="'+CSS.escape(id)+'"]'); if(tr&&tr.parentNode){ tr.parentNode.removeChild(tr); } });
+    }catch(_){}
+    try{ if(typeof updateBadges==='function'){ updateBadges(); } }catch(_){}
+  }
+  function afterTick(fn){ setTimeout(fn,60); }
+  function onLoad(){ var S=loadSet(); pruneFromMemory(S); afterTick(function(){ pruneFromDOM(S); }); }
+  if(document.readyState!=='loading') onLoad(); else document.addEventListener('DOMContentLoaded', onLoad, {once:true});
+  // Hook DELETE
+  document.addEventListener('click', function(e){
+    var btn=e.target.closest && e.target.closest('#btn_delete_pending'); if(!btn) return;
+    var ids=selectedPendingIds(); if(!ids.length) return;
+    afterTick(function(){ var S=loadSet(); ids.forEach(function(id){ S.add(String(id)); }); saveSet(S); pruneExtrasByIds(ids); try{ if(typeof window.cclResetPendingFilterIfMismatch==='function') window.cclResetPendingFilterIfMismatch(); }catch(_){ } }); }, true);
+  // Hook CREATE/UPDATE -> remove from deleted set so item can return
+  document.addEventListener('click', function(e){
+    var btn=e.target.closest && e.target.closest('#btn_create_update'); if(!btn) return;
+    afterTick(function(){ try{ var id=(document.getElementById('c_id')||{}).value||''; id=id&&String(id).trim(); if(!id) return; var S=loadSet(); if(S.delete(id)) saveSet(S); }catch(_){} });
+  }, true);
+})();
+</script>
+<!-- /SAFEGUARD -->
+
+
+<!-- SAFEGUARD: Remove rogue '\n' or '/n' text nodes & enforce delete persistence/dedup -->
+<script>
+(function(){
+  if(window.__CCL_FIX_N_AND_PERSIST__) return; window.__CCL_FIX_N_AND_PERSIST__=true;
+
+  function cleanseTextNodes(){
+    try{
+      var w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null);
+      var rm = [];
+      while(w.nextNode()){
+        var n = w.currentNode, v = (n.nodeValue||'').trim();
+        if(v === "\\n" || v === "/n"){ rm.push(n); }
+      }
+      rm.forEach(function(n){ if(n.parentNode) n.parentNode.removeChild(n); });
+    }catch(e){}
+  }
+
+  var KEY='ccl_pending_deleted_ids';
+  function loadDel(){ try{ return new Set(JSON.parse(localStorage.getItem(KEY)||'[]')); }catch(_){ return new Set(); } }
+  function saveDel(S){ try{ localStorage.setItem(KEY, JSON.stringify(Array.from(S))); }catch(_){ } }
+
+  function dedupPending(){
+    try{
+      if(!Array.isArray(window.pending)) return;
+      var seen = new Set();
+      window.pending = window.pending.filter(function(r){
+        var id = r && String(r.id||'').trim();
+        if(!id || seen.has(id)) return false;
+        seen.add(id); return true;
+      });
+    }catch(_){}
+  }
+
+  function applyDeleted(){
+    try{
+      var S = loadDel();
+      if(S.size && Array.isArray(window.pending)){
+        window.pending = window.pending.filter(function(r){ return !r || !S.has(String(r.id)); });
+      }
+      var body = document.getElementById('pending_body') || document.querySelector('#section_pending tbody');
+      if(body && S.size){
+        S.forEach(function(id){
+          try{
+            var tr = body.querySelector('tr[data-id="'+CSS.escape(String(id))+'"]');
+            if(tr && tr.parentNode) tr.parentNode.removeChild(tr);
+          }catch(_){}
+        });
+      }
+    }catch(_){}
+  }
+
+  function afterTick(fn){ setTimeout(fn, 50); }
+
+  function onLoad(){
+    cleanseTextNodes();
+    dedupPending();
+    applyDeleted();
+    try{ if(typeof renderPending==='function'){ renderPending(); } }catch(_){}
+    try{ if(typeof updateBadges==='function'){ updateBadges(); } }catch(_){}
+  }
+
+  if(document.readyState !== 'loading') onLoad();
+  else document.addEventListener('DOMContentLoaded', onLoad, {once:true});
+
+  // Persist deletions
+  document.addEventListener('click', function(e){
+    var btn = e.target.closest && e.target.closest('#btn_delete_pending');
+    if(!btn) return;
+    // collect IDs using existing state/checkboxes
+    function selectedIds(){
+      try{
+        if(window.state && state.selectedPending && state.selectedPending.size){
+          return Array.from(state.selectedPending).map(String);
+        }
+      }catch(_){}
+      var ids=[], body=document.getElementById('pending_body')||document.querySelector('#section_pending tbody');
+      if(body){
+        Array.from(body.querySelectorAll('tr')).forEach(function(tr){
+          var cb = tr.querySelector('input[type="checkbox"]');
+          if(cb && cb.checked) ids.push(String(tr.dataset.id||''));
+        });
+      }
+      return ids.filter(Boolean);
+    }
+    var ids = selectedIds();
+    if(!ids.length) return;
+    afterTick(function(){
+      var S = loadDel();
+      ids.forEach(function(id){ S.add(String(id)); });
+      saveDel(S);
+    });
+  }, true);
+
+  // When creating/updating a Job #, allow it to appear again by removing from the deleted set
+  document.addEventListener('click', function(e){
+    var btn = e.target.closest && e.target.closest('#btn_create_update');
+    if(!btn) return;
+    afterTick(function(){
+      try{
+        var id = (document.getElementById('c_id')||{}).value||''; id = String(id).trim();
+        if(!id) return;
+        var S = loadDel();
+        if(S.delete(id)) saveDel(S);
+      }catch(_){}
+    });
+  }, true);
+})();
+</script>
+<!-- /SAFEGUARD -->
+
+
+<script>
+// After render, remove any column whose header text is exactly "Job #"
+(function(){
+  function removeJobHashCols(context){
+    var tables = (context || document).querySelectorAll('table');
+    tables.forEach(function(table){
+      try{
+        var thead = table.tHead; if(!thead || !thead.rows || !thead.rows[0]) return;
+        var hdr = thead.rows[0];
+        var idx = -1;
+        for(var i=0;i<hdr.cells.length;i++){
+          var t = (hdr.cells[i].textContent||'').trim();
+          if(t === 'Job #'){ idx = i; break; }
+        }
+        if(idx <= 0) return; // not found or it's the checkbox column (we keep that)
+        // Remove header cell
+        hdr.deleteCell(idx);
+        // Remove cells at same index in body rows
+        Array.from(table.tBodies||[]).forEach(function(tb){
+          Array.from(tb.rows||[]).forEach(function(row){
+            if(row.cells && row.cells.length > idx){
+              row.deleteCell(idx);
+            }
+          });
+        });
+      }catch(e){ console.warn('remove Job # col err', e); }
+    });
+  }
+  // Run on DOMContentLoaded and after small timeout to catch dynamic headers
+  document.addEventListener('DOMContentLoaded', function(){
+    setTimeout(function(){ removeJobHashCols(); }, 100);
+  }, {once:true});
+  // Also observe DOM changes (in case tables render later)
+  try{
+    var mo = new MutationObserver(function(muts){ removeJobHashCols(); });
+    mo.observe(document.documentElement, {childList:true, subtree:true});
+  }catch(_){}
+})();
+</script>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  function rebuildAll(){
+    const sections = ['pending','pickups','assigned','inprogress','completed'];
+    sections.forEach(function(sec){
+      try{
+        var thead = document.querySelector('#section_'+sec+' thead');
+        if(thead){
+          buildHeader(thead, true, false); // include checkbox, no driver
+        }
+      }catch(e){ console.warn('rebuildAll error', sec, e); }
+    });
+  }
+  setTimeout(rebuildAll, 200);
+});
+</script>
+
+</body></html><script>
     function openGpsTab(){
       // Build HTML and open as a Blob URL in a NEW TAB
       const html = buildGpsHtml();
@@ -3439,7 +4242,7 @@ document.getElementById('btn_create_update')?.addEventListener('click', function
     status: 'Pending'
   };
   openConfirm('Create this new pickup in Main Dispatch?', function(){
-    pending.push(rec);
+    pending.unshift(rec);
     renderPending(); updateBadges(); closeCreate(); switchTab('pending'); toast('Pickup created');
   });
 });
@@ -3498,7 +4301,7 @@ document.getElementById('btn_create_update')?.addEventListener('click', function
         };
         if(!rec.id){ toast && toast('Enter a Job #'); return; }
         try{
-          pending.push(rec);
+          pending.unshift(rec);
           if(typeof renderPending==='function') renderPending();
           if(typeof updateBadges==='function') updateBadges();
           var modal = document.getElementById('create_modal'); if(modal) modal.style.display='none';
@@ -3588,7 +4391,7 @@ document.getElementById('btn_create_update')?.addEventListener('click', function
     </div>
     <div class="ft">
       <button class="btn" id="driverMsgCancel">Cancel</button>
-      <button class="btn primary" id="driverMsgSend">Update Driver</button>
+      <button style="background-color:#2563eb; color:white; padding:0.5rem 1rem; border-radius:0.5rem;" onmouseover="this.style.backgroundColor=\'#1d4ed8\'" onmouseout="this.style.backgroundColor=\'#2563eb\'">Update Driver</button>
     </div>
   </div>
 </div>
@@ -4002,6 +4805,838 @@ document.addEventListener("DOMContentLoaded", function() {
 })();
 </script>
 
+
+<!-- CCL: minimal, additive wiring for Create -> Main Dispatch (idempotent, v2) -->
+<script>
+(function(){
+  if (window.__ccl_create_pending_wired__) return;
+  window.__ccl_create_pending_wired__ = true;
+
+  function byId(id){ return document.getElementById(id); }
+
+  // Safe helper: use existing function if present, else a fallback.
+  function ensureRenderPending(){
+    if (typeof window.renderPending === 'function') return;
+    // Build a fallback that uses existing helpers if they exist.
+    window.renderPending = function(){
+      try{
+        var section = document.querySelector('#section_pending table');
+        var body = byId('pending_body');
+        if(!section || !body) return;
+
+        // If buildHeader/buildRowCells exist, use them so it matches other tabs.
+        if (typeof window.buildHeader === 'function' && typeof window.buildRowCells === 'function'){
+          var thead = section.tHead || section.createTHead();
+          window.buildHeader(thead, true, true); // with master checkbox + Driver column
+          body.innerHTML = '';
+          (window.pending || []).forEach(function(a){
+            var tr = document.createElement('tr');
+            tr.dataset.id = a.id;
+
+            // checkbox cell
+            var td0 = document.createElement('td');
+            var cb = document.createElement('input');
+            cb.type = 'checkbox'; cb.className = 'chk';
+            td0.appendChild(cb); tr.appendChild(td0);
+
+            // driver cell (pending has no driver yet)
+            var tdDriver = document.createElement('td');
+            tdDriver.textContent = (a.driverName || '—');
+            tr.appendChild(tdDriver);
+
+            window.buildRowCells(tr, a, 'Open');
+            body.appendChild(tr);
+          });
+        } else {
+          // Very simple fallback table render
+          body.innerHTML = '';
+          (window.pending || []).forEach(function(a){
+            var tr = document.createElement('tr');
+            tr.innerHTML = '<td>'+(a.id||'')+'</td>' +
+                           '<td>'+(a.from||'')+'</td>' +
+                           '<td>'+(a.to||'')+'</td>' +
+                           '<td>'+(a.container||'')+'</td>' +
+                           '<td>'+(a.appt||'')+'</td>' +
+                           '<td>'+(a.bk||'')+'</td>' +
+                           '<td>'+(a.window||'')+'</td>' +
+                           '<td>'+(a.status||'')+'</td>';
+            body.appendChild(tr);
+          });
+        }
+      }catch(e){ console.error('renderPending fallback error', e); }
+    };
+  }
+
+  function updateBadgesSafe(){
+    try{
+      if (typeof window.updateBadges === 'function') window.updateBadges();
+      else {
+        var bp = byId('badge_pending'); if(bp) bp.textContent = (window.pending && window.pending.length) || 0;
+      }
+    }catch(e){}
+  }
+
+  function closeCreateModal(){
+    var m = byId('create_modal');
+    if (m) m.style.display = 'none';
+  }
+
+  function openCreateModal(){
+    var m = byId('create_modal');
+    if (m) m.style.display = 'flex';
+  }
+
+  function wireDropdown(triggerId, menuId, hiddenId){
+    var trigger = byId(triggerId), menu = byId(menuId), hidden = byId(hiddenId);
+    if (!trigger || !menu || !hidden) return;
+    trigger.addEventListener('click', function(ev){
+      ev.preventDefault(); ev.stopPropagation();
+      menu.classList.toggle('hidden');
+    });
+    menu.querySelectorAll('div[data-val]').forEach(function(item){
+      item.addEventListener('click', function(){
+        var val = item.getAttribute('data-val');
+        hidden.value = val;
+        trigger.textContent = val;
+        menu.classList.add('hidden');
+      });
+    });
+    document.addEventListener('click', function(e){
+      if (!menu.classList.contains('hidden') && !menu.contains(e.target) && e.target!==trigger){
+        menu.classList.add('hidden');
+      }
+    });
+  }
+
+  function wireCreateFlow(){
+    // Open button
+    var btnOpen = byId('btn_create_pending');
+    if (btnOpen && !btnOpen.__wired){
+      btnOpen.__wired = true;
+      btnOpen.addEventListener('click', function(){
+        openCreateModal();
+      });
+    }
+
+    // Cancel button
+    var btnCancel = byId('btn_create_cancel');
+    if (btnCancel && !btnCancel.__wired){
+      btnCancel.__wired = true;
+      btnCancel.addEventListener('click', function(){
+        // Simple confirm per your spec
+        var cm = byId('confirm_modal'), ct = byId('confirm_text'),
+            yes = byId('confirm_yes'), no = byId('confirm_no');
+        if (cm && ct && yes && no){
+          ct.textContent = 'Confirm cancel? Your entries will be lost.';
+          cm.style.display = 'flex';
+          var onNo = function(){ cm.style.display = 'none'; no.removeEventListener('click', onNo); yes.removeEventListener('click', onYes); };
+          var onYes = function(){
+            cm.style.display = 'none';
+            closeCreateModal();
+            no.removeEventListener('click', onNo);
+            yes.removeEventListener('click', onYes);
+          };
+          no.addEventListener('click', onNo);
+          yes.addEventListener('click', onYes);
+        } else {
+          closeCreateModal();
+        }
+      });
+    }
+
+    // Update button -> push to pending + render
+    var btnUpdate = byId('btn_create_update');
+    if (btnUpdate && !btnUpdate.__wired){
+      btnUpdate.__wired = true;
+      btnUpdate.addEventListener('click', function(){
+        try{
+          // Build the new pickup object from form fields
+          var rec = {
+            id: (byId('c_id')||{}).value || '',
+            from: (byId('c_from')||{}).value || '',
+            to: (byId('c_to')||{}).value || '',
+            container: (byId('c_container')||{}).value || '',
+            appt: (byId('c_appt')||{}).value || '',
+            bk: (byId('c_bkpin')||{}).value || '',
+            window: (byId('c_window')||{}).value || '',
+            pudate: (byId('c_pudate')||{}).value || '',
+            deliveryDate: (byId('c_deliveryDate')||{}).value || '',
+            lfd: (byId('c_lfd')||{}).value || '',
+            returnDate: (byId('c_returnDate')||{}).value || '',
+            returnPort: (byId('c_returnPort')||{}).value || '',
+            customer: (byId('c_customer')||{}).value || '',
+            chassis: (byId('c_chassis')||{}).value || '',
+            size: (byId('c_size')||{}).value || '',
+            pin: (byId('c_pin')||{}).value || '',
+            ie: (byId('c_impexp')||{}).value || '',
+            remark: (byId('c_instruction')||{}).value || '',
+            status: 'Open'
+          };
+          // Load/Empty chosen via custom dropdown
+          var le = (byId('c_loadempty')||{}).value || '';
+          if (le) rec.loadempty = le;
+
+          if (!window.pending) window.pending = [];
+          window.pending.unshift(rec);
+
+          ensureRenderPending();
+          window.renderPending();
+      if (typeof window.switchTab==='function'){ try{ window.switchTab('pending'); }catch(_){}} 
+      updateBadgesSafe();
+          // Close modal
+          closeCreateModal();
+
+          // Optional: soft toast if available
+          try{ if (typeof window.toast === 'function') window.toast('New pickup added to Main Dispatch.'); }catch(_){}
+
+        }catch(e){
+          console.error('Create->Pending failed:', e);
+        }
+      });
+    }
+
+    // Wire the two dropdowns inside Create modal (if present)
+    wireDropdown('c_dd_loadempty','c_menu_loadempty','c_loadempty');
+    wireDropdown('c_dd_impexp','c_menu_impexp','c_impexp');
+  }
+
+  // Initialize after DOM ready
+  function ready(fn){ if (document.readyState !== 'loading') fn(); else document.addEventListener('DOMContentLoaded', fn, {once:true}); }
+  ready(function(){
+    ensureRenderPending();
+    wireCreateFlow();
+    // First draw (in case tab starts active and table is empty)
+    try{ window.renderPending(); }catch(_){}
+  });
+})();
+</script>
+
+
+<!-- CCL: robust Main Dispatch activation + Create wiring (idempotent, v2) -->
+<script>
+(function(){
+  if (window.__ccl_force_main_dispatch__) return;
+  window.__ccl_force_main_dispatch__ = true;
+
+  function byId(id){ return document.getElementById(id); }
+
+  // Fallback switchTab implementation if missing
+  function ensureSwitchTab(){
+    if (typeof window.switchTab === 'function') return;
+    window.switchTab = function(name){
+      var sections = ['pickups','assigned','inprogress','completed','pending'];
+      sections.forEach(function(s){
+        var sec = byId('section_'+s);
+        var tab = byId('tab_'+s);
+        if (!sec || !tab) return;
+        if (s === name){
+          sec.classList.remove('hidden');
+          tab.classList.add('active');
+        } else {
+          sec.classList.add('hidden');
+          tab.classList.remove('active');
+        }
+      });
+    };
+  }
+
+  // Ensure Main Dispatch is visible by default on load
+  function activateMainDispatch(){
+    try{
+      ensureSwitchTab();
+      window.switchTab('pending');
+    }catch(e){ console.error('activateMainDispatch error', e); }
+  }
+
+  // Ensure renderPending exists (reuse existing helpers if available)
+  function ensureRenderPending(){
+    if (typeof window.renderPending === 'function') return;
+    window.renderPending = function(){
+      try{
+        var table = (byId('section_pending')||{}).querySelector && byId('section_pending').querySelector('table');
+        var body = byId('pending_body');
+        if(!table || !body) return;
+        // Use helpers if present
+        if (typeof window.buildHeader === 'function' && typeof window.buildRowCells === 'function'){
+          var thead = table.tHead || table.createTHead();
+          window.buildHeader(thead, true, true);
+          body.innerHTML = '';
+          (window.pending || []).forEach(function(a){
+            var tr = document.createElement('tr');
+            tr.dataset.id = a.id;
+            // checkbox
+            var td0=document.createElement('td');
+            var cb=document.createElement('input'); cb.type='checkbox'; cb.className='chk';
+            td0.appendChild(cb); tr.appendChild(td0);
+            // driver placeholder
+            var tdDriver=document.createElement('td'); tdDriver.textContent = a.driverName || '—'; tr.appendChild(tdDriver);
+            window.buildRowCells(tr, a, 'Open');
+            body.appendChild(tr);
+          });
+        }else{
+          // Simple fallback
+          body.innerHTML = '';
+          (window.pending || []).forEach(function(a){
+            var tr = document.createElement('tr');
+            tr.innerHTML = '<td></td><td>'+(a.driverName||'—')+'</td>' +
+                           '<td>'+(a.id||'')+'</td>' +
+                           '<td>'+(a.from||'')+'</td>' +
+                           '<td>'+(a.to||'')+'</td>' +
+                           '<td>'+(a.container||'')+'</td>' +
+                           '<td>'+(a.appt||'')+'</td>' +
+                           '<td>'+(a.bk||'')+'</td>' +
+                           '<td>'+(a.window||'')+'</td>' +
+                           '<td>'+(a.status||'')+'</td>';
+            body.appendChild(tr);
+          });
+        }
+      }catch(e){ console.error('renderPending error', e); }
+    };
+  }
+
+  function updateBadgesSafe(){
+    try{
+      if (typeof window.updateBadges === 'function') window.updateBadges();
+      else {
+        var bp = byId('badge_pending'); if(bp) bp.textContent = (window.pending && window.pending.length) || 0;
+      }
+    }catch(e){}
+  }
+
+  function openCreateModal(){ var m = byId('create_modal'); if(m){ m.style.display='flex'; } }
+  function closeCreateModal(){ var m = byId('create_modal'); if(m){ m.style.display='none'; } }
+
+  function genId(){
+    // Generate a unique Job # if user left it blank
+    var t = Date.now();
+    return 'CCL-' + (t % 1000000).toString().padStart(6,'0');
+  }
+
+  function wireCreateFlow(){
+    // Open
+    var btnOpen = byId('btn_create_pending');
+    if (btnOpen && !btnOpen.__wired){
+      btnOpen.__wired = true;
+      btnOpen.addEventListener('click', openCreateModal);
+    }
+    // Cancel
+    var btnCancel = byId('btn_create_cancel');
+    if (btnCancel && !btnCancel.__wired){
+      btnCancel.__wired = true;
+      btnCancel.addEventListener('click', function(){
+        var cm = byId('confirm_modal'), ct = byId('confirm_text'),
+            yes = byId('confirm_yes'), no = byId('confirm_no');
+        if (cm && ct && yes && no){
+          ct.textContent = 'Confirm cancel? Your entries will be lost.';
+          cm.style.display = 'flex';
+          var onNo = function(){ cm.style.display = 'none'; no.removeEventListener('click', onNo); yes.removeEventListener('click', onYes); };
+          var onYes = function(){ cm.style.display = 'none'; closeCreateModal(); no.removeEventListener('click', onNo); yes.removeEventListener('click', onYes); };
+          no.addEventListener('click', onNo);
+          yes.addEventListener('click', onYes);
+        } else {
+          closeCreateModal();
+        }
+      });
+    }
+    // Update
+    var btnUpdate = byId('btn_create_update');
+    if (btnUpdate && !btnUpdate.__wired){
+      btnUpdate.__wired = true;
+      btnUpdate.addEventListener('click', function(){
+        try{
+          var id = (byId('c_id')||{}).value || genId();
+          var rec = {
+            id: id.trim(),
+            from: (byId('c_from')||{}).value || '',
+            to: (byId('c_to')||{}).value || '',
+            container: (byId('c_container')||{}).value || '',
+            appt: (byId('c_appt')||{}).value || '',
+            bk: (byId('c_bkpin')||{}).value || '',
+            window: (byId('c_window')||{}).value || '',
+            pudate: (byId('c_pudate')||{}).value || '',
+            deliveryDate: (byId('c_deliveryDate')||{}).value || '',
+            lfd: (byId('c_lfd')||{}).value || '',
+            returnDate: (byId('c_returnDate')||{}).value || '',
+            returnPort: (byId('c_returnPort')||{}).value || '',
+            customer: (byId('c_customer')||{}).value || '',
+            chassis: (byId('c_chassis')||{}).value || '',
+            size: (byId('c_size')||{}).value || '',
+            pin: (byId('c_pin')||{}).value || '',
+            ie: (byId('c_impexp')||{}).value || '',
+            remark: (byId('c_instruction')||{}).value || '',
+            status: 'Open'
+          };
+          var le = (byId('c_loadempty')||{}).value || '';
+          if (le) rec.loadempty = le;
+
+          if (!window.pending) window.pending = [];
+          window.pending.unshift(rec);
+
+          ensureRenderPending();
+          window.renderPending();
+          updateBadgesSafe();
+
+          ensureSwitchTab();
+          window.switchTab('pending'); // force-show Main Dispatch
+          closeCreateModal();
+
+          try{ if (typeof window.toast === 'function') window.toast('New pickup added to Main Dispatch.'); }catch(_){}
+        }catch(e){ console.error('Create->Pending failed:', e); }
+      });
+    }
+  }
+
+  // Init
+  function ready(fn){ if (document.readyState !== 'loading') fn(); else document.addEventListener('DOMContentLoaded', fn, {once:true}); }
+  ready(function(){
+    ensureRenderPending();
+    wireCreateFlow();
+    activateMainDispatch(); // make Main Dispatch visible on load
+    try{ window.renderPending(); }catch(_){}
+  });
+})();
+</script>
+
+
+<script>
+// After render, remove any column whose header text is exactly "Job #"
+(function(){
+  function removeJobHashCols(context){
+    var tables = (context || document).querySelectorAll('table');
+    tables.forEach(function(table){
+      try{
+        var thead = table.tHead; if(!thead || !thead.rows || !thead.rows[0]) return;
+        var hdr = thead.rows[0];
+        var idx = -1;
+        for(var i=0;i<hdr.cells.length;i++){
+          var t = (hdr.cells[i].textContent||'').trim();
+          if(t === 'Job #'){ idx = i; break; }
+        }
+        if(idx <= 0) return; // not found or it's the checkbox column (we keep that)
+        // Remove header cell
+        hdr.deleteCell(idx);
+        // Remove cells at same index in body rows
+        Array.from(table.tBodies||[]).forEach(function(tb){
+          Array.from(tb.rows||[]).forEach(function(row){
+            if(row.cells && row.cells.length > idx){
+              row.deleteCell(idx);
+            }
+          });
+        });
+      }catch(e){ console.warn('remove Job # col err', e); }
+    });
+  }
+  // Run on DOMContentLoaded and after small timeout to catch dynamic headers
+  document.addEventListener('DOMContentLoaded', function(){
+    setTimeout(function(){ removeJobHashCols(); }, 100);
+  }, {once:true});
+  // Also observe DOM changes (in case tables render later)
+  try{
+    var mo = new MutationObserver(function(muts){ removeJobHashCols(); });
+    mo.observe(document.documentElement, {childList:true, subtree:true});
+  }catch(_){}
+})();
+</script>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  function rebuildAll(){
+    const sections = ['pending','pickups','assigned','inprogress','completed'];
+    sections.forEach(function(sec){
+      try{
+        var thead = document.querySelector('#section_'+sec+' thead');
+        if(thead){
+          buildHeader(thead, true, false); // include checkbox, no driver
+        }
+      }catch(e){ console.warn('rebuildAll error', sec, e); }
+    });
+  }
+  setTimeout(rebuildAll, 200);
+});
+</script>
+
+
+
+<!-- === CCL JOB # MANAGER v2 (preserve '66', enforce (CCL-####) for CCL IDs) === -->
+<script>
+(function(){
+  function ready(fn){ if(document.readyState!=='loading') fn(); else document.addEventListener('DOMContentLoaded', fn, {once:true}); }
+  ready(function(){
+    const LS_COUNTER = 'ccl_job_counter_v2';
+    const LS_ISSUED  = 'ccl_job_issued_v2'; // only for CCL-#### ids
+
+    // Helpers
+    const makeCCL = n => 'CCL-' + String(n);
+    const parseCCLNum = id => {
+      const s = String(id||'').trim();
+      const m = /^CCL-(\d+)(?:[- ].*)?$/i.exec(s);
+      return m ? parseInt(m[1],10) : null;
+    };
+    const isPureNumber = id => /^\d+$/.test(String(id||'').trim());
+
+    const loadSet = () => {
+      try{ const s = localStorage.getItem(LS_ISSUED); if(s) return new Set(JSON.parse(s)); }catch(_){}
+      return new Set();
+    };
+    const saveSet = S => { try{ localStorage.setItem(LS_ISSUED, JSON.stringify([...S])); }catch(_){} };
+    const getCounter = () => {
+      const v = parseInt(localStorage.getItem(LS_COUNTER)||'',10);
+      return Number.isFinite(v) ? v : 5000;
+    };
+    const setCounter = v => { try{ localStorage.setItem(LS_COUNTER, String(v)); }catch(_){} };
+
+    // Seed from current data
+    (function normalizeAndIndex(){
+      if(!Array.isArray(window.pending)) window.pending = [];
+      const issued = loadSet();
+      let maxSeen = getCounter();
+
+      for(const rec of window.pending){
+        if(!rec) continue;
+        const n = parseCCLNum(rec.id);
+        if(n){
+          rec.id = makeCCL(n);
+          issued.add(rec.id);
+          if(n > maxSeen) maxSeen = n;
+        } else if(isPureNumber(rec.id)){
+          // keep literal numbers like "66"
+        } else {
+          // Unknown => convert to next CCL
+          let next = Math.max(5000, maxSeen) + 1;
+          while(issued.has(makeCCL(next))) next++;
+          rec.id = makeCCL(next);
+          issued.add(rec.id);
+          maxSeen = next;
+        }
+      }
+      saveSet(issued);
+      setCounter(maxSeen < 5000 ? 5000 : maxSeen);
+    })();
+
+    // Next CCL id (displayed with parentheses)
+    function nextCCLId(){
+      const issued = loadSet();
+      let counter = getCounter();
+      let next = Math.max(5000, counter) + 1;
+      while(issued.has(makeCCL(next))) next++;
+      const core = makeCCL(next);
+      issued.add(core);
+      saveSet(issued);
+      setCounter(next);
+      return '(' + core + ')';
+    }
+
+    // Order & display
+    (function forceRenderOrder(){
+      const orig = window.renderPending;
+      window.renderPending = function(){
+        const r = (typeof orig === 'function') ? orig.apply(this, arguments) : undefined;
+        try{
+          if(Array.isArray(window.pending)){
+            const ccl=[], other=[];
+            window.pending.forEach(rec=>{
+              const n = parseCCLNum(rec.id);
+              if(n){
+                rec.id = makeCCL(n);
+                rec.__display = '(' + rec.id + ')';
+                ccl.push({rec,n});
+              } else {
+                rec.__display = String(rec.id==null?'':rec.id);
+                other.push(rec);
+              }
+            });
+            ccl.sort((a,b)=>b.n-a.n);
+            window.pending = ccl.map(x=>x.rec).concat(other);
+          }
+          const body = document.getElementById('pending_body') || document.querySelector('#section_pending tbody');
+          if(body && body.children.length){
+            const rows = Array.from(body.children);
+            const byId = new Map(rows.map(tr => [tr.getAttribute('data-id')||'', tr]));
+            window.pending.forEach(rec=>{
+              const id = rec && rec.id ? rec.id : '';
+              const tr = byId.get(id);
+              if(tr) body.appendChild(tr);
+              try{
+                const jobCell = tr ? (tr.querySelector('[data-col="job"]') || tr.children[2]) : null;
+                if(jobCell && typeof rec.__display === 'string'){
+                  jobCell.textContent = rec.__display;
+                  tr && tr.setAttribute('data-id', rec.id);
+                }
+              }catch(_){}
+            });
+          }
+        }catch(_){}
+        return r;
+      };
+      try{ if(typeof window.renderPending === 'function') window.renderPending(); }catch(_){}
+    })();
+
+    // Prefill Create modal
+    (function prefillCreateJob(){
+      function setId(){
+        const inp = document.getElementById('c_id');
+        if(!inp) return;
+        const id = nextCCLId();
+        inp.value = id;          // show "(CCL-####)"
+        inp.readOnly = true;
+        inp.style.opacity = '0.9';
+        inp.style.background = '#0f172a';
+      }
+      const btn = document.getElementById('btn_create_pending');
+      if(btn && !btn.__ccl_job_prefill_v2__){
+        btn.__ccl_job_prefill_v2__ = true;
+        btn.addEventListener('click', function(){ setTimeout(setId, 0); }, true);
+      }
+      setTimeout(function(){
+        const modal = document.getElementById('create_modal');
+        if(modal && modal.style.display !== 'none'){
+          setId();
+        }
+      }, 200);
+    })();
+  });
+})();
+</script>
+
+
+
+<!-- === CCL DATE SEEDER + ASC SORT v2 (robust) === -->
+<script>
+(function(){
+  function ready(fn){ if(document.readyState!=='loading') fn(); else document.addEventListener('DOMContentLoaded', fn, {once:true}); }
+  ready(function(){
+    const LS_DATE_MAP = 'ccl_date_map_v2';
+    const rngDays = 60; // pick within last N days
+
+    const loadMap = () => {
+      try{ const s = localStorage.getItem(LS_DATE_MAP); if(s) return JSON.parse(s)||{}; }catch(_){}
+      return {};
+    };
+    const saveMap = m => { try{ localStorage.setItem(LS_DATE_MAP, JSON.stringify(m)); }catch(_){} };
+
+    const toMDY = (d) => {
+      const mm = String(d.getMonth()+1).padStart(2,'0');
+      const dd = String(d.getDate()).padStart(2,'0');
+      const yy = d.getFullYear();
+      return mm + '/' + dd + '/' + yy;
+    };
+    const parseCellDate = (txt) => {
+      const s = String(txt||'').trim();
+      if(!s || s==='—' || s==='-') return null;
+      // try MM/DD/YYYY
+      const m = /^([01]?\d)[\/\-]([0-3]?\d)[\/\-](\d{2,4})$/.exec(s);
+      if(m){
+        const M = Math.max(0, Math.min(11, parseInt(m[1],10)-1));
+        const D = Math.max(1, Math.min(31, parseInt(m[2],10)));
+        const Y = parseInt(m[3],10); const Y4 = (String(Y).length===2)? 2000+Y : Y;
+        const dt = new Date(Y4, M, D);
+        if(!isNaN(+dt)) { dt.setHours(0,0,0,0); return dt; }
+      }
+      const dt2 = new Date(s);
+      if(!isNaN(+dt2)){ dt2.setHours(0,0,0,0); return dt2; }
+      return null;
+    };
+    const randPastDate = () => {
+      const now = new Date();
+      const dt = new Date(now);
+      dt.setDate(now.getDate() - Math.floor(Math.random() * rngDays));
+      dt.setHours(0,0,0,0);
+      return dt;
+    };
+
+    function findArrivalIndex(){
+      // Look for header text "DATE OF ARRIVAL" in Main Dispatch table
+      const hdrRow = document.querySelector('#section_pending thead tr');
+      if(hdrRow){
+        const ths = Array.from(hdrRow.children);
+        for(let i=0;i<ths.length;i++){
+          const t = (ths[i].textContent||'').replace(/\s+/g,' ').trim().toLowerCase();
+          if(t.includes('date of arrival')) return i;
+        }
+      }
+      // fallback: assume second column (after checkbox)
+      return 1;
+    }
+
+    function seedAndSort(){
+      const tbody = document.querySelector('#section_pending tbody');
+      if(!tbody) return;
+      const dateIdx = findArrivalIndex();
+      const dateMap = loadMap();
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+
+      rows.forEach((tr, i)=>{
+        const id = tr.getAttribute('data-id') || ('row#'+i);
+        const cell = tr.children[dateIdx];
+        let dt = null;
+
+        if(cell) dt = parseCellDate(cell.textContent);
+        if((!dt || isNaN(+dt)) && dateMap[id]) dt = new Date(dateMap[id]);
+        if(!dt || isNaN(+dt)) dt = randPastDate();
+
+        // persist + set visuals
+        dateMap[id] = dt.toISOString();
+        if(cell) cell.textContent = toMDY(dt);
+        tr.dataset.arrivalTs = String(+dt);
+      });
+
+      saveMap(dateMap);
+
+      // sort earliest on top
+      rows.sort((a,b)=> (parseInt(a.dataset.arrivalTs || '0') - parseInt(b.dataset.arrivalTs || '0')) );
+      rows.forEach(tr=> tbody.appendChild(tr));
+    }
+
+    // run now
+    seedAndSort();
+
+    // also hook any render function that may rebuild the table
+    const prev = window.renderPending;
+    window.renderPending = function(){
+      const r = (typeof prev==='function') ? prev.apply(this, arguments) : undefined;
+      try{ seedAndSort(); }catch(_){}
+      return r;
+    };
+  });
+})();
+</script>
+
+<!-- === CCL: Delivery Date Stable Auto-Sort (earliest on top) === -->
+<script>
+(function(){
+  if (window.__CCL_DELIVERY_SORT__) return; window.__CCL_DELIVERY_SORT__ = true;
+  function ready(fn){ if(document.readyState!=='loading') fn(); else document.addEventListener('DOMContentLoaded', fn, {once:true}); }
+  ready(function(){
+    const TABLE = document.querySelector('#section_pending');
+    if(!TABLE) return;
+    const TBODY = TABLE.querySelector('tbody');
+    const HEADER = TABLE.querySelector('thead tr');
+    function parseTs(txt){
+      const s = String(txt||'').trim();
+      if(!s || s==='—' || s==='-') return Number.POSITIVE_INFINITY;
+      const m = /^([01]?\d)[\/\-]([0-3]?\d)[\/\-](\d{2,4})$/.exec(s);
+      if(m){
+        const M=Math.max(0,Math.min(11,parseInt(m[1],10)-1));
+        const D=Math.max(1,Math.min(31,parseInt(m[2],10)));
+        const Y=m[3].length===2?2000+parseInt(m[3],10):parseInt(m[3],10);
+        const dt=new Date(Y,M,D); if(!isNaN(+dt)){dt.setHours(0,0,0,0); return +dt;}
+      }
+      const dt2=new Date(s); if(!isNaN(+dt2)){dt2.setHours(0,0,0,0); return +dt2;}
+      return Number.POSITIVE_INFINITY;
+    }
+    function findCol(){
+      if(!HEADER) return -1;
+      const ths=Array.from(HEADER.children);
+      for(let i=0;i<ths.length;i++){
+        const t=(ths[i].textContent||'').replace(/\s+/g,' ').trim().toLowerCase();
+        if(t.includes('del date')||t.includes('delivery date')||t.includes('date of delivery')) return i;
+      }
+      return -1;
+    }
+    let col = -1; function ensureCol(){ if(col<0) col = findCol(); return col; }
+    let isSorting=false, again=false;
+    function sortIfNeeded(){
+      if(isSorting){ again=true; return; }
+      isSorting=true; requestAnimationFrame(()=>{
+        try{
+          if(!TBODY || ensureCol()<0) return;
+          const rows=Array.from(TBODY.querySelectorAll('tr'));
+          if(rows.length<=1) return;
+          const cur=rows.map(tr=>tr.getAttribute('data-id')||tr.innerText.slice(0,50));
+          const keyed=rows.map((tr,i)=>({tr, key: parseTs((tr.children[col]||{}).textContent), i}));
+          keyed.sort((a,b)=>(a.key-b.key)||(a.i-b.i));
+          const desired=keyed.map(x=>x.tr.getAttribute('data-id')||x.tr.innerText.slice(0,50));
+          let changed=false;
+          if(cur.length===desired.length){
+            for(let i=0;i<cur.length;i++){ if(cur[i]!==desired[i]){changed=true; break;} }
+          } else changed=true;
+          if(changed){ const frag=document.createDocumentFragment(); keyed.forEach(x=>frag.appendChild(x.tr)); TBODY.appendChild(frag); }
+        }finally{ isSorting=false; if(again){ again=false; sortIfNeeded(); } }
+      });
+    }
+    try{
+      const orig = window.renderPending;
+      window.renderPending = function(){ const r=(typeof orig==='function')?orig.apply(this, arguments):undefined; try{sortIfNeeded();}catch(_){ } return r; };
+    }catch(_){}
+    const mo = new MutationObserver(()=>sortIfNeeded());
+    if(TBODY) mo.observe(TBODY,{childList:true, subtree:true, characterData:true});
+    window.cclSortPendingByDeliveryDate = sortIfNeeded;
+    sortIfNeeded();
+  });
+})();
+</script>
+
+<!-- === CCL: Row Single-Select + Double-Click to Edit === -->
+<script>
+(function(){
+  if (window.__CCL_ROW_SELECT__) return; window.__CCL_ROW_SELECT__ = true;
+  function ready(fn){ if(document.readyState!=='loading') fn(); else document.addEventListener('DOMContentLoaded', fn, {once:true}); }
+  ready(function(){
+    const TBL = document.querySelector('#section_pending'); if(!TBL) return;
+    const TBODY = TBL.querySelector('tbody'); if(!TBODY) return;
+    function syncButtons(){ try{ if(typeof window.syncActionButtons==='function') window.syncActionButtons(); }catch(_){ } }
+    function clearSel(){
+      try{ if(window.state && state.selectedPending){ state.selectedPending.clear(); } }catch(_){}
+      TBODY.querySelectorAll('tr').forEach(tr=>{
+        tr.classList.remove('selected');
+        const cb = tr.querySelector('input[type="checkbox"]'); if(cb){ cb.checked=false; cb.classList.remove('active'); }
+      });
+    }
+    function selectRow(tr){
+      if(!tr) return;
+      const id = tr.getAttribute('data-id')||''; if(!id) return;
+      clearSel();
+      try{ state.selectedPending = state.selectedPending || new Set(); state.selectedPending.add(id); state.currentTab='pending'; }catch(_){}
+      tr.classList.add('selected'); const cb = tr.querySelector('input[type="checkbox"]'); if(cb){ cb.checked=true; cb.classList.add('active'); }
+      syncButtons();
+    }
+    TBODY.addEventListener('click', function(e){
+      const tag=(e.target.tagName||'').toLowerCase();
+      if(tag==='input'||tag==='button'||tag==='a'||e.target.closest('button,a')) return;
+      const tr = e.target.closest('tr'); if(tr) selectRow(tr);
+    }, true);
+    TBODY.addEventListener('dblclick', function(e){
+      const tr = e.target.closest('tr'); if(!tr) return; selectRow(tr);
+      try{ if(typeof window.openEdit==='function') window.openEdit(); }catch(_){}
+    }, true);
+    try{
+      const orig = window.renderPending;
+      window.renderPending = function(){ const r=(typeof orig==='function')?orig.apply(this, arguments):undefined; try{
+        if(state && state.selectedPending && state.selectedPending.size){ const id=[...state.selectedPending][0]; const row=TBODY.querySelector('tr[data-id="'+id+'"]'); if(row){ row.classList.add('selected'); } }
+      }catch(_){ } return r; };
+    }catch(_){}
+  });
+})();
+</script>
+
+<!-- === CCL: Edit Autofill DOM Fallback === -->
+<script>
+(function(){
+  function ready(fn){ if(document.readyState!=='loading') fn(); else document.addEventListener('DOMContentLoaded', fn, {once:true}); }
+  ready(function(){
+    if(typeof window.openEdit !== 'function') return;
+    if(window.__CCL_EDIT_PATCH__) return; window.__CCL_EDIT_PATCH__ = true;
+    const orig = window.openEdit;
+    window.openEdit = function(){
+      const r = orig.apply(this, arguments);
+      try{
+        const selId = (function(){ try{ return [...(state.selectedPending||[])][0]||''; }catch(_){ return ''; } })();
+        const rowEl = document.querySelector('#section_pending tbody tr[data-id="'+selId+'"]');
+        if(rowEl){
+          const map = {}; Array.from(rowEl.children).forEach(td => { if(td.dataset && td.dataset.colKey){ map[td.dataset.colKey]=(td.textContent||'').trim(); } });
+          function apply(id, key){ const el=document.getElementById(id); if(!el) return; if(!el.value || !el.value.trim()){ const v=(map[key]||''); el.value = (v==='—')? '' : v; } }
+          apply('e_from','from'); apply('e_to','to'); apply('e_container','container');
+          apply('e_loadempty','appt'); var ddLE=document.getElementById('dd_loadempty'); if(ddLE){ ddLE.textContent=document.getElementById('e_loadempty').value||ddLE.textContent||'Select…'; }
+          apply('e_bkpin','bk'); apply('e_impexp','ie'); var ddIE=document.getElementById('dd_impexp'); if(ddIE){ ddIE.textContent=document.getElementById('e_impexp').value||ddIE.textContent||'Select…'; }
+          apply('e_seal','seal'); apply('e_window','window'); apply('e_instruction','remark');
+        }
+      }catch(_){}
+      return r;
+    };
+  });
+})();
+</script>
 </body>
 </html>
 
@@ -4264,7 +5899,7 @@ document.addEventListener("DOMContentLoaded", function() {
         try{
           // Ensure pending array exists
           if(!Array.isArray(window.pending)) window.pending = [];
-          window.pending.push(rec);
+          window.pending.unshift(rec);
           if(typeof renderPending==='function') renderPending();
           if(typeof updateBadges==='function') updateBadges();
           closeCreate();
@@ -4287,5 +5922,821 @@ document.addEventListener("DOMContentLoaded", function() {
     bindFresh('btn_create_cancel',  doCancel);
     bindFresh('btn_create_update',  doUpdate);
   });
+})();
+</script>
+
+<!-- CCL: Create->Main Dispatch (with localStorage persistence), non-invasive -->
+<script>
+(function(){
+  if (window.__ccl_create_persist_wired__) return;
+  window.__ccl_create_persist_wired__ = true;
+
+  var LS_KEY = 'ccl_pending_extras_v1';
+
+  function byId(id){ return document.getElementById(id); }
+  function readLS(){
+    try{ return JSON.parse(localStorage.getItem(LS_KEY)||'[]'); }catch(e){ return []; }
+  }
+  function writeLS(arr){
+    try{ localStorage.setItem(LS_KEY, JSON.stringify(arr||[])); }catch(e){}
+  }
+  function mergeExtrasIntoPending(){
+    var extras = readLS();
+    if (!extras || !extras.length) return;
+    try{
+      // push into the real 'pending' if available
+      for (var i=0;i<extras.length;i++){
+        try{ pending.push(extras[i]); }catch(e){
+          window.__ccl_pending = window.__ccl_pending || [];
+          window.__ccl_pending.push(extras[i]);
+        }
+      }
+    }catch(e){}
+  }
+
+  // Fallbacks
+  function ensureSwitchTab(){
+    if (typeof window.switchTab === 'function') return;
+    window.switchTab = function(name){
+      var sections = ['pickups','assigned','inprogress','completed','pending'];
+      sections.forEach(function(s){
+        var sec = byId('section_'+s);
+        var tab = byId('tab_'+s);
+        if (!sec || !tab) return;
+        if (s === name){ sec.classList.remove('hidden'); tab.classList.add('active'); }
+        else { sec.classList.add('hidden'); tab.classList.remove('active'); }
+      });
+    };
+  }
+  function ensureRenderPending(){
+    if (typeof window.renderPending === 'function') return;
+    window.renderPending = function(){
+      var table = (byId('section_pending')||{}).querySelector && byId('section_pending').querySelector('table');
+      var body = byId('pending_body'); if(!table || !body) return;
+      body.innerHTML = '';
+      var list;
+      try{ list = pending; }catch(_){ list = (window.__ccl_pending || []); }
+      // simple fallback render (keeps it independent)
+      for (var i=0;i<list.length;i++){
+        var a = list[i];
+        var tr = document.createElement('tr');
+        tr.innerHTML = '<td></td><td>'+(a.driverName||'—')+'</td>' +
+                       '<td>'+(a.id||'')+'</td><td>'+(a.from||'')+'</td><td>'+(a.to||'')+'</td>' +
+                       '<td>'+(a.container||'')+'</td><td>'+(a.appt||'')+'</td><td>'+(a.bk||'')+'</td>' +
+                       '<td>'+(a.window||'')+'</td><td>'+(a.status||'')+'</td>';
+        body.appendChild(tr);
+      }
+    };
+  }
+  function updateBadgesSafe(){
+    try{
+      if (typeof window.updateBadges === 'function') window.updateBadges();
+      else{
+        var len; try{ len = pending.length; }catch(e){ len = (window.__ccl_pending||[]).length; }
+        var bp = byId('badge_pending'); if (bp) bp.textContent = len;
+      }
+    }catch(_){}
+  }
+  function genId(){
+    var t = Date.now();
+    return 'CCL-' + (t % 1000000).toString().padStart(6,'0');
+  }
+  function openCreate(){ var m=byId('create_modal'); if(m) m.style.display='flex'; }
+  function closeCreate(){ var m=byId('create_modal'); if(m) m.style.display='none'; }
+
+  function collectForm(){
+    function gv(id){ var el=byId(id); return (el && el.value) ? el.value : ''; }
+    return {
+      id: (gv('c_id') || genId()).trim(),
+      from: gv('c_from'),
+      to: gv('c_to'),
+      container: gv('c_container'),
+      appt: gv('c_appt'),
+      bk: gv('c_bkpin'),
+      window: gv('c_window'),
+      pudate: gv('c_pudate'),
+      deliveryDate: gv('c_deliveryDate'),
+      lfd: gv('c_lfd'),
+      returnDate: gv('c_returnDate'),
+      returnPort: gv('c_returnPort'),
+      customer: gv('c_customer'),
+      chassis: gv('c_chassis'),
+      size: gv('c_size'),
+      pin: gv('c_pin'),
+      ie: gv('c_impexp'),
+      remark: gv('c_instruction'),
+      loadempty: gv('c_loadempty'),
+      status: 'Open'
+    };
+  }
+
+  function wire(){
+    // Make sure Main Dispatch shows
+    ensureSwitchTab();
+    try{ window.switchTab('pending'); }catch(_){}
+
+    // Merge saved items into the live list once at startup
+    mergeExtrasIntoPending();
+    ensureRenderPending();
+    try{ window.renderPending(); }catch(_){}
+    updateBadgesSafe();
+
+    // Wire Create New button
+    var openBtn = byId('btn_create_pending');
+    if (openBtn && !openBtn.__wired){
+      openBtn.__wired = true;
+      openBtn.addEventListener('click', openCreate);
+    }
+
+    // Wire Update button
+    var updBtn = byId('btn_create_update');
+    if (updBtn && !updBtn.__wired){
+      updBtn.__wired = true;
+      updBtn.addEventListener('click', function(){
+        var rec = collectForm();
+        // Push into real pending (or fallback buffer)
+        var ok = false;
+        try{ pending.unshift(rec); ok = true; }catch(e){}
+        if (!ok){
+          window.__ccl_pending = window.__ccl_pending || [];
+          window.__ccl_pending.unshift(rec);
+        }
+        // Persist
+        var extras = readLS();
+        extras.push(rec);
+        writeLS(extras);
+
+        // Render + switch to Main Dispatch
+        ensureRenderPending();
+        try{ window.renderPending(); }catch(_){}
+        updateBadgesSafe();
+        try{ window.switchTab('pending'); }catch(_){}
+        closeCreate();
+        try{ if (typeof window.toast==='function') window.toast('New pickup added to Main Dispatch.'); }catch(_){}
+      });
+    }
+  }
+
+  if (document.readyState !== 'loading') wire();
+  else document.addEventListener('DOMContentLoaded', wire, {once:true});
+})();
+</script>
+
+<!-- CCL: Direct-append fallback for Create -> Main Dispatch row (additive) -->
+<script>
+(function(){
+  if (window.__ccl_direct_append_wired__) return;
+  window.__ccl_direct_append_wired__ = true;
+
+  function byId(id){ return document.getElementById(id); }
+
+  function appendRowDirect(rec){
+    try{
+      var section = byId('section_pending');
+      if (!section) return;
+      var table = section.querySelector('table');
+      var body = byId('pending_body');
+      if (!table || !body) return;
+
+      // Ensure a header exists (attempt to use your helpers for consistent columns)
+      if (!table.tHead || !table.tHead.rows || table.tHead.rows.length === 0){
+        if (typeof window.buildHeader === 'function'){
+          var thead = table.tHead || table.createTHead();
+          window.buildHeader(thead, true, true);
+        } else {
+          // very simple header (fallback)
+          var thead2 = table.tHead || table.createTHead();
+          var trh = thead2.insertRow();
+          ['','Driver','Job #','From','To','Container #','Appointment','BK/EDO','Window','Status']
+            .forEach(function(h){
+              var th = document.createElement('th');
+              th.textContent = h;
+              trh.appendChild(th);
+            });
+        }
+      }
+
+      // Build the row
+      var tr = document.createElement('tr');
+      tr.dataset.id = rec.id || '';
+
+      // Checkbox
+      var td0 = document.createElement('td');
+      var cb = document.createElement('input');
+      cb.type = 'checkbox'; cb.className = 'chk';
+      td0.appendChild(cb); tr.appendChild(td0);
+
+      // Driver placeholder
+      var tdDriver = document.createElement('td');
+      tdDriver.textContent = rec.driverName || '—';
+      tr.appendChild(tdDriver);
+
+      // Use your existing builder for the remaining columns if available
+      if (typeof window.buildRowCells === 'function' && Array.isArray(window.COL_ORDER)){
+        window.buildRowCells(tr, rec, 'Open');
+      } else {
+        // Fallback cells in a sensible order
+        var cells = [
+          rec.id || '',
+          rec.from || '',
+          rec.to || '',
+          rec.container || '',
+          rec.appt || '',
+          rec.bk || '',
+          rec.window || '',
+          'Open'
+        ];
+        cells.forEach(function(val){
+          var td = document.createElement('td');
+          td.textContent = val || '';
+          tr.appendChild(td);
+        });
+      }
+
+      // Insert at top so it's immediately visible
+      if (body.firstChild) body.insertBefore(tr, body.firstChild);
+      else body.appendChild(tr);
+
+      try{ if (typeof window.updateBadges === 'function') window.updateBadges(); }catch(_){}
+    }catch(e){
+      console.error('Direct append failed:', e);
+    }
+  }
+
+  function wireUpdateHook(){
+    var btn = byId('btn_create_update');
+    if (!btn || btn.__ccl_direct_append_hook__) return;
+    btn.__ccl_direct_append_hook__ = true;
+    btn.addEventListener('click', function(){
+      // Slight delay to allow any other handlers to run first
+      setTimeout(function(){
+        // Re-collect a minimal copy in case earlier handler didn't expose it
+        function gv(id){ var el=byId(id); return (el && el.value) ? el.value : ''; }
+        var rec = {
+          id: (gv('c_id') || ('CCL-' + (Date.now()%1000000).toString().padStart(6,'0'))).trim(),
+          from: gv('c_from'),
+          to: gv('c_to'),
+          container: gv('c_container'),
+          appt: gv('c_appt'),
+          bk: gv('c_bkpin'),
+          window: gv('c_window'),
+          pudate: gv('c_pudate'),
+          deliveryDate: gv('c_deliveryDate'),
+          lfd: gv('c_lfd'),
+          returnDate: gv('c_returnDate'),
+          returnPort: gv('c_returnPort'),
+          customer: gv('c_customer'),
+          chassis: gv('c_chassis'),
+          size: gv('c_size'),
+          pin: gv('c_pin'),
+          ie: gv('c_impexp'),
+          remark: gv('c_instruction'),
+          loadempty: gv('c_loadempty'),
+          status: 'Open'
+        };
+
+        // Push into the real pending if available
+        try{ pending.unshift(rec); }catch(_){
+          window.__ccl_pending = window.__ccl_pending || [];
+          window.__ccl_pending.unshift(rec);
+        }
+
+        // Ensure Main Dispatch visible
+        try{
+          if (typeof window.switchTab==='function'){ window.switchTab('pending'); }
+          else {
+            var sec = document.getElementById('section_pending');
+            if (sec) sec.classList.remove('hidden');
+          }
+        }catch(_){}
+
+        // Append directly so it's visible no matter what
+        appendRowDirect(rec);
+
+      }, 30);
+    });
+  }
+
+  if (document.readyState !== 'loading') wireUpdateHook();
+  else document.addEventListener('DOMContentLoaded', wireUpdateHook, {once:true});
+})();
+</script>
+
+<!-- CCL: Cancel button = close Create modal immediately -->
+<script>
+(function(){
+  if (window.__ccl_cancel_closes_create__) return;
+  window.__ccl_cancel_closes_create__ = true;
+  function byId(id){ return document.getElementById(id); }
+  function closeCreate(){ var m = byId('create_modal'); if(m){ m.style.display = 'none'; } }
+  function hideConfirm(){
+    var cm = byId('confirm_modal');
+    if (cm) cm.style.display = 'none';
+  }
+  function wire(){
+    var btn = byId('btn_create_cancel');
+    if (!btn || btn.__ccl_cancel_wired__) return;
+    btn.__ccl_cancel_wired__ = true;
+    // Use capture to beat other listeners and stop them
+    btn.addEventListener('click', function(ev){
+      try{ ev.stopImmediatePropagation(); }catch(_){}
+      try{ ev.preventDefault(); }catch(_){}
+      hideConfirm();
+      closeCreate();
+    }, true);
+  }
+  if (document.readyState !== 'loading') wire();
+  else document.addEventListener('DOMContentLoaded', wire, {once:true});
+})();
+</script>
+
+<!-- CCL: Dedupe on create + Delete button wiring (additive) -->
+<script>
+(function(){
+  if (window.__ccl_dedupe_delete_wired__) return;
+  window.__ccl_dedupe_delete_wired__ = true;
+
+  function byId(id){ return document.getElementById(id); }
+  function qs(sel,root){ return (root||document).querySelector(sel); }
+  function qsa(sel,root){ return Array.from((root||document).querySelectorAll(sel)); }
+
+  function pendingList(){
+    try { return pending; } catch(e) { return (window.__ccl_pending = window.__ccl_pending || []); }
+  }
+
+  function findIndexById(list, id){
+    for (var i=0;i<list.length;i++){
+      if ((list[i].id||'').trim() === id.trim()) return i;
+    }
+    return -1;
+  }
+
+  function ensureNotDuplicate(rec){
+    var list = pendingList();
+    var idx = findIndexById(list, (rec.id||''));
+    if (idx >= 0){
+      // Already exists: update shallow fields (optional) and return false to indicate no push
+      try{
+        for (var k in rec){ if (rec.hasOwnProperty(k)) list[idx][k] = rec[k]; }
+      }catch(_){}
+      return false;
+    }
+    return true;
+  }
+
+  // Global gate to prevent double-fire within a short window
+  function creationGate(){
+    var now = Date.now();
+    var last = window.__ccl_last_create_ts__ || 0;
+    if (now - last < 400) return false; // ignore repeated clicks/handlers
+    window.__ccl_last_create_ts__ = now;
+    return true;
+  }
+
+  // Patch into our direct-append flow if it exists: check DOM for existing row id
+  function patchDirectAppend(){
+    if (typeof window.appendRowDirect !== 'function') return;
+    var orig = window.appendRowDirect;
+    window.appendRowDirect = function(rec){
+      try{
+        var body = byId('pending_body');
+        if (body && rec && rec.id){
+          var existing = body.querySelector('tr[data-id="'+CSS.escape(rec.id)+'"]');
+          if (existing){
+            // Move it to top if needed
+            if (body.firstChild !== existing){ body.insertBefore(existing, body.firstChild); }
+            return;
+          }
+        }
+      }catch(_){}
+      return orig.apply(this, arguments);
+    };
+  }
+
+  // Hook create update button: dedupe both array + DOM by id
+  function wireCreateDedupe(){
+    var btn = byId('btn_create_update');
+    if (!btn || btn.__ccl_create_dedupe__) return;
+    btn.__ccl_create_dedupe__ = true;
+    btn.addEventListener('click', function(){
+      setTimeout(function(){
+        try{
+          // Collect minimal record (matches earlier patches)
+          function gv(id){ var el=byId(id); return (el && el.value) ? el.value : ''; }
+          var id = (gv('c_id') || ('CCL-' + (Date.now()%1000000).toString().padStart(6,'0'))).trim();
+          var rec = {
+            id: id,
+            from: gv('c_from'), to: gv('c_to'), container: gv('c_container'),
+            appt: gv('c_appt'), bk: gv('c_bkpin'), window: gv('c_window'),
+            pudate: gv('c_pudate'), deliveryDate: gv('c_deliveryDate'),
+            lfd: gv('c_lfd'), returnDate: gv('c_returnDate'), returnPort: gv('c_returnPort'),
+            customer: gv('c_customer'), chassis: gv('c_chassis'), size: gv('c_size'),
+            pin: gv('c_pin'), ie: gv('c_impexp'), remark: gv('c_instruction'),
+            loadempty: gv('c_loadempty'), status: 'Open'
+          };
+
+          // Global gate
+          if (!creationGate()) return;
+
+          // Array dedupe
+          var list = pendingList();
+          var shouldPush = ensureNotDuplicate(rec);
+          if (shouldPush){ try{ list.unshift(rec); }catch(_){ window.__ccl_pending = window.__ccl_pending || []; window.__ccl_pending.unshift(rec); } }
+
+          // DOM dedupe + position at top handled by appendRowDirect (if present) or here
+          var body = byId('pending_body');
+          if (body){
+            var ex = body.querySelector('tr[data-id="'+CSS.escape(rec.id)+'"]');
+            if (ex){
+              if (body.firstChild !== ex){ body.insertBefore(ex, body.firstChild); }
+            } else {
+              // If our helper exists, use it; else make a simple row quickly
+              if (typeof window.appendRowDirect === 'function'){
+                window.appendRowDirect(rec);
+              } else {
+                var tr = document.createElement('tr');
+                tr.dataset.id = rec.id;
+                // Minimal cells (checkbox + driver placeholder + a few fields)
+                var td0 = document.createElement('td'); var cb = document.createElement('input'); cb.type='checkbox'; cb.className='chk'; td0.appendChild(cb); tr.appendChild(td0);
+                var tdDriver = document.createElement('td'); tdDriver.textContent = rec.driverName || '—'; tr.appendChild(tdDriver);
+                ['id','from','to','container','appt','bk','window'].forEach(function(k){
+                  var td = document.createElement('td'); td.textContent = rec[k] || ''; tr.appendChild(td);
+                });
+                var tdStatus = document.createElement('td'); tdStatus.textContent = 'Open'; tr.appendChild(tdStatus);
+                if (body.firstChild) body.insertBefore(tr, body.firstChild); else body.appendChild(tr);
+              }
+            }
+          }
+
+          try{ if (typeof window.updateBadges === 'function') window.updateBadges(); }catch(_){}
+
+        }catch(e){ console.error('Create dedupe handler error', e); }
+      }, 20);
+    });
+  }
+
+  // Delete button wiring
+  function wireDelete(){
+    var btn = byId('btn_delete_pending');
+    if (!btn || btn.__ccl_delete_wired__) return;
+    btn.__ccl_delete_wired__ = true;
+    btn.addEventListener('click', function(){
+      var body = byId('pending_body');
+      if (!body){ return; }
+      var checked = qsa('input[type="checkbox"]:checked', body).map(function(cb){
+        var tr = cb.closest('tr');
+        return tr && tr.getAttribute('data-id');
+      }).filter(Boolean);
+
+      if (!checked.length){
+        try{ if (typeof window.toast==='function') window.toast('Select a pickup to delete.'); }catch(_){}
+        return;
+      }
+
+      // Use existing confirm modal if present
+      var cm = byId('confirm_modal'), ct = byId('confirm_text'),
+          yes = byId('confirm_yes'), no = byId('confirm_no');
+      if (cm && ct && yes && no){
+        ct.textContent = 'Delete ' + checked.length + ' pickup' + (checked.length>1?'s':'') + '?';
+        cm.style.display = 'flex';
+        var onNo = function(){ cm.style.display = 'none'; cleanup(); };
+        var onYes = function(){
+          try{
+            var list = pendingList();
+            // Remove from array
+            for (var i=0;i<checked.length;i++){
+              var idx = findIndexById(list, checked[i]);
+              if (idx >= 0){ list.splice(idx,1); }
+            }
+            // Remove from DOM
+            checked.forEach(function(id){
+              var row = body.querySelector('tr[data-id="'+CSS.escape(id)+'"]');
+              if (row) row.remove();
+            });
+            try{ if (typeof window.updateBadges==='function') window.updateBadges(); }catch(_){}
+            try{ if (typeof window.toast==='function') window.toast('Pickup(s) deleted.'); }catch(_){}
+          }finally{
+            cm.style.display = 'none'; cleanup();
+          }
+        };
+        function cleanup(){
+          no.removeEventListener('click', onNo);
+          yes.removeEventListener('click', onYes);
+        }
+        no.addEventListener('click', onNo, {once:true});
+        yes.addEventListener('click', onYes, {once:true});
+      } else {
+        // Fallback: delete without confirm
+        var list = pendingList();
+        checked.forEach(function(id){
+          var idx = findIndexById(list, id);
+          if (idx>=0) list.splice(idx,1);
+          var row = body.querySelector('tr[data-id="'+CSS.escape(id)+'"]');
+          if (row) row.remove();
+        });
+        try{ if (typeof window.updateBadges==='function') window.updateBadges(); }catch(_){}
+      }
+    });
+  }
+
+  function init(){
+    patchDirectAppend();
+    wireCreateDedupe();
+    wireDelete();
+  }
+
+  if (document.readyState !== 'loading') init();
+  else document.addEventListener('DOMContentLoaded', init, {once:true});
+
+})();
+</script>
+
+<!-- CCL: Single-submit guard & reconciliation (additive, high-priority) -->
+<script>
+(function(){
+  if (window.__ccl_single_submit_guard__) return;
+  window.__ccl_single_submit_guard__ = true;
+
+  function byId(id){ return document.getElementById(id); }
+  function genId(){ var t = Date.now(); return 'CCL-' + (t % 1000000).toString().padStart(6,'0'); }
+
+  // Global registry of committed IDs
+  window.__ccl_committed_ids__ = window.__ccl_committed_ids__ || new Set();
+
+  // 1) Capture phase: ensure a stable Job ID exists BEFORE other handlers run
+  function captureBind(){
+    var btn = byId('btn_create_update');
+    if (!btn || btn.__ccl_capture_wired__) return;
+    btn.__ccl_capture_wired__ = true;
+    btn.addEventListener('click', function(ev){
+      try{
+        var idEl = byId('c_id');
+        var idVal = (idEl && idEl.value || '').trim();
+        if (!idVal){
+          idVal = genId();
+          if (idEl) idEl.value = idVal;  // freeze the id so all handlers use the same one
+        }
+        window.__ccl_current_submit_id__ = idVal;
+      }catch(_){}
+    }, true); // capture: run before other listeners
+  }
+
+  // 2) After-click reconciliation: dedupe array + DOM for that ID
+  function bindAfter(){
+    var btn = byId('btn_create_update');
+    if (!btn || btn.__ccl_after_wired__) return;
+    btn.__ccl_after_wired__ = true;
+    btn.addEventListener('click', function(){
+      var id = window.__ccl_current_submit_id__;
+      if (!id) return;
+      // short delay: let other handlers run first
+      setTimeout(function(){
+        try{
+          // A) Array dedupe
+          var list;
+          try{ list = pending; }catch(e){ list = (window.__ccl_pending = window.__ccl_pending || []); }
+          if (Array.isArray(list)){
+            var seen = new Set();
+            for (var i=list.length-1; i>=0; i--){ // walk backwards, keep the earliest (top) one
+              var pid = (list[i].id||'').trim();
+              if (!pid) continue;
+              if (seen.has(pid)) list.splice(i,1);
+              else seen.add(pid);
+            }
+          }
+          // B) DOM dedupe (keep the top-most row)
+          var body = byId('pending_body');
+          if (body){
+            var rows = Array.from(body.querySelectorAll('tr[data-id="'+CSS.escape(id)+'"]'));
+            if (rows.length > 1){
+              // keep the first occurrence (top), remove the rest
+              rows.slice(1).forEach(function(r){ r.remove(); });
+            }
+            // also, make sure the first occurrence is at very top
+            var first = body.querySelector('tr[data-id="'+CSS.escape(id)+'"]');
+            if (first && body.firstChild !== first){
+              body.insertBefore(first, body.firstChild);
+            }
+          }
+          // C) Mark committed so subsequent duplicate flows skip
+          window.__ccl_committed_ids__.add(id);
+        }catch(e){ console.error('Post-submit reconciliation failed', e); }
+      }, 60);
+    });
+  }
+
+  // 3) Optional: provide a helper for other patches to check commit registry
+  window.__ccl_maybe_skip_commit__ = function(id){
+    try{
+      if (!id) return false;
+      if (window.__ccl_committed_ids__.has(id)) return true;
+    }catch(_){}
+    return false;
+  };
+
+  // Initialize
+  if (document.readyState !== 'loading'){ captureBind(); bindAfter(); }
+  else document.addEventListener('DOMContentLoaded', function(){ captureBind(); bindAfter(); }, {once:true});
+})();
+</script>
+
+<!-- CCL: Auto-switch to Pickups after Dispatch confirm -->
+<script>
+(function(){
+  if (window.__ccl_dispatch_switch_wired__) return;
+  window.__ccl_dispatch_switch_wired__ = true;
+
+  function byId(id){ return document.getElementById(id); }
+
+  // Patch confirm modal "Yes" specifically when text matches dispatch
+  function hookConfirm(){
+    var yesBtn = byId('confirm_yes');
+    if (!yesBtn || yesBtn.__ccl_dispatch_hooked__) return;
+    yesBtn.__ccl_dispatch_hooked__ = true;
+
+    yesBtn.addEventListener('click', function(){
+      try{
+        var ct = byId('confirm_text');
+        if (ct && /Move selected pickup\(s\) to Pickups\?/i.test(ct.textContent)){
+          if (typeof window.switchTab === 'function'){
+            setTimeout(function(){ window.switchTab('pickups'); }, 50);
+          }
+        }
+      }catch(e){ console.error('Dispatch auto-switch failed', e); }
+    });
+  }
+
+  if (document.readyState !== 'loading') hookConfirm();
+  else document.addEventListener('DOMContentLoaded', hookConfirm, {once:true});
+})();
+</script>
+
+<!-- CCL: Ensure new pickup always at top -->
+<script>
+(function(){
+  if (window.__ccl_top_reconcile__) return;
+  window.__ccl_top_reconcile__ = true;
+
+  function byId(id){ return document.getElementById(id); }
+
+  function enforceTop(id){
+    try{
+      var body = byId('pending_body');
+      if (!body || !id) return;
+      var rows = body.querySelectorAll('tr[data-id="'+CSS.escape(id)+'"]');
+      if (!rows.length) return;
+      var first = rows[0];
+      // Move first occurrence to top
+      if (body.firstChild !== first){ body.insertBefore(first, body.firstChild); }
+      // Remove duplicates after first
+      for (var i=1;i<rows.length;i++){ rows[i].remove(); }
+    }catch(e){ console.error('enforceTop error', e); }
+  }
+
+  function wire(){
+    var btn = byId('btn_create_update');
+    if (!btn || btn.__ccl_top_hook__) return;
+    btn.__ccl_top_hook__ = true;
+    btn.addEventListener('click', function(){
+      setTimeout(function(){
+        try{
+          var idEl = byId('c_id');
+          var idVal = (idEl && idEl.value||'').trim();
+          if (!idVal) return;
+          enforceTop(idVal);
+        }catch(e){}
+      }, 80);
+    });
+  }
+
+  if (document.readyState !== 'loading') wire();
+  else document.addEventListener('DOMContentLoaded', wire, {once:true});
+})();
+</script>
+
+<!-- CCL: Always-top insertion for newly created pickups (data + UI) -->
+<script>
+(function(){
+  if (window.__ccl_always_top_wired__) return;
+  window.__ccl_always_top_wired__ = true;
+
+  function byId(id){ return document.getElementById(id); }
+  function bodyEl(){ return byId('pending_body'); }
+
+  function pendingList(){
+    try { return pending; } catch(e) { return (window.__ccl_pending = window.__ccl_pending || []); }
+  }
+
+  function unshiftUniqueTop(rec){
+    var list = pendingList();
+    // remove any existing with same id
+    for (var i=list.length-1; i>=0; i--){
+      if ((list[i].id||'') === (rec.id||'')) list.splice(i,1);
+    }
+    list.unshift(rec);
+  }
+
+  function moveRowToTopById(id){
+    var body = bodyEl(); if (!body) return;
+    var row = body.querySelector('tr[data-id="'+CSS.escape(id)+'"]');
+    if (row && body.firstChild !== row){
+      body.insertBefore(row, body.firstChild);
+    }
+  }
+
+  function dedupeDOMKeepTop(){
+    var body = bodyEl(); if (!body) return;
+    var seen = Object.create(null);
+    Array.from(body.querySelectorAll('tr[data-id]')).forEach(function(tr){
+      var id = tr.getAttribute('data-id') || '';
+      if (!id) return;
+      if (seen[id]) tr.remove();
+      else seen[id] = true;
+    });
+  }
+
+  // Patch renderPending so it prefers newest-first (by _createdTs if present)
+  (function patchRender(){
+    if (typeof window.renderPending !== 'function') return;
+    var orig = window.renderPending;
+    window.renderPending = function(){
+      try{
+        // pre-sort list
+        var list = pendingList();
+        list.sort(function(a,b){
+          var ta = a && a._createdTs || 0;
+          var tb = b && b._createdTs || 0;
+          return tb - ta; // newest first
+        });
+      }catch(_){}
+      orig.apply(this, arguments);
+      try{
+        dedupeDOMKeepTop();
+        // also ensure DOM order mirrors list order (by moving rows to match)
+        var body = bodyEl(); if (!body) return;
+        var idToRow = {};
+        Array.from(body.children).forEach(function(tr){ idToRow[tr.getAttribute('data-id')||''] = tr; });
+        var frag = document.createDocumentFragment();
+        pendingList().forEach(function(rec){
+          var r = idToRow[rec.id||''];
+          if (r) frag.appendChild(r);
+        });
+        // append any leftovers (unlikely)
+        Array.from(body.children).forEach(function(tr){ frag.appendChild(tr); });
+        body.innerHTML=''; body.appendChild(frag);
+      }catch(_){}
+    };
+  })();
+
+  // Hook Create->Update again to enforce top insertion
+  (function wireCreateTop(){
+    var btn = byId('btn_create_update');
+    if (!btn || btn.__ccl_top_wired__) return;
+    btn.__ccl_top_wired__ = true;
+    btn.addEventListener('click', function(){
+      setTimeout(function(){
+        try{
+          function gv(id){ var el=byId(id); return (el && el.value) ? el.value : ''; }
+          var id = (gv('c_id') || ('CCL-' + (Date.now()%1000000).toString().padStart(6,'0'))).trim();
+          var rec = {
+            id: id, from: gv('c_from'), to: gv('c_to'), container: gv('c_container'),
+            appt: gv('c_appt'), bk: gv('c_bkpin'), window: gv('c_window'),
+            pudate: gv('c_pudate'), deliveryDate: gv('c_deliveryDate'),
+            lfd: gv('c_lfd'), returnDate: gv('c_returnDate'), returnPort: gv('c_returnPort'),
+            customer: gv('c_customer'), chassis: gv('c_chassis'), size: gv('c_size'),
+            pin: gv('c_pin'), ie: gv('c_impexp'), remark: gv('c_instruction'),
+            loadempty: gv('c_loadempty'), status: 'Open',
+            _createdTs: Date.now()
+          };
+          // Put newest at index 0 in data
+          unshiftUniqueTop(rec);
+          // If a renderer exists, let it redraw (which is already patched to keep newest-first)
+          if (typeof window.renderPending === 'function') { try{ window.renderPending(); }catch(_){ } }
+          // Ensure the DOM row is at the very top
+          moveRowToTopById(rec.id);
+          // Final dedupe
+          dedupeDOMKeepTop();
+        }catch(e){ console.error('always-top create handler failed', e); }
+      }, 30);
+    });
+  })();
+
+})();
+
+// CCL watchdog: ensure Main Dispatch details match badge on load
+(function(){
+  function reconcilePendingList(){
+    try{
+      var body=document.getElementById('pending_body')||document.querySelector('#section_pending tbody');
+      if(!body || !Array.isArray(window.pending)) return;
+      var rows=body.querySelectorAll('tr').length;
+      if(rows !== window.pending.length){
+        if(typeof renderPending==='function') renderPending();
+        if(typeof updateBadges==='function') updateBadges();
+      }
+    }catch(_){}
+  }
+  if(document.readyState!=='loading') setTimeout(reconcilePendingList, 80);
+  else document.addEventListener('DOMContentLoaded', function(){ setTimeout(reconcilePendingList, 80); }, {once:true});
 })();
 </script>
