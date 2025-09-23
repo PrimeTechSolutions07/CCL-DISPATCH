@@ -709,6 +709,15 @@ thead th.colhdr.drop-target{ background:#0b1731!important; box-shadow:inset 0 0 
 }
 
 </style>
+
+<style id="no_flicker_modal">
+/* Disable animations/transitions while opening the Edit modal */
+#edit_modal.no-anim *, #edit_modal.no-anim { 
+  transition: none !important; 
+  animation: none !important; 
+}
+</style>
+
 </head>
 <body class="min-h-screen">
 <header class="brand-grad p-4 flex items-center justify-between">
@@ -758,7 +767,7 @@ thead th.colhdr.drop-target{ background:#0b1731!important; box-shadow:inset 0 0 
 </div>
 <div class="flex items-center gap-3">
 <button class="btn bg-slate-700 hover:bg-slate-600 disabled:opacity-40" id="btn_remove">Remove</button>
-<button style="background-color:#2563eb; color:white; padding:0.5rem 1rem; border-radius:0.5rem;" onmouseover="this.style.backgroundColor=\'#1d4ed8\'" onmouseout="this.style.backgroundColor=\'#2563eb\'">Update Driver</button>
+<button id="btn_update" style="background-color:#2563eb; color:white; padding:0.5rem 1rem; border-radius:0.5rem;" onmouseover="this.style.backgroundColor=\'#1d4ed8\'" onmouseout="this.style.backgroundColor=\'#2563eb\'">Update Driver</button>
 </div>
 </section>
 <!-- COMPLETED -->
@@ -803,9 +812,8 @@ thead th.colhdr.drop-target{ background:#0b1731!important; box-shadow:inset 0 0 
 <!-- Only Create New + Move -->
 <div class="flex items-center gap-3 mt-3">
 <button class="btn bg-blue-600 hover:bg-blue-700" id="btn_create_pending">Create New</button>
-<button id="btn_edit_pending" style="background-color:#0f6d5c; color:white; padding:0.5rem 1rem; border-radius:0.5rem;" onmouseover="this.style.backgroundColor=\'#138d75\'" onmouseout="this.style.backgroundColor=\'#0f6d5c\'">Edit</button>
 <button class="btn bg-gray-500 hover:bg-gray-600" id="btn_delete_pending">Delete</button>
-<button class="btn bg-blue-600 hover:bg-blue-700" id="btn_move_from_pending">Dispatch</button>
+<button class="btn" id="btn_edit_pending" style="background:#065f46; border-color:#047857; color:#d1fae5;">Edit</button><button class="btn bg-blue-600 hover:bg-blue-700" id="btn_move_from_pending">Dispatch</button>
 </div>
 </section>
 <!-- DRIVERS (BOTTOM) -->
@@ -1628,7 +1636,9 @@ try{
   })();
 }catch(_){}
 
+      editModal.classList.add('no-anim');
       editModal.style.display='flex';
+      setTimeout(function(){ try{ editModal.classList.remove('no-anim'); }catch(_){}} , 160);
 // Ensure dropdowns are (re)initialized each time the modal opens
 try{
   initDropdown('dd_loadempty','menu_loadempty', eLoadEmpty);
@@ -4210,6 +4220,483 @@ document.addEventListener('DOMContentLoaded', function(){
 });
 </script>
 
+
+<script>
+/* === STICKY PREFILL (prevents 1s reset) === */
+(function(){
+  function $(sel, root){ return (root||document).querySelector(sel); }
+  function qa(sel, root){ return Array.from((root||document).querySelectorAll(sel)); }
+  function text(el){ return (el && (el.textContent||'').trim()) || ''; }
+  function setVal(id, v){ var e=document.getElementById(id); if(e){ e.value = v||''; } }
+  function setDD(hiddenId, btnId, v){
+    var hid=document.getElementById(hiddenId), btn=document.getElementById(btnId);
+    if(hid) hid.value = v||'';
+    if(btn) btn.textContent = v ? String(v) : 'Select…';
+  }
+  function headerKeys(table){
+    var ths = qa('thead tr:first-child th', table);
+    var offset = 0;
+    if(ths.length && text(ths[0]) === '') offset += 1;      // checkbox
+    if(ths.length > offset && /driver/i.test(text(ths[offset]))) offset += 1; // optional Driver col
+    var keys = ths.slice(offset).map(function(th){
+      return th.dataset.key ? th.dataset.key : text(th);
+    });
+    return {keys: keys, offset: offset};
+  }
+  function extractFromRow(tr){
+    var table = tr.closest('table');
+    var hk = headerKeys(table);
+    var tds = qa('td', tr).slice(hk.offset);
+    var map = {};
+    tds.forEach(function(td, i){ map[hk.keys[i] || ('COL_'+i)] = text(td); });
+    map.id = map['Job #'] || tr.getAttribute('data-id') || '';
+    return map;
+  }
+  function applyToModal(map){
+    setVal('e_from',        map['From'] || map['from'] || '');
+    setVal('e_to',          map['To'] || map['to'] || '');
+    setVal('e_container',   map['Container #'] || map['CONTAINER'] || map['container'] || '');
+    setVal('e_bkpin',       map['BK # / PIN'] || map['bk'] || map['pin'] || '');
+    setVal('e_seal',        map['Seal #'] || map['seal'] || '');
+    setVal('e_window',      map['Window'] || map['window'] || '');
+    setVal('e_instruction', map['Instruction'] || map['remark'] || '');
+    setDD('e_loadempty', 'dd_loadempty', map['LOAD / EMPTY'] || map['APPT TIME'] || map['appt'] || '');
+    setDD('e_impexp',    'dd_impexp',    map['Import / Export'] || map['ie'] || '');
+    var pill = document.getElementById('e_jobpill');
+    if(pill){ pill.textContent = map.id || 'Job #'; }
+  }
+  function isVisible(el){
+    if(!el) return false;
+    var s = window.getComputedStyle(el);
+    return s.display !== 'none' && s.visibility !== 'hidden' && s.opacity !== '0';
+  }
+  function stickyFill(map){
+    var modal = document.getElementById('edit_modal');
+    var until = Date.now() + 1500; // keep enforcing for 1.5s
+    // Guard: cancel any previous timer
+    if(window.__prefillTimer){ clearInterval(window.__prefillTimer); window.__prefillTimer=null; }
+    // Block form.reset during sticky window
+    var form = modal ? modal.querySelector('form') : null;
+    var origReset = form && form.reset;
+    if(form){
+      form.reset = function(){ /* swallow resets while sticky */ };
+      form.addEventListener('reset', function(e){ e.preventDefault(); }, {once:true});
+    }
+    // First pass immediately
+    applyToModal(map);
+    window.__prefillTimer = setInterval(function(){
+      if(Date.now() > until || !isVisible(modal)){
+        clearInterval(window.__prefillTimer); window.__prefillTimer=null;
+        if(form && origReset) form.reset = origReset;
+        return;
+      }
+      // Re-apply if any field got cleared
+      var needs = false;
+      ['e_container','e_bkpin','e_seal','e_window','e_from','e_to','e_instruction'].forEach(function(id){
+        var el=document.getElementById(id);
+        if(el && el.value === '') needs = true;
+      });
+      var dd1=document.getElementById('e_impexp'); var dd2=document.getElementById('e_loadempty');
+      if((dd1 && dd1.value==='') || (dd2 && dd2.value==='')) needs=true;
+      if(needs) applyToModal(map);
+    }, 40);
+    // Also stop on Save/Cancel
+    ['btn_modal_cancel','btn_modal_save','btn_modal_close'].forEach(function(id){
+      var b=document.getElementById(id);
+      if(b){ b.addEventListener('click', function(){ if(window.__prefillTimer){ clearInterval(window.__prefillTimer); window.__prefillTimer=null; if(form && origReset) form.reset = origReset; }}, {once:true}); }
+    });
+  }
+  function selectedRow(){
+    return document.querySelector('#section_pending tbody input[type="checkbox"]:checked')?.closest('tr')
+        || document.querySelector('#section_pending tbody tr.selected')
+        || null;
+  }
+  function openModal(){ var m=document.getElementById('edit_modal'); if(m){ m.style.display='flex'; } }
+  function bind(){
+    var btn=document.getElementById('btn_edit_pending'); if(!btn) return;
+    btn.addEventListener('click', function(){
+      var tr = selectedRow();
+      if(!tr){ if(window.toast){ toast('Select a row first'); } return; }
+      var map = extractFromRow(tr);
+      openModal();
+      // Apply, then keep sticky for short time to defeat clearing code
+      setTimeout(function(){ stickyFill(map); }, 10);
+    }, true);
+  }
+  if(document.readyState !== 'loading'){ bind(); } else { document.addEventListener('DOMContentLoaded', bind, {once:true}); }
+})();
+</script>
+
+
+<!-- === CCL MONOTONIC JOB ID PATCH v1 (non-invasive) === -->
+<script>
+(function(){
+  const LS_KEY_LAST = "ccl_last_job_num_v1";   // numeric part, e.g., 5007
+  const PREFIX = "CCL-";
+  const START_AT = 5001;
+
+  function readLast(){
+    const v = parseInt(localStorage.getItem(LS_KEY_LAST), 10);
+    return Number.isFinite(v) ? v : null;
+  }
+  function writeLast(n){
+    try{ localStorage.setItem(LS_KEY_LAST, String(n)); }catch(_){}
+  }
+  function scanHighestFromList(list){
+    let maxN = 0;
+    (list||[]).forEach(r => {
+      const m = String(r && r.id || "").match(/^CCL-(\d{4,})$/);
+      if(m){
+        const n = parseInt(m[1], 10);
+        if(Number.isFinite(n)) maxN = Math.max(maxN, n);
+      }
+    });
+    return maxN || null;
+  }
+
+  // Public API: next id and commit id
+  window.getNextJobNumber = function(){
+    let last = readLast();
+    if(last == null){
+      // Seed from whatever arrays exist globally
+      const all = []
+        .concat(Array.isArray(window.pending)?window.pending:[])
+        .concat(Array.isArray(window.pickups)?window.pickups:[])
+        .concat(Array.isArray(window.assigned)?window.assigned:[])
+        .concat(Array.isArray(window.inprogress)?window.inprogress:[])
+        .concat(Array.isArray(window.completed)?window.completed:[]);
+      const inferred = scanHighestFromList(all);
+      last = (inferred != null ? inferred : (START_AT-1));
+    }
+    return PREFIX + String(last + 1);
+  };
+  window.commitJobId = function(id){
+    const m = String(id||"").match(/^CCL-(\d{4,})$/);
+    if(!m) return;
+    const n = parseInt(m[1], 10);
+    const last = readLast();
+    if(last == null || n > last) writeLast(n);
+  };
+
+  // Prefill #c_id whenever Create modal opens
+  function tryPrefill(){
+    const idEl = document.getElementById('c_id');
+    if(idEl){ idEl.value = window.getNextJobNumber(); idEl.readOnly = true; }
+  }
+
+  // Hook: Create New button
+  document.addEventListener('click', function(e){
+    const t = e.target;
+    if(!t) return;
+    if(t.id === 'btn_create_pending' || (t.closest && t.closest('#btn_create_pending'))){
+      // Give any existing open/create logic a frame to run first
+      setTimeout(tryPrefill, 50);
+    }
+  }, true);
+
+  // Hook: when Update is clicked, commit the ID so it never reuses
+  document.addEventListener('click', function(e){
+    const t = e.target;
+    if(!t) return;
+    if(t.id === 'btn_create_update' || (t.closest && t.closest('#btn_create_update'))){
+      setTimeout(function(){
+        const idEl = document.getElementById('c_id');
+        if(idEl && idEl.value){ window.commitJobId(idEl.value.trim()); }
+      }, 10);
+    }
+  }, true);
+
+  // Safety: observe the create modal becoming visible and prefill
+  const cm = document.getElementById('create_modal');
+  if(cm && 'IntersectionObserver' in window){
+    const obs = new MutationObserver(() => {
+      const style = getComputedStyle(cm);
+      if(style.display !== 'none' && style.visibility !== 'hidden'){ tryPrefill(); }
+    });
+    obs.observe(cm, { attributes:true, attributeFilter:['style','class'] });
+  }
+
+  // One-time seed LAST from DOM, if empty
+  (function bootstrap(){
+    if(readLast() != null) return;
+    let maxSeen = 0;
+    try{
+      const cells = document.querySelectorAll('tbody td:first-child, tbody td[data-col="id"]');
+      cells.forEach(td => {
+        const txt = (td.textContent || '').trim();
+        const m = txt.match(/^CCL-(\d{4,})/);
+        if(m){ const n = parseInt(m[1], 10); if(Number.isFinite(n)) maxSeen = Math.max(maxSeen, n); }
+      });
+    }catch(_){}
+    if(maxSeen > 0){ writeLast(maxSeen); }
+  })();
+})();
+</script>
+<!-- === /CCL MONOTONIC JOB ID PATCH v1 === -->
+
+
+<script>
+// === CCL Inline Cell Editing (no modal) — v1 ===
+// Works on all tables. Double‑click any data cell to edit directly.
+// Saves back into the correct in‑memory array (pending/assigned/inprogress/pickups/completed).
+// Also persists pending edits to localStorage (ccl_pending_extras_v1) so they stick on refresh
+// with your existing seed mechanism.
+
+(function(){
+  function ready(fn){ if(document.readyState!=='loading') fn(); else document.addEventListener('DOMContentLoaded', fn, {once:true}); }
+  function $(sel, root){ return (root||document).querySelector(sel); }
+  function $all(sel, root){ return Array.from((root||document).querySelectorAll(sel)); }
+
+  function tableMeta(td){
+    const tr = td.closest('tr'); if(!tr) return null;
+    const tbody = tr.parentElement; if(!tbody) return null;
+    const table = tbody.closest('table'); if(!table) return null;
+    const thead = table.querySelector('thead'); if(!thead || !thead.rows.length) return null;
+    const hdr = thead.rows[0];
+    const colIdx = Array.prototype.indexOf.call(tr.children, td);
+    if(colIdx < 0) return null;
+    const th = hdr.children[colIdx];
+    // Determine key for this column
+    let key = th && th.dataset ? th.dataset.key : null;
+    // Skip non-data columns (checkbox / Driver) and unknowns
+    const label = th ? (th.textContent||'').trim().toUpperCase() : '';
+    if(!key){
+      if(label === '' /* checkbox col */ || label === 'DRIVER'){ return null; }
+      // fallback: map by label when dataset.key missing
+      const L = {
+        'JOB':'id','CONTAINER':'container','CHASSIS':'chassis','SIZE TYPE':'size','PIN':'pin',
+        'IMPORT / EXPORT':'ie','BK/EDO':'bk','PICK PORT':'from','P/U DATE':'pudate','APPT TIME':'appt',
+        'DEL DATE':'deliveryDate','DELIVERY':'to','LFD DATE':'lfd','RETURN DATE':'returnDate',
+        'RETURN PORT':'returnPort','CUSTOMER':'customer','REMARK':'remark','CARRIER NAME':'carrier',
+        'MB/L NO.':'mbl','DROP / LIVE':'status','DATE OF ARRIVAL':'arrival'
+      };
+      key = L[label] || null;
+    }
+    if(!key) return null;
+
+    // Determine which dataset this tbody represents
+    const tbid = (tbody.id||'').toLowerCase();
+    let arrName = null;
+    if(tbid.includes('pending')) arrName = 'pending';
+    else if(tbid.includes('assigned')) arrName = 'assigned';
+    else if(tbid.includes('inprogress')) arrName = 'inprogress';
+    else if(tbid==='p1_body' || tbid.includes('pickup')) arrName = 'pickups';
+    else if(tbid.includes('completed')) arrName = 'completed';
+    if(!arrName) return null;
+
+    // Row identity
+    let rowId = tr.getAttribute('data-id');
+    if(!rowId){
+      // Fallback: try to find the 'JOB' cell in this row by looking up header for 'id'
+      // Find the header index for key 'id'
+      let idCol = -1;
+      for(let i=0;i<hdr.children.length;i++){
+        if(hdr.children[i].dataset && hdr.children[i].dataset.key==='id'){ idCol = i; break; }
+        const txt = (hdr.children[i].textContent||'').trim().toUpperCase();
+        if(idCol<0 && txt==='JOB') idCol = i;
+      }
+      if(idCol>=0 && tr.children[idCol]){
+        rowId = tr.children[idCol].textContent.trim();
+      }
+    }
+    return {tr, tbody, table, thead, colIdx, th, key, arrName, rowId};
+  }
+
+  function getArrayByName(name){
+    // Guard for missing globals
+    try{
+      if(name==='pending') return window.pending || [];
+      if(name==='assigned') return window.assigned || [];
+      if(name==='inprogress') return window.inprogress || [];
+      if(name==='pickups') return window.pickups || [];
+      if(name==='completed') return window.completed || [];
+    }catch(_){}
+    return [];
+  }
+
+  function persistIfNeeded(name){
+    // Persist pending into your existing localStorage key so refresh keeps edits
+    if(name==='pending'){
+      try{ localStorage.setItem('ccl_pending_extras_v1', JSON.stringify(window.pending||[])); }catch(_){}
+    }
+  }
+
+  function renderCell(td, value){
+    // Minimal normalization: empty -> em dash, else plain text
+    const v = (value==null || String(value).trim()==='') ? '—' : String(value);
+    td.innerHTML = '';
+    const span = document.createElement('span');
+    // Keep centered dash look
+    if(v==='—'){ span.className = 'dash-center'; }
+    span.textContent = v;
+    td.appendChild(span);
+  }
+
+  function makeEditor(td, currentText){
+    // Use <input> for single-line; if original cell had a newline, use <textarea>
+    const multiline = /\n/.test(currentText);
+    const ed = multiline ? document.createElement('textarea') : document.createElement('input');
+    if(!multiline) ed.type = 'text';
+    ed.value = (currentText==='—' ? '' : currentText);
+    ed.style.width = '100%';
+    ed.style.background = '#0f172a';
+    ed.style.color = '#e6edf7';
+    ed.style.border = '1px solid #334155';
+    ed.style.borderRadius = '8px';
+    ed.style.padding = '6px 8px';
+    ed.style.minHeight = multiline ? '64px' : 'auto';
+    return ed;
+  }
+
+  function beginEdit(td){
+    const meta = tableMeta(td);
+    if(!meta || meta.arrName!=='pending'){ return; }
+    if(!meta) return;
+    const { key, arrName, rowId, tr, colIdx } = meta;
+
+    // Do not allow editing checkbox/status if you want; here we allow everything except checkbox col
+    // You can special-case 'status' to keep dash behavior—already handled in renderCell.
+
+    // Current cell text
+    const currentText = td.textContent.trim();
+    // If an editor already exists, skip
+    if(td.querySelector('input,textarea')) return;
+
+    const editor = makeEditor(td, currentText);
+    td.innerHTML = '';
+    td.appendChild(editor);
+    editor.focus();
+    // place caret at end
+    try{ const len = editor.value.length; editor.setSelectionRange && editor.setSelectionRange(len, len); }catch(_){}
+
+    function commit(){
+      const newValRaw = editor.value;
+      const newVal = newValRaw.trim();
+      const oldDisplay = (currentText === '—' ? '' : currentText);
+      if(newVal === oldDisplay){ renderCell(td, currentText); return; }
+      const colLabel = (meta.th && (meta.th.textContent||'').trim()) || key;
+      const jobLabel = meta.rowId ? meta.rowId : '(no job id)';
+      if (commit._called) { return; }
+      commit._called = true;
+
+      // Always open our modal; add a safety fallback to alert if missing
+      const ask = (window.__ccl_inline_confirm ? window.__ccl_inline_confirm : (data)=>{
+        const ok = window.confirm(`Save change?\n\nJob: ${data.job}\nField: ${data.field}\n\nFrom: "${data.old}"\nTo:   "${data.new}"`);
+        return Promise.resolve(ok);
+      });
+      ask({job: jobLabel, field: colLabel, old: oldDisplay, new: newVal}).then(function(proceed){
+        if(!proceed){
+          renderCell(td, currentText);
+          commit._called = false;
+          return;
+        }
+        const arr = getArrayByName(arrName);
+        if(rowId && Array.isArray(arr)){
+          const idx = arr.findIndex(x => (x && (x.id===rowId || String(x.id).trim()===String(rowId).trim())));
+          if(idx >= 0){
+            arr[idx][key] = newVal;
+            renderCell(td, newVal);
+            if(key==='id'){ tr.setAttribute('data-id', newVal); }
+            persistIfNeeded(arrName);
+          }else{
+            renderCell(td, newVal);
+          }
+        }else{
+          renderCell(td, newVal);
+        }
+        commit._called = false;
+      });
+    }}
+
+    function cancel(){
+      // Restore original without changing array
+      renderCell(td, currentText);
+    }
+
+    editor.addEventListener('keydown', function(ev){
+      if(ev.key==='Enter' && !(ev.shiftKey || ev.ctrlKey || ev.metaKey)){ commit._called = false;
+        ev.preventDefault();
+        editor.blur();
+      }else if(ev.key==='Escape'){
+        ev.preventDefault();
+        cancel();
+      }
+    });
+    editor.addEventListener('blur', commit, {once:true});
+  }
+
+  ready(function(){
+    // Delegate dblclick on every table body cell
+    document.getElementById('section_pending').addEventListener('dblclick', function(ev){
+      // Prevent legacy modal from triggering on dblclick
+      try{ ev.stopPropagation(); ev.preventDefault(); }catch(_){}
+      const td = ev.target && ev.target.closest ? ev.target.closest('td') : null;
+      if(!td) return;
+      // Avoid editing the selection checkbox column (usually first col)
+      const tr = td.closest('tr');
+      const isCheckboxCol = td.cellIndex === 0;
+      if(isCheckboxCol) return;
+      beginEdit(td);
+    }, true);
+  });
+})();
+</script>
+
+
+<!-- Inline Edit Confirmation Modal -->
+<style>
+#inline_confirm_modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:9999;background:rgba(2,6,23,.75);}
+#inline_confirm_modal .card{background:#0b1220;border:1px solid #334155;border-radius:14px;padding:14px;max-width:440px;width:92%;box-shadow:0 18px 40px rgba(0,0,0,.6);}
+#inline_confirm_modal h4{margin:0 0 8px 0;color:#e6edf7;font-size:16px;font-weight:700;}
+#inline_confirm_modal .kv{font-size:12px;color:#a9bdd7;margin:6px 0;}
+#inline_confirm_modal .kv b{color:#dbe7ff;}
+#inline_confirm_modal .diff{background:#0f172a;border:1px solid #2b3a55;border-radius:10px;padding:8px;margin-top:8px;color:#e6edf7;font-size:13px;white-space:pre-wrap;}
+#inline_confirm_modal .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px;}
+#inline_confirm_modal .btn{padding:8px 12px;border-radius:10px;border:1px solid #334155;background:#0f172a;color:#e6edf7;cursor:pointer;}
+#inline_confirm_modal .btn.primary{background:#2563eb;border-color:#1d4ed8;color:#fff;}
+#inline_confirm_modal .btn:hover{filter:brightness(1.05);}
+</style>
+<div id="inline_confirm_modal" aria-modal="true" role="dialog">
+  <div class="card">
+    <h4>Confirm change?</h4>
+    <div class="kv"><b>Job:</b> <span id="icm_job">—</span></div>
+    <div class="kv"><b>Field:</b> <span id="icm_field">—</span></div>
+    <div class="diff"><b>From:</b> <span id="icm_old">—</span>\n<b>To:</b> <span id="icm_new">—</span></div>
+    <div class="actions">
+      <button class="btn" id="icm_cancel">Cancel</button>
+      <button class="btn primary" id="icm_save">Save</button>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  const modal = document.getElementById('inline_confirm_modal');
+  const fJob = document.getElementById('icm_job');
+  const fField = document.getElementById('icm_field');
+  const fOld = document.getElementById('icm_old');
+  const fNew = document.getElementById('icm_new');
+  const btnCancel = document.getElementById('icm_cancel');
+  const btnSave = document.getElementById('icm_save');
+  let _resolver = null;
+
+  function openModal(data){
+    fJob.textContent = data.job || '—';
+    fField.textContent = data.field || '—';
+    fOld.textContent = data.old || '';
+    fNew.textContent = data.new || '';
+    modal.style.display = 'flex';
+    return new Promise(res => { _resolver = res; });
+  }
+  function closeModal(){ modal.style.display = 'none'; }
+
+  btnCancel.addEventListener('click', function(){ if(_resolver){ _resolver(false); } closeModal(); });
+  btnSave.addEventListener('click', function(){ if(_resolver){ _resolver(true); } closeModal(); });
+
+  // Expose to inline editor
+  window.__ccl_inline_confirm = openModal;
+})();
+</script>
+
 </body></html><script>
     function openGpsTab(){
       // Build HTML and open as a Blob URL in a NEW TAB
@@ -6234,6 +6721,590 @@ document.addEventListener('DOMContentLoaded', function(){
   });
 })();
 </script>
+
+<script>
+/* === STICKY PREFILL (prevents 1s reset) === */
+(function(){
+  function $(sel, root){ return (root||document).querySelector(sel); }
+  function qa(sel, root){ return Array.from((root||document).querySelectorAll(sel)); }
+  function text(el){ return (el && (el.textContent||'').trim()) || ''; }
+  function setVal(id, v){ var e=document.getElementById(id); if(e){ e.value = v||''; } }
+  function setDD(hiddenId, btnId, v){
+    var hid=document.getElementById(hiddenId), btn=document.getElementById(btnId);
+    if(hid) hid.value = v||'';
+    if(btn) btn.textContent = v ? String(v) : 'Select…';
+  }
+  function headerKeys(table){
+    var ths = qa('thead tr:first-child th', table);
+    var offset = 0;
+    if(ths.length && text(ths[0]) === '') offset += 1;      // checkbox
+    if(ths.length > offset && /driver/i.test(text(ths[offset]))) offset += 1; // optional Driver col
+    var keys = ths.slice(offset).map(function(th){
+      return th.dataset.key ? th.dataset.key : text(th);
+    });
+    return {keys: keys, offset: offset};
+  }
+  function extractFromRow(tr){
+    var table = tr.closest('table');
+    var hk = headerKeys(table);
+    var tds = qa('td', tr).slice(hk.offset);
+    var map = {};
+    tds.forEach(function(td, i){ map[hk.keys[i] || ('COL_'+i)] = text(td); });
+    map.id = map['Job #'] || tr.getAttribute('data-id') || '';
+    return map;
+  }
+  function applyToModal(map){
+    setVal('e_from',        map['From'] || map['from'] || '');
+    setVal('e_to',          map['To'] || map['to'] || '');
+    setVal('e_container',   map['Container #'] || map['CONTAINER'] || map['container'] || '');
+    setVal('e_bkpin',       map['BK # / PIN'] || map['bk'] || map['pin'] || '');
+    setVal('e_seal',        map['Seal #'] || map['seal'] || '');
+    setVal('e_window',      map['Window'] || map['window'] || '');
+    setVal('e_instruction', map['Instruction'] || map['remark'] || '');
+    setDD('e_loadempty', 'dd_loadempty', map['LOAD / EMPTY'] || map['APPT TIME'] || map['appt'] || '');
+    setDD('e_impexp',    'dd_impexp',    map['Import / Export'] || map['ie'] || '');
+    var pill = document.getElementById('e_jobpill');
+    if(pill){ pill.textContent = map.id || 'Job #'; }
+  }
+  function isVisible(el){
+    if(!el) return false;
+    var s = window.getComputedStyle(el);
+    return s.display !== 'none' && s.visibility !== 'hidden' && s.opacity !== '0';
+  }
+  function stickyFill(map){
+    var modal = document.getElementById('edit_modal');
+    var until = Date.now() + 1500; // keep enforcing for 1.5s
+    // Guard: cancel any previous timer
+    if(window.__prefillTimer){ clearInterval(window.__prefillTimer); window.__prefillTimer=null; }
+    // Block form.reset during sticky window
+    var form = modal ? modal.querySelector('form') : null;
+    var origReset = form && form.reset;
+    if(form){
+      form.reset = function(){ /* swallow resets while sticky */ };
+      form.addEventListener('reset', function(e){ e.preventDefault(); }, {once:true});
+    }
+    // First pass immediately
+    applyToModal(map);
+    window.__prefillTimer = setInterval(function(){
+      if(Date.now() > until || !isVisible(modal)){
+        clearInterval(window.__prefillTimer); window.__prefillTimer=null;
+        if(form && origReset) form.reset = origReset;
+        return;
+      }
+      // Re-apply if any field got cleared
+      var needs = false;
+      ['e_container','e_bkpin','e_seal','e_window','e_from','e_to','e_instruction'].forEach(function(id){
+        var el=document.getElementById(id);
+        if(el && el.value === '') needs = true;
+      });
+      var dd1=document.getElementById('e_impexp'); var dd2=document.getElementById('e_loadempty');
+      if((dd1 && dd1.value==='') || (dd2 && dd2.value==='')) needs=true;
+      if(needs) applyToModal(map);
+    }, 40);
+    // Also stop on Save/Cancel
+    ['btn_modal_cancel','btn_modal_save','btn_modal_close'].forEach(function(id){
+      var b=document.getElementById(id);
+      if(b){ b.addEventListener('click', function(){ if(window.__prefillTimer){ clearInterval(window.__prefillTimer); window.__prefillTimer=null; if(form && origReset) form.reset = origReset; }}, {once:true}); }
+    });
+  }
+  function selectedRow(){
+    return document.querySelector('#section_pending tbody input[type="checkbox"]:checked')?.closest('tr')
+        || document.querySelector('#section_pending tbody tr.selected')
+        || null;
+  }
+  function openModal(){ var m=document.getElementById('edit_modal'); if(m){ m.style.display='flex'; } }
+  function bind(){
+    var btn=document.getElementById('btn_edit_pending'); if(!btn) return;
+    btn.addEventListener('click', function(){
+      var tr = selectedRow();
+      if(!tr){ if(window.toast){ toast('Select a row first'); } return; }
+      var map = extractFromRow(tr);
+      openModal();
+      // Apply, then keep sticky for short time to defeat clearing code
+      setTimeout(function(){ stickyFill(map); }, 10);
+    }, true);
+  }
+  if(document.readyState !== 'loading'){ bind(); } else { document.addEventListener('DOMContentLoaded', bind, {once:true}); }
+})();
+</script>
+
+
+<!-- === CCL MONOTONIC JOB ID PATCH v1 (non-invasive) === -->
+<script>
+(function(){
+  const LS_KEY_LAST = "ccl_last_job_num_v1";   // numeric part, e.g., 5007
+  const PREFIX = "CCL-";
+  const START_AT = 5001;
+
+  function readLast(){
+    const v = parseInt(localStorage.getItem(LS_KEY_LAST), 10);
+    return Number.isFinite(v) ? v : null;
+  }
+  function writeLast(n){
+    try{ localStorage.setItem(LS_KEY_LAST, String(n)); }catch(_){}
+  }
+  function scanHighestFromList(list){
+    let maxN = 0;
+    (list||[]).forEach(r => {
+      const m = String(r && r.id || "").match(/^CCL-(\d{4,})$/);
+      if(m){
+        const n = parseInt(m[1], 10);
+        if(Number.isFinite(n)) maxN = Math.max(maxN, n);
+      }
+    });
+    return maxN || null;
+  }
+
+  // Public API: next id and commit id
+  window.getNextJobNumber = function(){
+    let last = readLast();
+    if(last == null){
+      // Seed from whatever arrays exist globally
+      const all = []
+        .concat(Array.isArray(window.pending)?window.pending:[])
+        .concat(Array.isArray(window.pickups)?window.pickups:[])
+        .concat(Array.isArray(window.assigned)?window.assigned:[])
+        .concat(Array.isArray(window.inprogress)?window.inprogress:[])
+        .concat(Array.isArray(window.completed)?window.completed:[]);
+      const inferred = scanHighestFromList(all);
+      last = (inferred != null ? inferred : (START_AT-1));
+    }
+    return PREFIX + String(last + 1);
+  };
+  window.commitJobId = function(id){
+    const m = String(id||"").match(/^CCL-(\d{4,})$/);
+    if(!m) return;
+    const n = parseInt(m[1], 10);
+    const last = readLast();
+    if(last == null || n > last) writeLast(n);
+  };
+
+  // Prefill #c_id whenever Create modal opens
+  function tryPrefill(){
+    const idEl = document.getElementById('c_id');
+    if(idEl){ idEl.value = window.getNextJobNumber(); idEl.readOnly = true; }
+  }
+
+  // Hook: Create New button
+  document.addEventListener('click', function(e){
+    const t = e.target;
+    if(!t) return;
+    if(t.id === 'btn_create_pending' || (t.closest && t.closest('#btn_create_pending'))){
+      // Give any existing open/create logic a frame to run first
+      setTimeout(tryPrefill, 50);
+    }
+  }, true);
+
+  // Hook: when Update is clicked, commit the ID so it never reuses
+  document.addEventListener('click', function(e){
+    const t = e.target;
+    if(!t) return;
+    if(t.id === 'btn_create_update' || (t.closest && t.closest('#btn_create_update'))){
+      setTimeout(function(){
+        const idEl = document.getElementById('c_id');
+        if(idEl && idEl.value){ window.commitJobId(idEl.value.trim()); }
+      }, 10);
+    }
+  }, true);
+
+  // Safety: observe the create modal becoming visible and prefill
+  const cm = document.getElementById('create_modal');
+  if(cm && 'IntersectionObserver' in window){
+    const obs = new MutationObserver(() => {
+      const style = getComputedStyle(cm);
+      if(style.display !== 'none' && style.visibility !== 'hidden'){ tryPrefill(); }
+    });
+    obs.observe(cm, { attributes:true, attributeFilter:['style','class'] });
+  }
+
+  // One-time seed LAST from DOM, if empty
+  (function bootstrap(){
+    if(readLast() != null) return;
+    let maxSeen = 0;
+    try{
+      const cells = document.querySelectorAll('tbody td:first-child, tbody td[data-col="id"]');
+      cells.forEach(td => {
+        const txt = (td.textContent || '').trim();
+        const m = txt.match(/^CCL-(\d{4,})/);
+        if(m){ const n = parseInt(m[1], 10); if(Number.isFinite(n)) maxSeen = Math.max(maxSeen, n); }
+      });
+    }catch(_){}
+    if(maxSeen > 0){ writeLast(maxSeen); }
+  })();
+})();
+</script>
+<!-- === /CCL MONOTONIC JOB ID PATCH v1 === -->
+
+
+<!-- === Driver Match / Mismatch Auto-Advance (drop-in) === -->
+<script>
+(function(){
+  // Guard against double-injection
+  if (window.__driverMatchFlowEnabled__) return;
+  window.__driverMatchFlowEnabled__ = true;
+
+  // Ensure alert modal helpers exist; lazily create a modal if missing
+  window.openAlert = window.openAlert || function(msg){
+    var m = document.getElementById('alert_modal');
+    var t = document.getElementById('alert_text');
+    if(!m){
+      m = document.createElement('div');
+      m.id = 'alert_modal';
+      m.style.cssText = 'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);z-index:999999;';
+      var inner = document.createElement('div');
+      inner.style.cssText = 'background:#111827;color:#e5e7eb;border:1px solid #374151;border-radius:14px;max-width:520px;width:92%;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.4);';
+      var h = document.createElement('div'); h.textContent = 'Notice'; h.style.cssText='font-weight:700;margin-bottom:8px;font-size:18px;';
+      t = document.createElement('div'); t.id='alert_text'; t.style.cssText='white-space:pre-wrap;line-height:1.4;margin-bottom:16px;';
+      var b = document.createElement('button'); b.textContent='OK'; b.onclick=function(){ closeAlert(); }; b.style.cssText='padding:8px 14px;border-radius:10px;border:1px solid #374151;background:#1f2937;color:#e5e7eb;';
+      inner.appendChild(h); inner.appendChild(t); inner.appendChild(b);
+      m.appendChild(inner);
+      document.body.appendChild(m);
+      m.style.display='none';
+    }
+    if(t) t.textContent = msg || 'Driver mismatch.';
+    m.style.display = 'flex';
+  };
+  window.closeAlert = window.closeAlert || function(){ var m = document.getElementById('alert_modal'); if(m) m.style.display='none'; };
+
+  function byText(ths, text){
+    for (var i=0;i<ths.length;i++){
+      if (((ths[i].textContent||'').trim()||'') === text) return i;
+    }
+    return -1;
+  }
+  function getAssignedDriverColIndex(){
+    var ths = document.querySelectorAll('#section_assigned thead th');
+    var idx = byText(ths,'Driver');
+    if (idx !== -1) return idx;
+    return 1; // fallback
+  }
+  function getDriversDriverColIndex(){
+    var ths = document.querySelectorAll('#section_drivers_bottom thead th');
+    var idx = byText(ths,'Driver');
+    if (idx !== -1) return idx;
+    return 3; // fallback
+  }
+
+  function moveAssignedJobToInProgressById(jobId){
+    if (typeof window.inprogress === 'undefined' || !Array.isArray(window.inprogress)) {
+      window.inprogress = [];
+    }
+    try {
+      var a = window.assigned || [];
+      var idx = -1;
+      for (var i=0;i<a.length;i++){ if(String(a[i]?.id)===String(jobId)){ idx=i; break; } }
+      if (idx === -1) return false;
+      var job = a[idx];
+      a.splice(idx,1);
+      window.inprogress.unshift(Object.assign({}, job, {status:'In-Progress'}));
+
+      try{ if(typeof window.renderAssigned==='function') window.renderAssigned(); }catch(e){}
+      try{ if(typeof window.renderInprogress==='function') window.renderInprogress(); }catch(e){}
+      try{ if(typeof window.updateBadges==='function') window.updateBadges(); }catch(e){}
+      try{ if(typeof window.switchTab==='function') window.switchTab('inprogress'); }catch(e){}
+      try{ if(typeof window.toast==='function') window.toast('Driver matched — moved to In-Progress'); }catch(e){}
+      return true;
+    } catch(e){ console && console.warn && console.warn('moveAssignedJobToInProgressById error', e); return false; }
+  }
+
+  function enableDriverClickMatchFlow(){
+    var drvBody = document.getElementById('drv_body');
+    if(!drvBody) return;
+    drvBody.addEventListener('click', function(e){
+      var row = e.target.closest('tr'); if(!row) return;
+
+      var drvColIdx = getDriversDriverColIndex();
+      var selectedDriverName = ((row.children[drvColIdx]||{}).textContent||'').trim();
+
+      var onAssigned = (window.state && window.state.currentTab === 'assigned');
+      if(!onAssigned){
+        if(window.state) window.state.selectedDriver = { name: selectedDriverName };
+        return;
+      }
+
+      var assignedBody = document.getElementById('assigned_body'); if(!assignedBody) return;
+      var cbs = assignedBody.querySelectorAll('input[type="checkbox"]:checked');
+      var selectedJobRows = [];
+      cbs.forEach(function(cb){ var tr = cb.closest('tr'); if(tr) selectedJobRows.push(tr); });
+      if(selectedJobRows.length !== 1) return;
+
+      var jobTr = selectedJobRows[0];
+      var jobId = jobTr.getAttribute('data-id') || (jobTr.dataset && jobTr.dataset.id) || '';
+      var jobDrvColIdx = getAssignedDriverColIndex();
+      var jobDriverName = ((jobTr.children[jobDrvColIdx]||{}).textContent||'').trim();
+
+      if(window.state) window.state.selectedDriver = { name: selectedDriverName };
+
+      if(jobDriverName && selectedDriverName && jobDriverName === selectedDriverName){
+        moveAssignedJobToInProgressById(jobId);
+      } else {
+        openAlert(
+          'Driver mismatch.\n\n' +
+          'Selected driver: ' + (selectedDriverName || '—') + '\n' +
+          'Job is assigned to: ' + (jobDriverName || '—') + '\n\n' +
+          'Pick the correct driver or update the job’s driver first.'
+        );
+      }
+    }, true);
+  }
+
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', enableDriverClickMatchFlow);
+  } else {
+    enableDriverClickMatchFlow();
+  }
+})();
+</script>
+<!-- === End Driver Match / Mismatch block === -->
+
+<script>
+// === CCL Inline Cell Editing (no modal) — v1 ===
+// Works on all tables. Double‑click any data cell to edit directly.
+// Saves back into the correct in‑memory array (pending/assigned/inprogress/pickups/completed).
+// Also persists pending edits to localStorage (ccl_pending_extras_v1) so they stick on refresh
+// with your existing seed mechanism.
+
+(function(){
+  function ready(fn){ if(document.readyState!=='loading') fn(); else document.addEventListener('DOMContentLoaded', fn, {once:true}); }
+  function $(sel, root){ return (root||document).querySelector(sel); }
+  function $all(sel, root){ return Array.from((root||document).querySelectorAll(sel)); }
+
+  function tableMeta(td){
+    const tr = td.closest('tr'); if(!tr) return null;
+    const tbody = tr.parentElement; if(!tbody) return null;
+    const table = tbody.closest('table'); if(!table) return null;
+    const thead = table.querySelector('thead'); if(!thead || !thead.rows.length) return null;
+    const hdr = thead.rows[0];
+    const colIdx = Array.prototype.indexOf.call(tr.children, td);
+    if(colIdx < 0) return null;
+    const th = hdr.children[colIdx];
+    // Determine key for this column
+    let key = th && th.dataset ? th.dataset.key : null;
+    // Skip non-data columns (checkbox / Driver) and unknowns
+    const label = th ? (th.textContent||'').trim().toUpperCase() : '';
+    if(!key){
+      if(label === '' /* checkbox col */ || label === 'DRIVER'){ return null; }
+      // fallback: map by label when dataset.key missing
+      const L = {
+        'JOB':'id','CONTAINER':'container','CHASSIS':'chassis','SIZE TYPE':'size','PIN':'pin',
+        'IMPORT / EXPORT':'ie','BK/EDO':'bk','PICK PORT':'from','P/U DATE':'pudate','APPT TIME':'appt',
+        'DEL DATE':'deliveryDate','DELIVERY':'to','LFD DATE':'lfd','RETURN DATE':'returnDate',
+        'RETURN PORT':'returnPort','CUSTOMER':'customer','REMARK':'remark','CARRIER NAME':'carrier',
+        'MB/L NO.':'mbl','DROP / LIVE':'status','DATE OF ARRIVAL':'arrival'
+      };
+      key = L[label] || null;
+    }
+    if(!key) return null;
+
+    // Determine which dataset this tbody represents
+    const tbid = (tbody.id||'').toLowerCase();
+    let arrName = null;
+    if(tbid.includes('pending')) arrName = 'pending';
+    else if(tbid.includes('assigned')) arrName = 'assigned';
+    else if(tbid.includes('inprogress')) arrName = 'inprogress';
+    else if(tbid==='p1_body' || tbid.includes('pickup')) arrName = 'pickups';
+    else if(tbid.includes('completed')) arrName = 'completed';
+    if(!arrName) return null;
+
+    // Row identity
+    let rowId = tr.getAttribute('data-id');
+    if(!rowId){
+      // Fallback: try to find the 'JOB' cell in this row by looking up header for 'id'
+      // Find the header index for key 'id'
+      let idCol = -1;
+      for(let i=0;i<hdr.children.length;i++){
+        if(hdr.children[i].dataset && hdr.children[i].dataset.key==='id'){ idCol = i; break; }
+        const txt = (hdr.children[i].textContent||'').trim().toUpperCase();
+        if(idCol<0 && txt==='JOB') idCol = i;
+      }
+      if(idCol>=0 && tr.children[idCol]){
+        rowId = tr.children[idCol].textContent.trim();
+      }
+    }
+    return {tr, tbody, table, thead, colIdx, th, key, arrName, rowId};
+  }
+
+  function getArrayByName(name){
+    // Guard for missing globals
+    try{
+      if(name==='pending') return window.pending || [];
+      if(name==='assigned') return window.assigned || [];
+      if(name==='inprogress') return window.inprogress || [];
+      if(name==='pickups') return window.pickups || [];
+      if(name==='completed') return window.completed || [];
+    }catch(_){}
+    return [];
+  }
+
+  function persistIfNeeded(name){
+    // Persist pending into your existing localStorage key so refresh keeps edits
+    if(name==='pending'){
+      try{ localStorage.setItem('ccl_pending_extras_v1', JSON.stringify(window.pending||[])); }catch(_){}
+    }
+  }
+
+  function renderCell(td, value){
+    // Minimal normalization: empty -> em dash, else plain text
+    const v = (value==null || String(value).trim()==='') ? '—' : String(value);
+    td.innerHTML = '';
+    const span = document.createElement('span');
+    // Keep centered dash look
+    if(v==='—'){ span.className = 'dash-center'; }
+    span.textContent = v;
+    td.appendChild(span);
+  }
+
+  function makeEditor(td, currentText){
+    // Use <input> for single-line; if original cell had a newline, use <textarea>
+    const multiline = /\n/.test(currentText);
+    const ed = multiline ? document.createElement('textarea') : document.createElement('input');
+    if(!multiline) ed.type = 'text';
+    ed.value = (currentText==='—' ? '' : currentText);
+    ed.style.width = '100%';
+    ed.style.background = '#0f172a';
+    ed.style.color = '#e6edf7';
+    ed.style.border = '1px solid #334155';
+    ed.style.borderRadius = '8px';
+    ed.style.padding = '6px 8px';
+    ed.style.minHeight = multiline ? '64px' : 'auto';
+    return ed;
+  }
+
+  function beginEdit(td){
+    const meta = tableMeta(td);
+    if(!meta) return;
+    const { key, arrName, rowId, tr, colIdx } = meta;
+
+    // Do not allow editing checkbox/status if you want; here we allow everything except checkbox col
+    // You can special-case 'status' to keep dash behavior—already handled in renderCell.
+
+    // Current cell text
+    const currentText = td.textContent.trim();
+    // If an editor already exists, skip
+    if(td.querySelector('input,textarea')) return;
+
+    const editor = makeEditor(td, currentText);
+    td.innerHTML = '';
+    td.appendChild(editor);
+    editor.focus();
+    // place caret at end
+    try{ const len = editor.value.length; editor.setSelectionRange && editor.setSelectionRange(len, len); }catch(_){}
+
+    function commit(){
+      const newVal = editor.value.trim();
+      // Write to array object
+      const arr = getArrayByName(arrName);
+      if(rowId && Array.isArray(arr)){
+        const idx = arr.findIndex(x => (x && (x.id===rowId || String(x.id).trim()===String(rowId).trim())));
+        if(idx >= 0){
+          // Update underlying data
+          arr[idx][key] = newVal;
+          // Re-render only this cell to avoid flicker
+          renderCell(td, newVal);
+          // Ensure the <tr> keeps the latest id display if we edited 'id'
+          if(key==='id'){
+            tr.setAttribute('data-id', newVal);
+          }
+          // Persist pending set
+          persistIfNeeded(arrName);
+        }else{
+          // Could not resolve row; still update the UI cell
+          renderCell(td, newVal);
+        }
+      }else{
+        renderCell(td, newVal);
+      }
+    }
+
+    function cancel(){
+      // Restore original without changing array
+      renderCell(td, currentText);
+    }
+
+    editor.addEventListener('keydown', function(ev){
+      if(ev.key==='Enter' && !(ev.shiftKey || ev.ctrlKey || ev.metaKey)){ commit._called = false;
+        ev.preventDefault();
+        editor.blur();
+      }else if(ev.key==='Escape'){
+        ev.preventDefault();
+        cancel();
+      }
+    });
+    editor.addEventListener('blur', commit, {once:true});
+  }
+
+  ready(function(){
+    // Delegate dblclick on every table body cell
+    document.getElementById('section_pending').addEventListener('dblclick', function(ev){
+      // Prevent legacy modal from triggering on dblclick
+      try{ ev.stopPropagation(); ev.preventDefault(); }catch(_){}
+      const td = ev.target && ev.target.closest ? ev.target.closest('td') : null;
+      if(!td) return;
+      // Avoid editing the selection checkbox column (usually first col)
+      const tr = td.closest('tr');
+      const isCheckboxCol = td.cellIndex === 0;
+      if(isCheckboxCol) return;
+      beginEdit(td);
+    }, true);
+  });
+})();
+</script>
+
+
+<!-- Inline Edit Confirmation Modal -->
+<style>
+#inline_confirm_modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:9999;background:rgba(2,6,23,.75);}
+#inline_confirm_modal .card{background:#0b1220;border:1px solid #334155;border-radius:14px;padding:14px;max-width:440px;width:92%;box-shadow:0 18px 40px rgba(0,0,0,.6);}
+#inline_confirm_modal h4{margin:0 0 8px 0;color:#e6edf7;font-size:16px;font-weight:700;}
+#inline_confirm_modal .kv{font-size:12px;color:#a9bdd7;margin:6px 0;}
+#inline_confirm_modal .kv b{color:#dbe7ff;}
+#inline_confirm_modal .diff{background:#0f172a;border:1px solid #2b3a55;border-radius:10px;padding:8px;margin-top:8px;color:#e6edf7;font-size:13px;white-space:pre-wrap;}
+#inline_confirm_modal .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px;}
+#inline_confirm_modal .btn{padding:8px 12px;border-radius:10px;border:1px solid #334155;background:#0f172a;color:#e6edf7;cursor:pointer;}
+#inline_confirm_modal .btn.primary{background:#2563eb;border-color:#1d4ed8;color:#fff;}
+#inline_confirm_modal .btn:hover{filter:brightness(1.05);}
+</style>
+<div id="inline_confirm_modal" aria-modal="true" role="dialog">
+  <div class="card">
+    <h4>Confirm change?</h4>
+    <div class="kv"><b>Job:</b> <span id="icm_job">—</span></div>
+    <div class="kv"><b>Field:</b> <span id="icm_field">—</span></div>
+    <div class="diff"><b>From:</b> <span id="icm_old">—</span>\n<b>To:</b> <span id="icm_new">—</span></div>
+    <div class="actions">
+      <button class="btn" id="icm_cancel">Cancel</button>
+      <button class="btn primary" id="icm_save">Save</button>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  const modal = document.getElementById('inline_confirm_modal');
+  const fJob = document.getElementById('icm_job');
+  const fField = document.getElementById('icm_field');
+  const fOld = document.getElementById('icm_old');
+  const fNew = document.getElementById('icm_new');
+  const btnCancel = document.getElementById('icm_cancel');
+  const btnSave = document.getElementById('icm_save');
+  let _resolver = null;
+
+  function openModal(data){
+    fJob.textContent = data.job || '—';
+    fField.textContent = data.field || '—';
+    fOld.textContent = data.old || '';
+    fNew.textContent = data.new || '';
+    modal.style.display = 'flex';
+    return new Promise(res => { _resolver = res; });
+  }
+  function closeModal(){ modal.style.display = 'none'; }
+
+  btnCancel.addEventListener('click', function(){ if(_resolver){ _resolver(false); } closeModal(); });
+  btnSave.addEventListener('click', function(){ if(_resolver){ _resolver(true); } closeModal(); });
+
+  // Expose to inline editor
+  window.__ccl_inline_confirm = openModal;
+})();
+</script>
+
 </body>
 </html>
 
