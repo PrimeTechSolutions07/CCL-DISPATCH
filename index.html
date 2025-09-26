@@ -718,6 +718,77 @@ thead th.colhdr.drop-target{ background:#0b1731!important; box-shadow:inset 0 0 
 }
 </style>
 
+<style id="create_modal_compact_v1">
+/* === Create Modal: 35% overall size reduction (no font-size changes) === */
+#create_modal .box{ width:62vw !important; height:60vh !important; }
+#create_modal .hdr{ padding:8px 12px !important; }
+#create_modal .content{ padding:10px !important; }
+#create_modal .grid3{ gap:8px !important; }
+#create_modal .panel{ padding:8px !important; border-radius:14px !important; }
+#create_modal label{ margin-bottom:3px !important; }
+#create_modal input, #create_modal textarea{ padding:6px 8px !important; min-height:32px !important; }
+#create_modal textarea{ min-height:64px !important; }
+#create_modal .actions{ padding:8px 12px !important; gap:8px !important; }
+#create_modal .btn{ padding:8px 12px !important; border-radius:10px !important; }
+</style>
+<style id="create_modal_compact_v2">
+/* === Create Modal: Extra 10% compression (excluding From/To/Customer) === */
+#create_modal .grid3 > div:not(:has(#c_from)):not(:has(#c_to)):not(:has(#c_customer)){
+  flex: 1 1 0;
+  max-width: 85% !important;
+}
+#create_modal input, #create_modal textarea{
+  padding:5px 7px !important;
+}
+#create_modal .panel{ padding:6px !important; }
+</style>
+<style id="create_modal_grow_13">
+/* === Create Modal: +13% size tweak (no font change) === */
+#create_modal .box{ width:70vw !important; height:68vh !important; }
+#create_modal .hdr{ padding:10px 14px !important; }
+#create_modal .content{ padding:12px !important; }
+#create_modal .panel{ padding:9px !important; }
+</style>
+<style id="customer_btn_compact_ios">
+/* === Customer dropdown buttons: compact + iPhone blue === */
+#c_btn_save_customer{ padding:4px 10px !important; border-radius:10px !important; background:var(--ios) !important; border-color:var(--ios) !important; }
+#c_btn_save_customer:hover{ background:var(--ios-hover) !important; }
+#c_btn_delete_customer{ padding:4px 10px !important; border-radius:10px !important; }
+</style>
+<style id="customer_btn_shrink30">
+/* === Customer dropdown buttons smaller by 30% === */
+#c_btn_save_customer, #c_btn_delete_customer{
+  font-size: 0.8em !important;
+  padding:3px 8px !important;
+  border-radius:8px !important;
+}
+</style>
+<style id="customer_dd_menu_style">
+/* === Customer dropdown menu styling === */
+.ccl-dd{ position:relative; display:inline-block; width:100%; }
+.ccl-dd-trigger{ width:100%; background:#111827; border:1px solid #374151; border-radius:8px; padding:6px 10px; text-align:left; color:#fff; }
+.ccl-dd-menu{ position:absolute; top:100%; left:0; right:0; background:#1f2937; border:1px solid #374151; border-radius:8px; max-height:220px; overflow-y:auto; z-index:50; }
+.ccl-dd-menu div{ padding:6px 10px; cursor:pointer; }
+.ccl-dd-menu div:hover{ background:#2563eb; color:#fff; }
+.hidden{ display:none; }
+</style>
+<style id="customer_dd_menu_height">
+/* === Customer dropdown: show at least 10 items === */
+.ccl-dd-menu{ max-height: 360px !important; }
+</style>
+<style id="customer_dd_overlay_10rows">
+/* === Customer dropdown: overlay (no clipping) + 10-row view === */
+.ccl-dd{ position:relative; overflow:visible; }
+.ccl-dd-menu{
+  position: fixed !important;   /* detach from clipped parents */
+  z-index: 10050 !important;    /* above modals */
+  max-height: none !important;
+  height: 360px !important;     /* ~10 items */
+  overflow-y: auto !important;
+  width: auto;                   /* set in JS to match trigger */
+  box-shadow: 0 14px 32px rgba(0,0,0,.45);
+}
+</style>
 </head>
 <body class="min-h-screen">
 <header class="brand-grad p-4 flex items-center justify-between">
@@ -938,7 +1009,7 @@ thead th.colhdr.drop-target{ background:#0b1731!important; box-shadow:inset 0 0 
 <div class="text-xs opacity-80">LTE • 100%</div>
 </div>
 <div class="content">
-<div class="space-y-3"><div class="panel"><div class="panel-title">Job</div><div class="grid3"><div><label>Job #</label><input id="c_id"/></div><div><label>Window</label><input id="c_window"/></div><div><label>BK # / PIN</label><input id="c_bkpin"/></div></div></div><div class="panel"><div class="panel-title">Locations</div><div class="grid3"><div><label>From</label><textarea id="c_from" rows="3"></textarea></div><div><label>To</label><textarea id="c_to" rows="3"></textarea></div><div><label>Customer</label><input id="c_customer"/></div></div></div><div class="panel"><div class="panel-title">Container • Type</div><div class="grid3"><div><label>Container #</label><input id="c_container"/></div><div><label>Load / Empty</label><input id="c_loadempty" type="hidden"/><div class="ccl-dd"><button class="ccl-dd-trigger" id="c_dd_loadempty" type="button">Select…</button><div class="ccl-dd-menu hidden" id="c_menu_loadempty"><div data-val="LOAD">LOAD</div><div data-val="EMPTY">EMPTY</div></div></div></div><div><label>Import / Export</label><input id="c_impexp" type="hidden"/><div class="ccl-dd"><button class="ccl-dd-trigger" id="c_dd_impexp" type="button">Select…</button><div class="ccl-dd-menu hidden" id="c_menu_impexp"><div data-val="Import">Import</div><div data-val="Export">Export</div></div></div></div></div></div><div class="panel"><div class="panel-title">Dates • Appt</div><div class="grid3"><div><label>Appointment</label><input id="c_appt"/></div><div><label>P/U Date</label><input id="c_pudate"/></div><div><label>Delivery Date</label><input id="c_deliveryDate"/></div><div><label>LFD Date</label><input id="c_lfd"/></div><div><label>Return Date</label><input id="c_returnDate"/></div></div></div><div class="panel"><div class="panel-title">Ports • Equipment</div><div class="grid3"><div><label>Return Port</label><input id="c_returnPort"/></div><div><label>Chassis</label><input id="c_chassis"/></div><div><label>Size / Type</label><input id="c_size"/></div><div><label>PIN #</label><input id="c_pin"/></div><div><label>Seal #</label><input id="c_seal"/></div></div></div><div class="panel"><div class="panel-title">Instruction</div><div class="grid3"><div style="grid-column:1/-1"><label>Instruction</label><textarea id="c_instruction" rows="3"></textarea></div></div></div></div>
+<div class="space-y-3"><div class="panel"><div class="panel-title">Job</div><div class="grid3"><div><label>Job #</label><input id="c_id"/></div><div><label>Window</label><input id="c_window"/></div><div><label>BK # / PIN</label><input id="c_bkpin"/></div></div></div><div class="panel"><div class="panel-title">Locations</div><div class="grid3"><div><label>From</label><textarea id="c_from" rows="3"></textarea></div><div><label>To</label><textarea id="c_to" rows="3"></textarea></div><div><label>Customer</label><input id="c_customer" type="hidden"/><div class="ccl-dd"><button class="ccl-dd-trigger" id="c_dd_customer" type="button">Select…</button><div class="ccl-dd-menu hidden" id="c_menu_customer"></div></div><div class="mt-2 flex gap-2"><button id="c_btn_save_customer" class="btn btn-ios" type="button" style="padding:6px 10px;">Save Customer</button><button id="c_btn_delete_customer" class="btn" type="button" style="padding:6px 10px;">Delete</button></div></div></div></div><div class=\"panel\"><div class=\"grid3\"><div><label>Customer Email</label><input id=\"c_email\"/></div><div><label>Customer Phone</label><input id=\"c_phone\"/></div></div></div><div class="panel"><div class="panel-title">Container • Type</div><div class="grid3"><div><label>Container #</label><input id="c_container"/></div><div><label>Load / Empty</label><input id="c_loadempty" type="hidden"/><div class="ccl-dd"><button class="ccl-dd-trigger" id="c_dd_loadempty" type="button">Select…</button><div class="ccl-dd-menu hidden" id="c_menu_loadempty"><div data-val="LOAD">LOAD</div><div data-val="EMPTY">EMPTY</div></div></div></div><div><label>Import / Export</label><input id="c_impexp" type="hidden"/><div class="ccl-dd"><button class="ccl-dd-trigger" id="c_dd_impexp" type="button">Select…</button><div class="ccl-dd-menu hidden" id="c_menu_impexp"><div data-val="Import">Import</div><div data-val="Export">Export</div></div></div></div></div></div><div class="panel"><div class="panel-title">Dates • Appt</div><div class="grid3"><div><label>Appointment</label><input id="c_appt"/></div><div><label>P/U Date</label><input id="c_pudate"/></div><div><label>Delivery Date</label><input id="c_deliveryDate"/></div><div><label>LFD Date</label><input id="c_lfd"/></div><div><label>Return Date</label><input id="c_returnDate"/></div></div></div><div class="panel"><div class="panel-title">Ports • Equipment</div><div class="grid3"><div><label>Return Port</label><input id="c_returnPort"/></div><div><label>Chassis</label><input id="c_chassis"/></div><div><label>Size / Type</label><input id="c_size"/></div><div><label>PIN #</label><input id="c_pin"/></div><div><label>Seal #</label><input id="c_seal"/></div></div></div><div class="panel"><div class="panel-title">Instruction</div><div class="grid3"><div style="grid-column:1/-1"><label>Instruction</label><textarea id="c_instruction" rows="3"></textarea></div></div></div></div>
 </div>
 <div class="actions">
 <button class="btn btn-outline" id="btn_create_cancel">Cancel</button>
@@ -1031,13 +1102,16 @@ thead th.colhdr.drop-target{ background:#0b1731!important; box-shadow:inset 0 0 
       carrier: 'CARRIER NAME',
       mbl: 'MB/L NO.',
       status: 'DROP / LIVE'
+    ,
+      email: 'EMAIL',
+      phone: 'PHONE'
     };
 
     
     const DEFAULT_ORDER = [
       'arrival','id','container','chassis','size','pin','ie','bk',
       'from','pudate','appt','deliveryDate','to','lfd','returnDate','returnPort',
-      'appt','customer','remark','carrier','mbl','status'
+      'appt','customer','remark','carrier','mbl','status','email','phone'
     ];
 
     try{ localStorage.removeItem('ccl_col_order'); localStorage.removeItem('ccl_col_order_all'); }catch(_){}
@@ -1119,6 +1193,8 @@ if(key==='status') return statusPill(statusOverride || a.status);
   if(key==='remark') return norm(a.remark);
   if(key==='carrier') return norm(a.carrier);
   if(key==='mbl') return norm(a.mbl);
+if(key==='email') return norm(a.email);
+  if(key==='phone') return norm(a.phone);
   return norm(a[key]);
 }
     function buildRowCells(tr, a, statusOverride){
@@ -1481,7 +1557,7 @@ tr.addEventListener('click',function(e){ if(e.target.tagName.toLowerCase()==='in
       td.innerHTML='';
       td.appendChild(input);
       input.focus();
-      input.select();
+      input.selectCustomer();
 
       let pendingValue = oldText;
       input.addEventListener('input', () => { pendingValue = input.value; });
@@ -1991,6 +2067,77 @@ document.addEventListener('dblclick', function(e){
     width: 40px;
     text-align: center !important;
   }
+</style>
+<style id="create_modal_compact_v1">
+/* === Create Modal: 35% overall size reduction (no font-size changes) === */
+#create_modal .box{ width:62vw !important; height:60vh !important; }
+#create_modal .hdr{ padding:8px 12px !important; }
+#create_modal .content{ padding:10px !important; }
+#create_modal .grid3{ gap:8px !important; }
+#create_modal .panel{ padding:8px !important; border-radius:14px !important; }
+#create_modal label{ margin-bottom:3px !important; }
+#create_modal input, #create_modal textarea{ padding:6px 8px !important; min-height:32px !important; }
+#create_modal textarea{ min-height:64px !important; }
+#create_modal .actions{ padding:8px 12px !important; gap:8px !important; }
+#create_modal .btn{ padding:8px 12px !important; border-radius:10px !important; }
+</style>
+<style id="create_modal_compact_v2">
+/* === Create Modal: Extra 10% compression (excluding From/To/Customer) === */
+#create_modal .grid3 > div:not(:has(#c_from)):not(:has(#c_to)):not(:has(#c_customer)){
+  flex: 1 1 0;
+  max-width: 85% !important;
+}
+#create_modal input, #create_modal textarea{
+  padding:5px 7px !important;
+}
+#create_modal .panel{ padding:6px !important; }
+</style>
+<style id="create_modal_grow_13">
+/* === Create Modal: +13% size tweak (no font change) === */
+#create_modal .box{ width:70vw !important; height:68vh !important; }
+#create_modal .hdr{ padding:10px 14px !important; }
+#create_modal .content{ padding:12px !important; }
+#create_modal .panel{ padding:9px !important; }
+</style>
+<style id="customer_btn_compact_ios">
+/* === Customer dropdown buttons: compact + iPhone blue === */
+#c_btn_save_customer{ padding:4px 10px !important; border-radius:10px !important; background:var(--ios) !important; border-color:var(--ios) !important; }
+#c_btn_save_customer:hover{ background:var(--ios-hover) !important; }
+#c_btn_delete_customer{ padding:4px 10px !important; border-radius:10px !important; }
+</style>
+<style id="customer_btn_shrink30">
+/* === Customer dropdown buttons smaller by 30% === */
+#c_btn_save_customer, #c_btn_delete_customer{
+  font-size: 0.8em !important;
+  padding:3px 8px !important;
+  border-radius:8px !important;
+}
+</style>
+<style id="customer_dd_menu_style">
+/* === Customer dropdown menu styling === */
+.ccl-dd{ position:relative; display:inline-block; width:100%; }
+.ccl-dd-trigger{ width:100%; background:#111827; border:1px solid #374151; border-radius:8px; padding:6px 10px; text-align:left; color:#fff; }
+.ccl-dd-menu{ position:absolute; top:100%; left:0; right:0; background:#1f2937; border:1px solid #374151; border-radius:8px; max-height:220px; overflow-y:auto; z-index:50; }
+.ccl-dd-menu div{ padding:6px 10px; cursor:pointer; }
+.ccl-dd-menu div:hover{ background:#2563eb; color:#fff; }
+.hidden{ display:none; }
+</style>
+<style id="customer_dd_menu_height">
+/* === Customer dropdown: show at least 10 items === */
+.ccl-dd-menu{ max-height: 360px !important; }
+</style>
+<style id="customer_dd_overlay_10rows">
+/* === Customer dropdown: overlay (no clipping) + 10-row view === */
+.ccl-dd{ position:relative; overflow:visible; }
+.ccl-dd-menu{
+  position: fixed !important;   /* detach from clipped parents */
+  z-index: 10050 !important;    /* above modals */
+  max-height: none !important;
+  height: 360px !important;     /* ~10 items */
+  overflow-y: auto !important;
+  width: auto;                   /* set in JS to match trigger */
+  box-shadow: 0 14px 32px rgba(0,0,0,.45);
+}
 </style>
 </head><body>
   <div class="top">Driver GPS • Long Beach Port</div>
@@ -4697,6 +4844,167 @@ document.addEventListener('DOMContentLoaded', function(){
 })();
 </script>
 
+
+<script>
+(function(){
+  function ready(fn){ if(document.readyState!=='loading') fn(); else document.addEventListener('DOMContentLoaded', fn, {once:true}); }
+  ready(function(){
+    const LS_KEY = 'ccl_customers_v1';
+    const SEED_LIST = ["MEARSK","WAN- HAI","YANG MING","EVER GREEN","MSC","ZIM LINE","OCCL","SEA LAND","SIM LINE","CMA","TS LINES","ANL","HAG PAG","COSCO","HMM","APL"];
+    const ddBtn = document.getElementById('c_dd_customer');
+    const ddMenu = document.getElementById('c_menu_customer');
+    const inName = document.getElementById('c_customer');
+    const inTo = document.getElementById('c_to');
+    const inEmail = document.getElementById('c_email');
+    const inPhone = document.getElementById('c_phone');
+    const btnSave = document.getElementById('c_btn_save_customer');
+    const btnDel  = document.getElementById('c_btn_delete_customer');
+
+    if(!ddBtn || !ddMenu) return;
+    ensureSeed();
+
+    function load(){ try{ return JSON.parse(localStorage.getItem(LS_KEY)||'{}'); }catch(_){ return {}; } }
+function ensureSeed(){ const map = load(); if(Object.keys(map).length===0){ SEED_LIST.forEach(n=>map[n]={}); try{ localStorage.setItem(LS_KEY, JSON.stringify(map)); }catch(_){} } }
+    function save(map){ try{ localStorage.setItem(LS_KEY, JSON.stringify(map)); }catch(_){ } }
+    function renderMenu(active){
+      const map = load();
+      ddMenu.innerHTML = '';
+      const keys = Object.keys(map).sort((a,b)=>a.localeCompare(b));
+      if(!keys.length){
+        const empty = document.createElement('div');
+        empty.textContent = 'No customers yet';
+        empty.style.opacity = .7;
+        ddMenu.appendChild(empty);
+      } else {
+        keys.forEach(name=>{
+          const div = document.createElement('div');
+          div.textContent = name;
+          div.dataset.name = name;
+          if(name===active){ div.style.background = '#111827'; }
+          div.addEventListener('click', ()=>selectCustomer(name));
+          ddMenu.appendChild(div);
+        });
+      }
+    }
+    
+    function placeMenu(){
+      const r = ddBtn.getBoundingClientRect();
+      ddMenu.style.left = (Math.round(r.left)+window.scrollX) + 'px';
+      ddMenu.style.top  = (Math.round(r.bottom)+window.scrollY) + 'px';
+      ddMenu.style.width = Math.round(r.width) + 'px';
+    }
+
+    function openMenu(){
+      ddMenu.classList.remove('hidden');
+      renderMenu(inName.value||'');
+      placeMenu();
+      const close = (ev)=>{
+        if(!ddMenu.contains(ev.target) && ev.target!==ddBtn){
+          ddMenu.classList.add('hidden');
+          document.removeEventListener('click', close, true);
+        }
+      };
+      setTimeout(()=>document.addEventListener('click', close, true), 0);
+      window.addEventListener('resize', placeMenu);
+      window.addEventListener('scroll', placeMenu, true);
+    }
+    function selectCustomer(name){
+  const map = load();
+  const rec = map[name] || null;
+  inName.value = name;
+  ddBtn.textContent = name;
+  // Always clear first, then prefill
+  try{ inTo.value = ''; inEmail.value = ''; inPhone.value = ''; }catch(_){}
+  if(rec){
+    try{ if(rec.to!==undefined) inTo.value = rec.to; }catch(_){}
+    try{ if(rec.email!==undefined) inEmail.value = rec.email; }catch(_){}
+    try{ if(rec.phone!==undefined) inPhone.value = rec.phone; }catch(_){}
+  }
+  ddMenu.classList.add('hidden');
+}
+; map[name] = rec; }
+      inName.value = name;
+      ddBtn.textContent = name;
+      try{ inTo.value = rec.to||''; }catch(_){}
+      try{ inEmail.value = rec.email||''; }catch(_){}
+      try{ inPhone.value = rec.phone||''; }catch(_){}
+      ddMenu.classList.add('hidden');
+    }
+    function addOrUpdate(){
+  let name = (ddBtn.textContent||'').trim();
+  if(!name || name==='Select…'){ name = prompt('Customer name:'); }
+  if(!name) return;
+  const map = load();
+  map[name] = { to: (inTo.value||'').trim(), email: (inEmail.value||'').trim(), phone: (inPhone.value||'').trim() };
+  save(map);
+  inName.value = name; ddBtn.textContent = name;
+  renderMenu(name);
+  selectCustomer(name);
+  if(window.toast) toast('Customer saved');
+};
+      save(map);
+      inName.value = name;
+      ddBtn.textContent = name;
+      renderMenu(name);
+      if(window.toast) toast('Customer saved');
+    }
+    function del(){
+      const name = inName.value || ddBtn.textContent;
+      if(!name || name==='Select…') return;
+      if(!confirm('Delete \"'+name+'\"?')) return;
+      const map = load(); delete map[name]; save(map);
+      inName.value=''; ddBtn.textContent='Select…';
+      if(window.toast) toast('Customer deleted');
+      renderMenu('');
+    }
+    function attachConfirm(el, field){
+      if(!el) return;
+      el.addEventListener('change', function(){
+        const name = inName.value;
+        if(!name) return;
+        const map = load(); let rec = map[name]; if(!rec){ rec = {}; map[name] = rec; }
+        const newVal = (el.value||'').trim();
+        const oldVal = (rec[field]||'').trim();
+        if(newVal !== oldVal){
+          const cm = document.getElementById('confirm_modal');
+          const setYes = ()=>{ rec[field] = newVal; save(map); if(window.toast) toast('Updated '+field+' for '+name); };
+          if(cm){
+            const txt = document.getElementById('confirm_text');
+            const yes = document.getElementById('confirm_yes');
+            const no  = document.getElementById('confirm_no');
+            txt.textContent = 'Update saved '+field+' for \"'+name+'\"?';
+            cm.style.display='flex';
+            const clean = ()=>{ yes.removeEventListener('click', onYes); no.removeEventListener('click', onNo); };
+            function onYes(){ setYes(); cm.style.display='none'; clean(); }
+            function onNo(){ cm.style.display='none'; clean(); }
+            yes.addEventListener('click', onYes, {once:true});
+            no.addEventListener('click', onNo, {once:true});
+          } else {
+            if(window.confirm('Update saved '+field+' for \"'+name+'\"?')) setYes();
+          }
+        }
+      });
+    }
+
+    ddBtn.addEventListener('click', openMenu);
+
+    function autoOpen(){
+      ddMenu.classList.remove('hidden');
+      renderMenu(inName.value||'');
+      placeMenu();
+    }
+    ddBtn.addEventListener('focus', autoOpen);
+
+    btnSave && btnSave.addEventListener('click', addOrUpdate);
+    btnDel && btnDel.addEventListener('click', del);
+    attachConfirm(inTo, 'to');
+    attachConfirm(inEmail, 'email');
+    attachConfirm(inPhone, 'phone');
+    renderMenu(inName.value||'');
+  });
+})();
+</script>
+
 </body></html><script>
     function openGpsTab(){
       // Build HTML and open as a Blob URL in a NEW TAB
@@ -7302,6 +7610,148 @@ document.addEventListener('DOMContentLoaded', function(){
 
   // Expose to inline editor
   window.__ccl_inline_confirm = openModal;
+})();
+</script>
+
+
+<script>
+(function(){
+  function ready(fn){ if(document.readyState!=='loading') fn(); else document.addEventListener('DOMContentLoaded', fn, {once:true}); }
+  ready(function(){
+    const LS_KEY = 'ccl_customers_v1';
+    const SEED_LIST = ["MEARSK","WAN- HAI","YANG MING","EVER GREEN","MSC","ZIM LINE","OCCL","SEA LAND","SIM LINE","CMA","TS LINES","ANL","HAG PAG","COSCO","HMM","APL"];
+    const ddBtn = document.getElementById('c_dd_customer');
+    const ddMenu = document.getElementById('c_menu_customer');
+    const inName = document.getElementById('c_customer');
+    const inTo = document.getElementById('c_to');
+    const inEmail = document.getElementById('c_email');
+    const inPhone = document.getElementById('c_phone');
+    const btnSave = document.getElementById('c_btn_save_customer');
+    const btnDel  = document.getElementById('c_btn_delete_customer');
+
+    if(!ddBtn || !ddMenu) return;
+    ensureSeed();
+
+    function load(){ try{ return JSON.parse(localStorage.getItem(LS_KEY)||'{}'); }catch(_){ return {}; } }
+function ensureSeed(){ const map = load(); if(Object.keys(map).length===0){ SEED_LIST.forEach(n=>map[n]={}); try{ localStorage.setItem(LS_KEY, JSON.stringify(map)); }catch(_){} } }
+    function save(map){ try{ localStorage.setItem(LS_KEY, JSON.stringify(map)); }catch(_){ } }
+    function renderMenu(active){
+      const map = load();
+      ddMenu.innerHTML = '';
+      const keys = Object.keys(map).sort((a,b)=>a.localeCompare(b));
+      if(!keys.length){
+        const empty = document.createElement('div');
+        empty.textContent = 'No customers yet';
+        empty.style.opacity = .7;
+        ddMenu.appendChild(empty);
+      } else {
+        keys.forEach(name=>{
+          const div = document.createElement('div');
+          div.textContent = name;
+          div.dataset.name = name;
+          if(name===active){ div.style.background = '#111827'; }
+          div.addEventListener('click', ()=>selectCustomer(name));
+          ddMenu.appendChild(div);
+        });
+      }
+    }
+    
+    function placeMenu(){
+      const r = ddBtn.getBoundingClientRect();
+      ddMenu.style.left = (Math.round(r.left)+window.scrollX) + 'px';
+      ddMenu.style.top  = (Math.round(r.bottom)+window.scrollY) + 'px';
+      ddMenu.style.width = Math.round(r.width) + 'px';
+    }
+
+    function openMenu(){
+      ddMenu.classList.remove('hidden');
+      renderMenu(inName.value||'');
+      placeMenu();
+      const close = (ev)=>{
+        if(!ddMenu.contains(ev.target) && ev.target!==ddBtn){
+          ddMenu.classList.add('hidden');
+          document.removeEventListener('click', close, true);
+        }
+      };
+      setTimeout(()=>document.addEventListener('click', close, true), 0);
+      window.addEventListener('resize', placeMenu);
+      window.addEventListener('scroll', placeMenu, true);
+    }
+    function selectCustomer(name){
+      const map = load(); let rec = map[name]; if(!rec){ rec = {}; map[name] = rec; }
+      inName.value = name;
+      ddBtn.textContent = name;
+      try{ inTo.value = rec.to||''; }catch(_){}
+      try{ inEmail.value = rec.email||''; }catch(_){}
+      try{ inPhone.value = rec.phone||''; }catch(_){}
+      ddMenu.classList.add('hidden');
+    }
+    function addOrUpdate(){
+      const currentBtnText = ddBtn.textContent.trim();
+      const name = (currentBtnText && currentBtnText!=='Select…') ? currentBtnText : prompt('Customer name:');
+      if(!name) return;
+      const map = load();
+      map[name] = { to: (inTo.value||'').trim(), email: (inEmail.value||'').trim(), phone: (inPhone.value||'').trim() };
+      save(map);
+      inName.value = name;
+      ddBtn.textContent = name;
+      renderMenu(name);
+      if(window.toast) toast('Customer saved');
+    }
+    function del(){
+      const name = inName.value || ddBtn.textContent;
+      if(!name || name==='Select…') return;
+      if(!confirm('Delete \"'+name+'\"?')) return;
+      const map = load(); delete map[name]; save(map);
+      inName.value=''; ddBtn.textContent='Select…';
+      if(window.toast) toast('Customer deleted');
+      renderMenu('');
+    }
+    function attachConfirm(el, field){
+      if(!el) return;
+      el.addEventListener('change', function(){
+        const name = inName.value;
+        if(!name) return;
+        const map = load(); let rec = map[name]; if(!rec){ rec = {}; map[name] = rec; }
+        const newVal = (el.value||'').trim();
+        const oldVal = (rec[field]||'').trim();
+        if(newVal !== oldVal){
+          const cm = document.getElementById('confirm_modal');
+          const setYes = ()=>{ rec[field] = newVal; save(map); if(window.toast) toast('Updated '+field+' for '+name); };
+          if(cm){
+            const txt = document.getElementById('confirm_text');
+            const yes = document.getElementById('confirm_yes');
+            const no  = document.getElementById('confirm_no');
+            txt.textContent = 'Update saved '+field+' for \"'+name+'\"?';
+            cm.style.display='flex';
+            const clean = ()=>{ yes.removeEventListener('click', onYes); no.removeEventListener('click', onNo); };
+            function onYes(){ setYes(); cm.style.display='none'; clean(); }
+            function onNo(){ cm.style.display='none'; clean(); }
+            yes.addEventListener('click', onYes, {once:true});
+            no.addEventListener('click', onNo, {once:true});
+          } else {
+            if(window.confirm('Update saved '+field+' for \"'+name+'\"?')) setYes();
+          }
+        }
+      });
+    }
+
+    ddBtn.addEventListener('click', openMenu);
+
+    function autoOpen(){
+      ddMenu.classList.remove('hidden');
+      renderMenu(inName.value||'');
+      placeMenu();
+    }
+    ddBtn.addEventListener('focus', autoOpen);
+
+    btnSave && btnSave.addEventListener('click', addOrUpdate);
+    btnDel && btnDel.addEventListener('click', del);
+    attachConfirm(inTo, 'to');
+    attachConfirm(inEmail, 'email');
+    attachConfirm(inPhone, 'phone');
+    renderMenu(inName.value||'');
+  });
 })();
 </script>
 
